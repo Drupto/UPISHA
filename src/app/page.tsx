@@ -136,27 +136,27 @@ const heroSlides = [
 
 const announcements = [
   {
-    date: '15 Mar 2025',
-    title: 'UP ISHA Annual Conference 2025 - Registration Open',
+    date: '15 Mar 2026',
+    title: 'UP ISHA Annual Conference 2026 - Registration Open',
     type: 'Event',
   },
   {
-    date: '28 Feb 2025',
+    date: '28 Feb 2026',
     title: 'Call for Papers - UP Journal of Speech & Hearing',
     type: 'Publication',
   },
   {
-    date: '10 Feb 2025',
+    date: '10 Feb 2026',
     title: 'Workshop on Pediatric Audiology - Lucknow Chapter',
     type: 'Workshop',
   },
   {
-    date: '25 Jan 2025',
-    title: 'New Membership Benefits for 2025 Announced',
+    date: '25 Jan 2026',
+    title: 'New Membership Benefits for 2026 Announced',
     type: 'Announcement',
   },
   {
-    date: '15 Jan 2025',
+    date: '15 Jan 2026',
     title: 'Republic Day Special Webinar on Hearing Health',
     type: 'Webinar',
   },
@@ -191,40 +191,46 @@ const features = [
 
 const executiveCouncil = [
   {
-    name: 'Dr. Rajesh Kumar Sharma',
+    name: 'Mr. Bhupendra Kumar Mishra',
     role: 'President',
-    image: '/images/avatar-president.png',
+    image: '/images/President.jpeg',
     speciality: 'Audiology',
   },
   {
-    name: 'Dr. Sunita Verma',
+    name: 'Mohd. Kamran Farooq Khan',
     role: 'Vice President',
-    image: '/images/avatar-vp.png',
+    image: '/images/VIcePresident.png',
     speciality: 'Speech-Language Pathology',
   },
   {
-    name: 'Dr. Amit Mishra',
+    name: 'Dr. Sankalp Shukla',
     role: 'Secretary',
-    image: '/images/avatar-secretary.png',
-    speciality: 'Audiology',
-  },
-  {
-    name: 'Dr. Priya Singh',
-    role: 'Treasurer',
-    image: '/images/avatar-treasurer.png',
+    image: '/images/Treasurer.png',
     speciality: 'Speech-Language Pathology',
   },
   {
-    name: 'Dr. Vikram Pandey',
-    role: 'Joint Secretary',
-    image: null,
+    name: 'Mr. Priyaveer Chauhan',
+    role: 'Secretary',
+    image: '/images/Secretary.png',
+    speciality: 'Speech-Language Pathology',
+  },
+  {
+    name: 'Ms. Sneha Bansal',
+    role: 'Member',
+    image: '/images/MsSnehaBansal.png',
     speciality: 'Neuro-Audiology',
   },
   {
-    name: 'Dr. Ananya Gupta',
-    role: 'Executive Member',
-    image: null,
+    name: 'Mr. Shiv Shanker Dwivedi',
+    role: 'Member',
+    image: '/images/MrShivShankerDwivedi.png',
     speciality: 'Pediatric Audiology',
+  },
+  {
+    name: 'Mr. Lavkush Mishra',
+    role: 'Member',
+    image: '/images/LavkushMishraMember.png',
+    speciality: '',
   },
 ]
 
@@ -398,7 +404,7 @@ const faqItems = [
 
 const stats = [
   { value: 550, suffix: '+', label: 'Active Members', icon: Users },
-  { value: 20, suffix: '+', label: 'Years of Service', icon: Activity },
+  { value: 2, suffix: '+', label: 'Years of Service', icon: Activity },
   { value: 15, suffix: '+', label: 'Regional Chapters', icon: Globe },
   { value: 50, suffix: '+', label: 'Annual Events', icon: Calendar },
 ]
@@ -446,21 +452,21 @@ const partners = [
 const upcomingWebinars = [
   {
     title: 'Advanced Audiological Assessment in Pediatric Population',
-    date: 'March 25, 2025',
+    date: 'March 25, 2026',
     time: '4:00 PM IST',
     speaker: 'Dr. Anita Deshpande',
     duration: '90 min',
   },
   {
     title: 'Tele-Practice in Speech-Language Pathology',
-    date: 'April 8, 2025',
+    date: 'April 8, 2026',
     time: '5:00 PM IST',
     speaker: 'Dr. Manoj Kumar',
     duration: '60 min',
   },
   {
     title: 'Cochlear Implant Rehabilitation: Best Practices',
-    date: 'April 22, 2025',
+    date: 'April 22, 2026',
     time: '4:30 PM IST',
     speaker: 'Dr. Sunita Verma',
     duration: '75 min',
@@ -585,8 +591,8 @@ const specialities = ['All Specialities', 'Audiology', 'Speech-Language Patholog
 /* Events Timeline data */
 const eventsTimeline = [
   {
-    date: '18-20 Oct 2025',
-    title: 'UP ISHACON 2025 - Annual State Conference',
+    date: '18-20 Oct 2026',
+    title: 'UP ISHACON 2026 - Annual State Conference',
     location: 'KGMU, Lucknow',
     description:
       'Three-day flagship conference featuring keynote lectures, scientific paper presentations, panel discussions, and hands-on workshops on the latest advances in audiology and speech-language pathology.',
@@ -597,7 +603,7 @@ const eventsTimeline = [
     registrationLink: '#join',
   },
   {
-    date: '25 Mar 2025',
+    date: '25 Mar 2026',
     title: 'Workshop on Pediatric Audiology',
     location: 'Lucknow Chapter',
     description:
@@ -609,11 +615,11 @@ const eventsTimeline = [
     registrationLink: '#join',
   },
   {
-    date: '03 Mar 2025',
+    date: '03 Mar 2026',
     title: 'World Hearing Day Awareness Walk',
     location: 'Hazratganj, Lucknow',
     description:
-      'Public awareness walk and free hearing screening camp in observance of WHO World Hearing Day 2025.',
+      'Public awareness walk and free hearing screening camp in observance of WHO World Hearing Day 2026.',
     type: 'Outreach',
     icon: Megaphone,
     time: '8:00 AM - 1:00 PM',
@@ -621,7 +627,7 @@ const eventsTimeline = [
     registrationLink: '#join',
   },
   {
-    date: '15 Feb 2025',
+    date: '15 Feb 2026',
     title: 'Continuing Education - Voice Disorders',
     location: 'Webinar (Online)',
     description:
@@ -633,7 +639,7 @@ const eventsTimeline = [
     registrationLink: '#join',
   },
   {
-    date: '28 Jan 2025',
+    date: '28 Jan 2026',
     title: 'Research Methodology Workshop',
     location: 'KGMU, Lucknow',
     description:
@@ -676,11 +682,11 @@ const memberSpotlights = [
 
 /* News ticker items */
 const newsTickerItems = [
-  'UP ISHACON 2025 Registration Now Open — Early Bird Discount Until September 15',
+  'UP ISHACON 2026 Registration Now Open — Early Bird Discount Until September 15',
   'Call for Papers: UP Journal of Speech & Hearing Vol. 12 — Submit by August 30',
   'New RCI Continuing Education Credits Now Available for UP ISHA Webinars',
-  'Free Hearing Screening Camp on World Hearing Day — March 3, 2025',
-  'Student Scholarship Program 2025 — Applications Open for ASLP Researchers',
+  'Free Hearing Screening Camp on World Hearing Day — March 3, 2026',
+  'Student Scholarship Program 2026 — Applications Open for ASLP Researchers',
 ]
 
 /* ─── Animated Section Wrapper ─── */
@@ -905,10 +911,14 @@ function Navbar({
               e.preventDefault()
               onNavClick('#home')
             }}
-            className="flex items-center gap-3 shrink-0 group"
+            className="flex items-center gap-3 shrink-0 group mr-4 lg:mr-10"
           >
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-upisha-teal to-upisha-teal-dark rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
-              <Ear className="h-6 w-6 md:h-7 md:w-7 text-white" />
+            <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all bg-white">
+              <img
+                src="/images/mainlogo.jpeg"
+                alt="UP ISHA logo"
+                className="h-full w-full object-contain"
+              />
             </div>
             <div className="hidden sm:block">
               <div className="font-bold text-upisha-navy dark:text-white text-sm md:text-base leading-tight">
@@ -1122,7 +1132,7 @@ function HeroSection() {
                 className="inline-flex items-center gap-1.5 bg-white/10 text-upisha-gold border border-upisha-gold/40 px-2.5 py-1 rounded-full text-[11px] md:text-xs font-semibold mb-5 backdrop-blur-sm"
               >
                 <Star className="h-3 w-3 fill-upisha-gold text-upisha-gold" />
-                Serving Since 2005
+                Serving Since 2024
               </motion.div>
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-5 leading-[1.1] text-shadow-hero">
                 {heroSlides[current].title}
@@ -1337,9 +1347,9 @@ function AnnouncementSection() {
             <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
               <CardContent className="p-5 space-y-4">
                 <div className="space-y-1">
-                  <h4 className="font-semibold text-upisha-navy dark:text-white">UP ISHACON 2025</h4>
+                  <h4 className="font-semibold text-upisha-navy dark:text-white">UP ISHACON 2026</h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" /> October 18-20, 2025
+                    <Calendar className="h-3.5 w-3.5" /> October 18-20, 2026
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" /> Lucknow, UP
@@ -1347,9 +1357,9 @@ function AnnouncementSection() {
                 </div>
                 <Separator className="dark:bg-gray-700" />
                 <div className="space-y-1">
-                  <h4 className="font-semibold text-upisha-navy dark:text-white">World Hearing Day 2025</h4>
+                  <h4 className="font-semibold text-upisha-navy dark:text-white">World Hearing Day 2026</h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" /> March 3, 2025
+                    <Calendar className="h-3.5 w-3.5" /> March 3, 2026
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" /> Across UP
@@ -1359,7 +1369,7 @@ function AnnouncementSection() {
                 <div className="space-y-1">
                   <h4 className="font-semibold text-upisha-navy dark:text-white">Pediatric SLP Workshop</h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" /> April 12, 2025
+                    <Calendar className="h-3.5 w-3.5" /> April 12, 2026
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" /> Varanasi, UP
@@ -1446,7 +1456,7 @@ function AboutSection() {
             </div>
             {/* Stats overlay - improved dark mode */}
             <div className="absolute -bottom-6 -right-6 md:right-6 bg-upisha-teal text-white rounded-xl p-5 shadow-lg ring-4 ring-white/20 dark:ring-gray-900/20">
-              <div className="text-3xl font-bold">20+</div>
+              <div className="text-3xl font-bold">2+</div>
               <div className="text-sm opacity-90">Years of Service</div>
             </div>
             <div className="absolute -top-4 -left-4 md:left-6 bg-upisha-gold text-white rounded-xl p-4 shadow-lg ring-4 ring-white/20 dark:ring-gray-900/20">
@@ -1465,7 +1475,7 @@ function AboutSection() {
             <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed mb-4">
               The Uttar Pradesh Speech & Hearing Association (UP ISHA) is the premier professional
               body representing audiologists and speech-language pathologists in Uttar Pradesh,
-              India. Established in 2005, UP ISHA has been at the forefront of advancing the
+              India. Established in 2024, UP ISHA has been at the forefront of advancing the
               professions of audiology and speech-language pathology in the state.
             </p>
             <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed mb-6">
@@ -1517,13 +1527,13 @@ function AboutSection() {
                 <div className="md:w-64 shrink-0 bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/15 p-6 md:p-8 flex flex-col items-center justify-center text-center">
                   <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg mb-3">
                     <img
-                      src="/images/avatar-president.png"
-                      alt="Dr. Rajesh Kumar Sharma"
+                      src="/images/President.jpeg"
+                      alt="Mr. Bhupendra Kumar Mishra"
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
                   </div>
-                  <h4 className="font-bold text-upisha-navy dark:text-white text-sm">Dr. Rajesh Kumar Sharma</h4>
+                  <h4 className="font-bold text-upisha-navy dark:text-white text-sm">Mr. Bhupendra Kumar Mishra</h4>
                   <p className="text-xs text-upisha-teal font-medium flex items-center gap-1 mt-1">
                     <Star className="h-3 w-3 fill-upisha-gold text-upisha-gold" />
                     President, UP ISHA
@@ -1541,7 +1551,7 @@ function AboutSection() {
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="h-px flex-1 bg-gradient-to-r from-upisha-teal/20 to-transparent" />
-                    <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Est. 2005</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Est. 2024</span>
                   </div>
                 </div>
               </div>
@@ -1761,7 +1771,7 @@ function PublicationsSection() {
                   <div className="space-y-3 mb-4">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                       <Clock className="h-4 w-4 text-upisha-gold" />
-                      Submission Deadline: June 30, 2025
+                      Submission Deadline: June 30, 2026
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                       <FileText className="h-4 w-4 text-upisha-gold" />
@@ -2999,7 +3009,7 @@ function ContactSection() {
     {
       icon: MapPin,
       title: 'Office Address',
-      details: ['Department of Audiology & Speech-Language Pathology', "King George's Medical University", 'Lucknow, Uttar Pradesh - 226003'],
+      details: ['110 Raghu Raj Nagar Patel Nagar Lucknow-226016'],
       action: null,
     },
     {
@@ -3279,20 +3289,20 @@ function ContactSection() {
                     height="100%"
                     style={{ border: 0 }}
                     loading="lazy"
-                    title="UP ISHA Office Location - King George's Medical University, Lucknow"
+                    title="UP ISHA Office Location - 110 Raghu Raj Nagar Patel Nagar Lucknow"
                     className="w-full h-full"
                   />
                   {/* Map overlay card */}
                   <div className="absolute bottom-3 left-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-lg shadow-md p-3 max-w-[220px] border border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-2 mb-1">
                       <MapPin className="h-3.5 w-3.5 text-upisha-teal" />
-                      <span className="text-xs font-semibold text-upisha-navy dark:text-white">KGMU, Lucknow</span>
+                      <span className="text-xs font-semibold text-upisha-navy dark:text-white">UP ISHA Office</span>
                     </div>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
-                      Dept. of Audiology & SLP, King George&apos;s Medical University
+                      110 Raghu Raj Nagar Patel Nagar Lucknow-226016
                     </p>
                     <a
-                      href="https://www.google.com/maps/search/King+George%27s+Medical+University+Lucknow"
+                      href="https://www.google.com/maps/search/110+Raghu+Raj+Nagar+Patel+Nagar+Lucknow+226016"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-[10px] text-upisha-teal font-semibold mt-1.5 hover:underline"
@@ -3447,7 +3457,7 @@ function Footer() {
               <div className="space-y-1.5 text-xs text-gray-400">
                 <p className="flex items-start gap-2">
                   <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5 text-upisha-teal" />
-                  KGMU, Lucknow, UP - 226003
+                  110 Raghu Raj Nagar Patel Nagar Lucknow-226016
                 </p>
                 <p className="flex items-center gap-2">
                   <Phone className="h-3.5 w-3.5 shrink-0 text-upisha-teal" />
@@ -3561,7 +3571,7 @@ function CommandPalette({
       { label: 'Browse Documents', href: '#documents', group: 'Resources', icon: FileText },
       { label: 'View Publications', href: '#publications', group: 'Resources', icon: BookOpen },
       { label: 'View Gallery', href: '#gallery', group: 'Resources', icon: Camera },
-      { label: 'UP ISHACON 2025 Countdown', href: '#home', group: 'Events', icon: Timer },
+      { label: 'UP ISHACON 2026 Countdown', href: '#home', group: 'Events', icon: Timer },
       { label: 'Upcoming Webinars', href: '#about', group: 'Events', icon: PlayCircle },
     ]
   }, [])
@@ -3709,7 +3719,7 @@ function CommandPalette({
 
 /* ─── Event Countdown Timer ─── */
 function CountdownTimer() {
-  const targetDate = new Date('2025-10-18T09:00:00+05:30').getTime()
+  const targetDate = new Date('2026-10-18T09:00:00+05:30').getTime()
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 
   useEffect(() => {
@@ -3747,8 +3757,8 @@ function CountdownTimer() {
             <Timer className="h-3 w-3 mr-1" />
             Save the Date
           </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-white">UP ISHACON 2025</h2>
-          <p className="text-white/80 mt-2">October 18-20, 2025 • Lucknow, Uttar Pradesh</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white">UP ISHACON 2026</h2>
+          <p className="text-white/80 mt-2">October 18-20, 2026 • Lucknow, Uttar Pradesh</p>
         </div>
         <div className="grid grid-cols-4 gap-3 md:gap-6 max-w-xl mx-auto">
           {units.map((unit) => (
@@ -4041,7 +4051,7 @@ function SocialProofNotification() {
     { icon: Users, text: 'Dr. Priya from Lucknow just joined UP ISHA', emoji: '🎉' },
     { icon: Calendar, text: '3 new events added this week', emoji: '📅' },
     { icon: UserPlus, text: '12 professionals registered this month', emoji: '👥' },
-    { icon: Sparkles, text: 'UP ISHACON 2025 registration is now open!', emoji: '🏆' },
+    { icon: Sparkles, text: 'UP ISHACON 2026 registration is now open!', emoji: '🏆' },
   ]
 
   useEffect(() => {
@@ -4466,7 +4476,7 @@ function TestimonialsSection() {
 
 /* ─── Event Calendar Mini-View ─── */
 function parseEventDates(dateStr: string): { year: number; month: number; days: number[] }[] {
-  // Parse formats like '18-20 Oct 2025', '25 Mar 2025', '03 Mar 2025'
+  // Parse formats like '18-20 Oct 2026', '25 Mar 2026', '03 Mar 2026'
   const results: { year: number; month: number; days: number[] }[] = []
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -4701,7 +4711,7 @@ function EventsTimelineSection() {
     const endOfWeek = new Date(startOfWeek)
     endOfWeek.setDate(startOfWeek.getDate() + 7)
 
-    // Parse date strings like '18-20 Oct 2025', '25 Mar 2025', '03 Mar 2025'
+    // Parse date strings like '18-20 Oct 2026', '25 Mar 2026', '03 Mar 2026'
     const parts = dateStr.match(/(\d{1,2})(?:-\d{1,2})?\s+([A-Za-z]+)\s+(\d{4})/)
     if (!parts) return false
     const day = parseInt(parts[1], 10)
