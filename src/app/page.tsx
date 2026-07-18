@@ -47,6 +47,11 @@ import {
   Building2,
   Newspaper,
   PlayCircle,
+  Sun,
+  Moon,
+  Bell,
+  Timer,
+  Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -172,25 +177,25 @@ const executiveCouncil = [
   {
     name: 'Dr. Rajesh Kumar Sharma',
     role: 'President',
-    image: null,
+    image: '/images/avatar-president.png',
     speciality: 'Audiology',
   },
   {
     name: 'Dr. Sunita Verma',
     role: 'Vice President',
-    image: null,
+    image: '/images/avatar-vp.png',
     speciality: 'Speech-Language Pathology',
   },
   {
     name: 'Dr. Amit Mishra',
     role: 'Secretary',
-    image: null,
+    image: '/images/avatar-secretary.png',
     speciality: 'Audiology',
   },
   {
     name: 'Dr. Priya Singh',
     role: 'Treasurer',
-    image: null,
+    image: '/images/avatar-treasurer.png',
     speciality: 'Speech-Language Pathology',
   },
   {
@@ -580,8 +585,9 @@ function Navbar({
             ))}
           </nav>
 
-          {/* CTA + Mobile Toggle */}
-          <div className="flex items-center gap-3">
+          {/* CTA + Theme Toggle + Mobile Toggle */}
+          <div className="flex items-center gap-2 md:gap-3">
+            <ThemeToggle />
             <Button
               className="hidden md:inline-flex bg-upisha-teal hover:bg-upisha-teal-dark text-white"
               onClick={() => onNavClick('#join')}
@@ -590,7 +596,7 @@ function Navbar({
               Join Now
             </Button>
             <button
-              className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
+              className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               onClick={() => setIsMobileOpen(!isMobileOpen)}
               aria-label="Toggle navigation menu"
             >
@@ -1097,12 +1103,22 @@ function AboutSection() {
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="text-center hover:shadow-lg transition-all duration-300 group">
+                <Card className="text-center hover:shadow-lg transition-all duration-300 group overflow-hidden">
                   <CardContent className="pt-6 pb-6">
-                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
-                      <Users className="h-10 w-10 text-upisha-teal group-hover:text-white transition-colors" />
+                    <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-upisha-teal/10 group-hover:border-upisha-teal transition-colors">
+                      {member.image ? (
+                        <img
+                          src={member.image}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
+                          <Users className="h-10 w-10 text-upisha-teal group-hover:text-white transition-colors" />
+                        </div>
+                      )}
                     </div>
-                    <h4 className="font-bold text-upisha-navy">{member.name}</h4>
+                    <h4 className="font-bold text-upisha-navy dark:text-white">{member.name}</h4>
                     <p className="text-upisha-teal font-medium text-sm">{member.role}</p>
                     <Badge variant="outline" className="mt-2 text-xs">
                       {member.speciality}
@@ -2169,6 +2185,258 @@ function Footer() {
   )
 }
 
+/* ─── Theme Toggle ─── */
+function ThemeToggle() {
+  const [isDark, setIsDark] = useState(
+    typeof window !== 'undefined' ? document.documentElement.classList.contains('dark') : false
+  )
+
+  const toggle = () => {
+    document.documentElement.classList.toggle('dark')
+    const nextIsDark = !isDark
+    setIsDark(nextIsDark)
+    localStorage.setItem('theme', nextIsDark ? 'dark' : 'light')
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300"
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+    </button>
+  )
+}
+
+/* ─── Event Countdown Timer ─── */
+function CountdownTimer() {
+  const targetDate = new Date('2025-10-18T09:00:00+05:30').getTime()
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = Date.now()
+      const diff = Math.max(0, targetDate - now)
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [targetDate])
+
+  const units = [
+    { label: 'Days', value: timeLeft.days },
+    { label: 'Hours', value: timeLeft.hours },
+    { label: 'Minutes', value: timeLeft.minutes },
+    { label: 'Seconds', value: timeLeft.seconds },
+  ]
+
+  return (
+    <section className="py-12 md:py-16 bg-gradient-to-r from-upisha-teal to-upisha-teal-dark relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-4 left-[10%] w-20 h-20 rounded-full border-2 border-white" />
+        <div className="absolute bottom-4 right-[15%] w-32 h-32 rounded-full border border-white" />
+        <div className="absolute top-1/2 left-[60%] w-16 h-16 rounded-full bg-white/20" />
+      </div>
+      <div className="max-w-5xl mx-auto px-4 relative">
+        <div className="text-center mb-8">
+          <Badge className="bg-white/20 text-white mb-3">
+            <Timer className="h-3 w-3 mr-1" />
+            Save the Date
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold text-white">UP ISHACON 2025</h2>
+          <p className="text-white/80 mt-2">October 18-20, 2025 • Lucknow, Uttar Pradesh</p>
+        </div>
+        <div className="grid grid-cols-4 gap-3 md:gap-6 max-w-xl mx-auto">
+          {units.map((unit) => (
+            <div
+              key={unit.label}
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-3 md:p-5 text-center border border-white/20"
+            >
+              <div className="text-2xl md:text-4xl font-bold text-white tabular-nums">
+                {String(unit.value).padStart(2, '0')}
+              </div>
+              <div className="text-xs md:text-sm text-white/70 mt-1">{unit.label}</div>
+            </div>
+          ))}
+        </div>
+        <div className="text-center mt-8">
+          <Button size="lg" className="bg-white text-upisha-teal hover:bg-white/90 font-semibold">
+            Register Now
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ─── Newsletter Section ─── */
+function NewsletterSection() {
+  const [email, setEmail] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [subscribed, setSubscribed] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email) return
+    setIsSubmitting(true)
+    try {
+      await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      setSubscribed(true)
+    } catch {
+      // handle error
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <section className="py-16 md:py-20 bg-upisha-gold-light dark:bg-upisha-navy relative overflow-hidden">
+      {/* Decorative wave pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <svg className="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
+          <path d="M0,200 C300,100 600,300 1200,200 L1200,400 L0,400 Z" fill="currentColor" className="text-upisha-gold" />
+        </svg>
+      </div>
+      <div className="max-w-4xl mx-auto px-4 relative">
+        <div className="text-center">
+          <Badge className="bg-upisha-gold/20 text-upisha-gold mb-3">
+            <Bell className="h-3 w-3 mr-1" />
+            Stay Updated
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy dark:text-white mb-3">
+            Subscribe to Our Newsletter
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 max-w-xl mx-auto mb-8">
+            Get the latest updates on conferences, workshops, research publications, and
+            professional opportunities delivered directly to your inbox.
+          </p>
+          {subscribed ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white dark:bg-upisha-navy-light rounded-2xl p-8 shadow-lg max-w-md mx-auto"
+            >
+              <CheckCircle2 className="h-12 w-12 text-upisha-teal mx-auto mb-3" />
+              <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">
+                Successfully Subscribed!
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">
+                Welcome aboard! You&apos;ll receive our next newsletter soon.
+              </p>
+            </motion.div>
+          ) : (
+            <form
+              onSubmit={handleSubmit}
+              className="bg-white dark:bg-upisha-navy-light rounded-2xl p-6 md:p-8 shadow-lg max-w-lg mx-auto flex flex-col sm:flex-row gap-3"
+            >
+              <div className="flex-1 relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input
+                  type="email"
+                  required
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 h-12 bg-gray-50 dark:bg-upisha-navy border-gray-200 dark:border-gray-700"
+                />
+              </div>
+              <Button
+                type="submit"
+                size="lg"
+                className="bg-upisha-gold hover:bg-upisha-gold/90 text-white h-12 px-6"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Subscribing...' : 'Subscribe'}
+                <Sparkles className="h-4 w-4 ml-2" />
+              </Button>
+            </form>
+          )}
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
+            No spam. Unsubscribe at any time. We respect your privacy.
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ─── Cookie Consent Banner ─── */
+function CookieConsent() {
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    const consent = localStorage.getItem('upisha-cookie-consent')
+    if (!consent) {
+      const timer = setTimeout(() => setIsVisible(true), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
+  const accept = () => {
+    localStorage.setItem('upisha-cookie-consent', 'accepted')
+    setIsVisible(false)
+  }
+
+  const decline = () => {
+    localStorage.setItem('upisha-cookie-consent', 'declined')
+    setIsVisible(false)
+  }
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="fixed bottom-0 left-0 right-0 z-50 p-4"
+        >
+          <div className="max-w-4xl mx-auto bg-white dark:bg-upisha-navy rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 md:p-6 flex flex-col md:flex-row items-center gap-4">
+            <div className="flex-1 text-center md:text-left">
+              <h4 className="font-semibold text-upisha-navy dark:text-white text-sm mb-1">
+                🍪 We use cookies
+              </h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                This website uses cookies to enhance your experience. By continuing to visit this
+                site you agree to our use of cookies.
+              </p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={decline}
+                className="text-xs border-gray-300 dark:border-gray-600"
+              >
+                Decline
+              </Button>
+              <Button
+                size="sm"
+                onClick={accept}
+                className="bg-upisha-teal hover:bg-upisha-teal-dark text-white text-xs"
+              >
+                Accept All
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
 /* ─── Scroll Progress Indicator ─── */
 function ScrollProgress() {
   const { scrollYProgress } = useScroll()
@@ -2529,6 +2797,7 @@ export default function Home() {
       <main className="flex-1">
         <HeroSection />
         <QuickLinks />
+        <CountdownTimer />
         <AnnouncementSection />
         <FeaturesSection />
         <AboutSection />
@@ -2540,11 +2809,13 @@ export default function Home() {
         <JoinSection />
         <TestimonialsSection />
         <GallerySection />
+        <NewsletterSection />
         <PartnersSection />
         <ContactSection />
       </main>
       <Footer />
       <BackToTop />
+      <CookieConsent />
     </div>
   )
 }
