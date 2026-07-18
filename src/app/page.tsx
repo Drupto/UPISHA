@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence, useInView, useScroll, useSpring } from 'framer-motion'
+import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
 import {
   Menu,
   X,
@@ -65,6 +65,7 @@ import {
   PhoneCall,
   Building,
   Mailbox,
+  Zap,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
@@ -709,6 +710,20 @@ function AnimatedSection({
   )
 }
 
+/* ─── Wave Divider ─── */
+function WaveDivider({ color, flip = false }: { color: string; flip?: boolean }) {
+  return (
+    <div className="wave-divider" style={{ transform: flip ? 'scaleY(-1)' : undefined }}>
+      <svg viewBox="0 0 1200 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M0,20 C150,40 350,0 600,20 C850,40 1050,0 1200,20 L1200,40 L0,40 Z"
+          fill={color}
+        />
+      </svg>
+    </div>
+  )
+}
+
 /* ─── Reusable Section Heading ─── */
 function SectionHeading({
   badge,
@@ -731,25 +746,43 @@ function SectionHeading({
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className={`inline-flex items-center gap-1.5 ${
+        className={`inline-flex items-center gap-1.5 badge-float ${
           light ? 'bg-white/10 text-white' : 'bg-upisha-teal/10 text-upisha-teal'
-        } px-3 py-1.5 rounded-full text-xs font-semibold mb-3`}
+        } px-3 py-1.5 rounded-full text-xs font-semibold mb-4`}
       >
         {BadgeIcon && <BadgeIcon className="h-3.5 w-3.5" />}
         {badge}
       </motion.div>
-      <motion.h2
-        initial={{ opacity: 0, y: 15 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.1 }}
-        className={`text-3xl md:text-4xl font-extrabold tracking-tight mb-3 ${light ? 'text-white' : 'text-upisha-navy dark:text-white'}`}
-      >
-        {title}
-      </motion.h2>
-      <div
-        className={`h-1 w-16 bg-upisha-gold rounded-full mb-4 ${align === 'center' ? 'mx-auto' : ''}`}
-      />
+      <div className={`flex items-center gap-3 ${align === 'center' ? 'justify-center' : ''}`}>
+        {align === 'center' && (
+          <motion.div
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.15, duration: 0.4 }}
+            className={`heading-decorative-left shrink-0 ${light ? 'opacity-30' : ''}`}
+          />
+        )}
+        <motion.h2
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className={`text-3xl md:text-4xl font-extrabold tracking-tight ${light ? 'text-white' : 'text-upisha-navy dark:text-white'}`}
+        >
+          {title}
+        </motion.h2>
+        {align === 'center' && (
+          <motion.div
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.15, duration: 0.4 }}
+            className={`heading-decorative-right shrink-0 ${light ? 'opacity-30' : ''}`}
+          />
+        )}
+      </div>
+      <div className={`shimmer-line w-20 mx-auto mt-3 mb-4`} style={{ marginLeft: align === 'center' ? 'auto' : undefined, marginRight: align === 'center' ? 'auto' : undefined }} />
       {subtitle && (
         <p
           className={`max-w-2xl ${
@@ -1001,6 +1034,11 @@ function Navbar({
 function HeroSection() {
   const [current, setCurrent] = useState(0)
   const { toast } = useToast()
+  const heroRef = useRef<HTMLElement>(null)
+  const { scrollY } = useScroll()
+
+  // Parallax-like scroll effect
+  const heroTranslateY = useTransform(scrollY, [0, 700], [0, 80])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -1014,7 +1052,9 @@ function HeroSection() {
   const goNext = () => setCurrent((prev) => (prev + 1) % heroSlides.length)
 
   return (
-    <section id="home" className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+    <section id="home" ref={heroRef} className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+      {/* Parallax container */}
+      <motion.div style={{ y: heroTranslateY }} className="absolute inset-0">
       {/* Decorative geometric shapes */}
       <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
         <div className="absolute top-[15%] right-[10%] w-20 h-20 md:w-32 md:h-32 border-2 border-white/10 rounded-full" />
@@ -1024,6 +1064,21 @@ function HeroSection() {
         <div className="absolute bottom-[35%] right-[15%] w-4 h-4 border border-white/15 rotate-45" />
         <div className="absolute top-[60%] left-[15%] w-6 h-6 border border-upisha-teal/20 rounded-full" />
       </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 z-[3] pointer-events-none overflow-hidden">
+        <div className="absolute bottom-[-20px] left-[8%] w-2 h-2 bg-upisha-gold/25 rounded-full floating-particle" style={{ '--particle-duration': '10s', '--particle-delay': '0s' } as React.CSSProperties} />
+        <div className="absolute bottom-[-20px] left-[22%] w-3 h-3 bg-upisha-teal/20 rounded-full floating-particle" style={{ '--particle-duration': '12s', '--particle-delay': '1.5s' } as React.CSSProperties} />
+        <div className="absolute bottom-[-20px] left-[40%] w-1.5 h-1.5 bg-white/20 rounded-full floating-particle" style={{ '--particle-duration': '9s', '--particle-delay': '3s' } as React.CSSProperties} />
+        <div className="absolute bottom-[-20px] left-[55%] w-2.5 h-2.5 bg-upisha-gold/15 rounded-full floating-particle" style={{ '--particle-duration': '11s', '--particle-delay': '2s' } as React.CSSProperties} />
+        <div className="absolute bottom-[-20px] left-[70%] w-2 h-2 bg-upisha-teal/15 rounded-full floating-particle" style={{ '--particle-duration': '13s', '--particle-delay': '4s' } as React.CSSProperties} />
+        <div className="absolute bottom-[-20px] left-[85%] w-1.5 h-1.5 bg-upisha-gold/20 rounded-full floating-particle" style={{ '--particle-duration': '8s', '--particle-delay': '0.5s' } as React.CSSProperties} />
+        <div className="absolute bottom-[-20px] left-[15%] w-3.5 h-3.5 bg-white/10 rounded-full floating-particle" style={{ '--particle-duration': '14s', '--particle-delay': '5s' } as React.CSSProperties} />
+        <div className="absolute bottom-[-20px] left-[48%] w-2 h-2 bg-upisha-teal/10 rounded-full floating-particle" style={{ '--particle-duration': '10s', '--particle-delay': '6s' } as React.CSSProperties} />
+        <div className="absolute bottom-[-20px] left-[62%] w-1 h-1 bg-upisha-gold/30 rounded-full floating-particle" style={{ '--particle-duration': '7s', '--particle-delay': '1s' } as React.CSSProperties} />
+        <div className="absolute bottom-[-20px] left-[35%] w-2.5 h-2.5 bg-white/8 rounded-full floating-particle" style={{ '--particle-duration': '15s', '--particle-delay': '7s' } as React.CSSProperties} />
+      </div>
+
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
@@ -1037,11 +1092,16 @@ function HeroSection() {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${heroSlides[current].image})` }}
           />
-          {/* Deeper gradient for stronger text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-r from-upisha-navy/95 via-upisha-navy/80 to-upisha-navy/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-upisha-navy/80 via-upisha-navy/20 to-upisha-navy/30" />
+          {/* More dramatic diagonal gradient overlays */}
+          <div className="absolute inset-0 bg-gradient-to-br from-upisha-navy/95 via-upisha-navy/75 to-upisha-teal/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-upisha-navy/90 via-transparent to-upisha-navy/40" />
+          {/* Diagonal accent gradient sweep */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-upisha-teal/20 via-transparent to-upisha-gold/10" />
+          {/* Teal-to-gold accent gradient at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-upisha-teal/40 via-upisha-gold/15 to-transparent" />
         </motion.div>
       </AnimatePresence>
+      </motion.div>{/* end parallax container */}
 
       {/* Content */}
       <div className="relative z-10 h-full flex items-center">
@@ -1064,17 +1124,17 @@ function HeroSection() {
                 <Star className="h-3 w-3 fill-upisha-gold text-upisha-gold" />
                 Serving Since 2005
               </motion.div>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-5 leading-[1.1] drop-shadow-2xl">
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-5 leading-[1.1] text-shadow-hero">
                 {heroSlides[current].title}
               </h1>
               <div className="h-1 w-24 bg-gradient-to-r from-upisha-gold to-upisha-teal rounded-full mb-6" />
-              <p className="text-base md:text-xl text-gray-100 mb-8 leading-relaxed max-w-xl drop-shadow-md">
+              <p className="text-base md:text-xl text-gray-100 mb-8 leading-relaxed max-w-xl drop-shadow-md typewriter-cursor">
                 {heroSlides[current].subtitle}
               </p>
-              <div className="flex flex-wrap gap-3 md:gap-4">
+              <div className="flex flex-wrap items-center gap-3 md:gap-4">
                 <Button
                   size="lg"
-                  className="bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-xl hover:shadow-2xl transition-all glow-teal"
+                  className="bg-upisha-gold hover:bg-upisha-gold/90 text-white shadow-xl hover:shadow-2xl transition-all glow-gold text-base px-8 h-12"
                   onClick={() =>
                     document
                       .getElementById(heroSlides[current].ctaLink.slice(1))
@@ -1082,22 +1142,20 @@ function HeroSection() {
                   }
                 >
                   {heroSlides[current].cta}
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                  <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
                 <Button
-                  size="lg"
+                  size="default"
                   variant="outline"
-                  className="border-white/60 text-white hover:bg-white/15 hover:border-white/80 backdrop-blur-sm bg-white/5"
+                  className="border-white/50 text-white/90 hover:bg-white/15 hover:border-white/70 backdrop-blur-sm bg-white/5 h-10 px-5"
                   onClick={() =>
                     document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
                   }
                 >
                   Learn More
                 </Button>
-                <Button
-                  size="lg"
-                  variant="ghost"
-                  className="text-white/85 hover:text-white hover:bg-white/10"
+                <button
+                  className="w-9 h-9 rounded-full border border-white/30 text-white/70 hover:text-white hover:bg-white/15 hover:border-white/50 flex items-center justify-center transition-all backdrop-blur-sm"
                   onClick={() => {
                     if (navigator.share) {
                       navigator.share({
@@ -1110,10 +1168,10 @@ function HeroSection() {
                       toast({ title: 'Link copied!', description: 'UP ISHA link has been copied to clipboard.' })
                     }
                   }}
+                  aria-label="Share this page"
                 >
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
+                  <Share2 className="h-4 w-4" />
+                </button>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -1220,7 +1278,7 @@ function QuickLinks() {
 /* ─── Announcement Section ─── */
 function AnnouncementSection() {
   return (
-    <section className="py-16 md:py-20 bg-white dark:bg-gray-900 border-t-2 border-t-upisha-teal/10">
+    <section className="py-16 md:py-20 bg-white dark:bg-gray-900 border-t-2 border-t-upisha-teal/10 section-pattern">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Announcements */}
@@ -1326,7 +1384,7 @@ function AnnouncementSection() {
 /* ─── Features Section ─── */
 function FeaturesSection() {
   return (
-    <section className="py-16 md:py-20 bg-upisha-teal-light dark:bg-upisha-teal/10 border-t-2 border-t-upisha-gold/10">
+    <section className="py-16 md:py-20 bg-upisha-teal-light dark:bg-upisha-teal/10 border-t-2 border-t-upisha-gold/10 section-pattern">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">What We Offer</Badge>
@@ -1347,7 +1405,7 @@ function FeaturesSection() {
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
+              <Card className="h-full border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
                 <CardContent className="p-6 text-center">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/20 rounded-2xl flex items-center justify-center group-hover:bg-upisha-teal group-hover:text-white transition-all duration-300">
                     <feature.icon className="h-8 w-8 text-upisha-teal group-hover:text-white transition-colors" />
@@ -1373,7 +1431,7 @@ function FeaturesSection() {
 /* ─── About Section ─── */
 function AboutSection() {
   return (
-    <AnimatedSection id="about" className="py-16 md:py-20 bg-white dark:bg-gray-900">
+    <AnimatedSection id="about" className="py-16 md:py-20 bg-white dark:bg-gray-900 section-pattern">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Image */}
@@ -1509,7 +1567,7 @@ function AboutSection() {
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="text-center hover:shadow-lg transition-all duration-300 group overflow-hidden dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-lift">
+                <Card className="text-center hover:shadow-lg transition-all duration-300 group overflow-hidden dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border card-lift">
                   <CardContent className="pt-6 pb-6">
                     <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-upisha-teal/10 group-hover:border-upisha-teal transition-colors shadow-sm">
                       {member.image ? (
@@ -1520,8 +1578,8 @@ function AboutSection() {
                           loading="lazy"
                         />
                       ) : (
-                        <div className="w-full h-full bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
-                          <Users className="h-10 w-10 text-upisha-teal group-hover:text-white transition-colors" />
+                        <div className="w-full h-full gradient-avatar text-2xl">
+                          {member.name.split(' ').filter(w => w.length > 1).slice(-2).map(w => w[0]).join('')}
                         </div>
                       )}
                     </div>
@@ -1568,7 +1626,7 @@ function DocumentsSection() {
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full hover:shadow-lg transition-all duration-300 group border-l-4 border-l-upisha-teal dark:bg-gray-900 dark:border-gray-700 dark:border-l-upisha-teal card-gradient-top shadow-sm hover:shadow-md">
+              <Card className="h-full hover:shadow-lg transition-all duration-300 group border-l-4 border-l-upisha-teal dark:bg-gray-900 dark:border-gray-700 dark:border-l-upisha-teal card-gradient-top card-gradient-border shadow-sm hover:shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 shrink-0 rounded-lg bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/20 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
@@ -1647,7 +1705,7 @@ function PublicationsSection() {
           </TabsList>
           <TabsContent value="journal" className="mt-8">
             <div className="grid md:grid-cols-2 gap-8">
-              <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
+              <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <BookOpen className="h-8 w-8 text-upisha-teal" />
@@ -1723,7 +1781,7 @@ function PublicationsSection() {
             </div>
           </TabsContent>
           <TabsContent value="monograph" className="mt-8">
-            <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
+            <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <FileText className="h-8 w-8 text-upisha-teal" />
@@ -1757,7 +1815,7 @@ function PublicationsSection() {
             </Card>
           </TabsContent>
           <TabsContent value="research" className="mt-8">
-            <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
+            <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <GraduationCap className="h-8 w-8 text-upisha-teal" />
@@ -1874,7 +1932,7 @@ function ProfessionalsSection() {
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all duration-300 group hover:-translate-y-1 card-gradient-top">
+              <Card className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all duration-300 group hover:-translate-y-1 card-gradient-top card-gradient-border">
                 <CardContent className="p-6 text-center">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-upisha-teal/20 to-upisha-gold/20 rounded-2xl flex items-center justify-center group-hover:bg-upisha-teal group-hover:rotate-6 transition-all">
                     <cat.icon className="h-8 w-8 text-upisha-teal group-hover:text-white transition-colors" />
@@ -2150,9 +2208,35 @@ function JoinSection() {
     city: '',
     message: '',
   })
+  const [joinTouched, setJoinTouched] = useState<Record<string, boolean>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [showRestored, setShowRestored] = useState(false)
+
+  // Validation helpers for join form
+  const joinErrors: Record<string, string> = {}
+  if (joinTouched.fullName && formData.fullName.trim().length < 2) joinErrors.fullName = 'Name must be at least 2 characters'
+  if (joinTouched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) joinErrors.email = 'Please enter a valid email address'
+  if (joinTouched.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) joinErrors.phone = 'Please enter a valid 10-digit phone number'
+  if (joinTouched.city && formData.city.trim().length === 0) joinErrors.city = 'City is required'
+  if (joinTouched.membershipType && !formData.membershipType) joinErrors.membershipType = 'Please select a membership type'
+
+  const joinValid: Record<string, boolean> = {
+    fullName: formData.fullName.trim().length >= 2,
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email),
+    phone: /^\d{10}$/.test(formData.phone.replace(/\D/g, '')),
+    city: formData.city.trim().length > 0,
+    membershipType: !!formData.membershipType,
+  }
+
+  const joinFieldClass = (field: string) => {
+    const touched = joinTouched[field]
+    const error = joinErrors[field]
+    const valid = joinValid[field]
+    if (touched && error) return 'border-red-400 dark:border-red-500 focus-visible:border-red-500'
+    if (touched && valid) return 'border-green-400 dark:border-green-500 focus-visible:border-green-500'
+    return 'input-focus-ring'
+  }
 
   // Auto-save form data to localStorage
   useEffect(() => {
@@ -2254,7 +2338,7 @@ function JoinSection() {
               viewport={{ once: true }}
             >
               <Card
-                className={`h-full relative card-gradient-top card-lift ${
+                className={`h-full relative card-gradient-top card-gradient-border card-lift ${
                   plan.popular
                     ? 'border-upisha-teal shadow-lg md:scale-[1.03] dark:bg-gray-800'
                     : 'border-gray-200 dark:bg-gray-800 dark:border-gray-700'
@@ -2381,28 +2465,40 @@ function JoinSection() {
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Full Name *
                       </label>
-                      <Input
-                        required
-                        placeholder="Dr. Your Name"
-                        value={formData.fullName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, fullName: e.target.value })
-                        }
-                        className="input-focus-ring"
-                      />
+                      <div className="relative">
+                        <Input
+                          required
+                          placeholder="Dr. Your Name"
+                          value={formData.fullName}
+                          onChange={(e) =>
+                            setFormData({ ...formData, fullName: e.target.value })
+                          }
+                          onBlur={() => setJoinTouched((prev) => ({ ...prev, fullName: true }))}
+                          className={joinFieldClass('fullName')}
+                        />
+                        {joinTouched.fullName && joinValid.fullName && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
+                        {joinTouched.fullName && joinErrors.fullName && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                      </div>
+                      {joinTouched.fullName && joinErrors.fullName && <p className="text-xs text-red-500 mt-1">{joinErrors.fullName}</p>}
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Email *
                       </label>
-                      <Input
-                        required
-                        type="email"
-                        placeholder="you@example.com"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="input-focus-ring"
-                      />
+                      <div className="relative">
+                        <Input
+                          required
+                          type="email"
+                          placeholder="you@example.com"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          onBlur={() => setJoinTouched((prev) => ({ ...prev, email: true }))}
+                          className={joinFieldClass('email')}
+                        />
+                        {joinTouched.email && joinValid.email && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
+                        {joinTouched.email && joinErrors.email && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                      </div>
+                      {joinTouched.email && joinErrors.email && <p className="text-xs text-red-500 mt-1">{joinErrors.email}</p>}
                     </div>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-5">
@@ -2410,26 +2506,38 @@ function JoinSection() {
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Phone *
                       </label>
-                      <Input
-                        required
-                        type="tel"
-                        placeholder="+91-XXXXXXXXXX"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="input-focus-ring"
-                      />
+                      <div className="relative">
+                        <Input
+                          required
+                          type="tel"
+                          placeholder="+91-XXXXXXXXXX"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          onBlur={() => setJoinTouched((prev) => ({ ...prev, phone: true }))}
+                          className={joinFieldClass('phone')}
+                        />
+                        {joinTouched.phone && joinValid.phone && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
+                        {joinTouched.phone && joinErrors.phone && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                      </div>
+                      {joinTouched.phone && joinErrors.phone && <p className="text-xs text-red-500 mt-1">{joinErrors.phone}</p>}
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         City *
                       </label>
-                      <Input
-                        required
-                        placeholder="Lucknow"
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        className="input-focus-ring"
-                      />
+                      <div className="relative">
+                        <Input
+                          required
+                          placeholder="Lucknow"
+                          value={formData.city}
+                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                          onBlur={() => setJoinTouched((prev) => ({ ...prev, city: true }))}
+                          className={joinFieldClass('city')}
+                        />
+                        {joinTouched.city && joinValid.city && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
+                        {joinTouched.city && joinErrors.city && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                      </div>
+                      {joinTouched.city && joinErrors.city && <p className="text-xs text-red-500 mt-1">{joinErrors.city}</p>}
                     </div>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-5">
@@ -2470,8 +2578,9 @@ function JoinSection() {
                       onValueChange={(value) =>
                         setFormData({ ...formData, membershipType: value })
                       }
+                      onOpenChange={() => setJoinTouched((prev) => ({ ...prev, membershipType: true }))}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className={`w-full ${joinTouched.membershipType && joinErrors.membershipType ? 'border-red-400' : joinTouched.membershipType && joinValid.membershipType ? 'border-green-400' : ''}`}>
                         <SelectValue placeholder="Select membership type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -2480,7 +2589,8 @@ function JoinSection() {
                         <SelectItem value="student">Student Member - ₹200/year</SelectItem>
                       </SelectContent>
                     </Select>
-                    {formData.membershipType && (
+                    {joinTouched.membershipType && joinErrors.membershipType && <p className="text-xs text-red-500 mt-1">{joinErrors.membershipType}</p>}
+                    {formData.membershipType && !joinErrors.membershipType && (
                       <p className="text-xs text-upisha-teal mt-1.5 flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3" />
                         Selected: {membershipTypes.find(t => t.type.toLowerCase().includes(formData.membershipType))?.type || formData.membershipType}
@@ -2566,7 +2676,7 @@ function JoinSection() {
 
 /* ─── Gallery Section ─── */
 function GallerySection() {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [selectedImage, setSelectedImage] = useState<{ src: string; index: number } | null>(null)
   const [filter, setFilter] = useState('All')
   const [visibleCount, setVisibleCount] = useState(6)
   const { toast } = useToast()
@@ -2574,10 +2684,40 @@ function GallerySection() {
   const categories = ['All', 'Events', 'Workshops', 'Meetings', 'Outreach', 'Training', 'Conferences']
   const filteredImages =
     filter === 'All' ? galleryImages : galleryImages.filter((img) => img.category === filter)
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!selectedImage) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        setSelectedImage((prev) =>
+          prev ? { src: filteredImages[(prev.index - 1 + filteredImages.length) % filteredImages.length].src, index: (prev.index - 1 + filteredImages.length) % filteredImages.length } : null
+        )
+      } else if (e.key === 'ArrowRight') {
+        setSelectedImage((prev) =>
+          prev ? { src: filteredImages[(prev.index + 1) % filteredImages.length].src, index: (prev.index + 1) % filteredImages.length } : null
+        )
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedImage, filteredImages])
+
+  const goToPrev = () => {
+    setSelectedImage((prev) =>
+      prev ? { src: filteredImages[(prev.index - 1 + filteredImages.length) % filteredImages.length].src, index: (prev.index - 1 + filteredImages.length) % filteredImages.length } : null
+    )
+  }
+
+  const goToNext = () => {
+    setSelectedImage((prev) =>
+      prev ? { src: filteredImages[(prev.index + 1) % filteredImages.length].src, index: (prev.index + 1) % filteredImages.length } : null
+    )
+  }
   const visibleImages = filteredImages.slice(0, visibleCount)
 
   return (
-    <AnimatedSection id="gallery" className="py-16 md:py-20 bg-white dark:bg-gray-900">
+    <AnimatedSection id="gallery" className="py-16 md:py-20 bg-white dark:bg-gray-900 section-pattern">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-3">
@@ -2641,38 +2781,42 @@ function GallerySection() {
           </p>
         )}
 
-        {/* Gallery Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {visibleImages.map((img, i) => (
-            <motion.div
-              key={`${img.title}-${i}`}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: Math.min(i * 0.08, 0.4) }}
-              viewport={{ once: true }}
-              className="group cursor-pointer relative overflow-hidden rounded-xl shadow-sm hover:shadow-xl card-lift bg-gray-100 dark:bg-gray-800"
-              onClick={() => setSelectedImage(img.src)}
-            >
-              <div className="aspect-[4/3] overflow-hidden">
-                <img
-                  src={img.src}
-                  alt={img.title}
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 backdrop-blur-[2px]">
-                <div>
-                  <h4 className="text-white font-semibold text-sm">{img.title}</h4>
-                  <Badge className="bg-upisha-gold/90 text-white text-xs mt-1 border-0">{img.category}</Badge>
+        {/* Gallery Grid - Masonry-like layout with varying heights */}
+        <div className="masonry-grid">
+          {visibleImages.map((img, i) => {
+            // Vary aspect ratios for masonry effect
+            const aspectClass = i % 5 === 0 ? 'aspect-[3/4]' : i % 5 === 2 ? 'aspect-[4/3]' : i % 5 === 4 ? 'aspect-square' : 'aspect-[4/3]'
+            return (
+              <motion.div
+                key={`${img.title}-${i}`}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: Math.min(i * 0.08, 0.4) }}
+                viewport={{ once: true }}
+                className="group cursor-pointer relative overflow-hidden rounded-xl shadow-sm hover:shadow-xl tilt-hover bg-gray-100 dark:bg-gray-800"
+                onClick={() => setSelectedImage({ src: img.src, index: i })}
+              >
+                <div className={`${aspectClass} overflow-hidden`}>
+                  <img
+                    src={img.src}
+                    alt={img.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
                 </div>
-              </div>
-              {/* Top-right zoom icon */}
-              <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <Eye className="h-4 w-4 text-white" />
-              </div>
-            </motion.div>
-          ))}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 backdrop-blur-[2px]">
+                  <div>
+                    <h4 className="text-white font-semibold text-sm">{img.title}</h4>
+                    <Badge className="bg-upisha-gold/90 text-white text-xs mt-1 border-0">{img.category}</Badge>
+                  </div>
+                </div>
+                {/* Top-right zoom icon */}
+                <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <Eye className="h-4 w-4 text-white" />
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
 
         {/* Load More / View Full Gallery */}
@@ -2698,18 +2842,62 @@ function GallerySection() {
           )}
         </div>
 
-        {/* Lightbox */}
+        {/* Enhanced Lightbox */}
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-          <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-none">
+          <DialogContent className="max-w-5xl p-0 overflow-hidden bg-black border-none">
             <DialogHeader className="sr-only">
               <DialogTitle>Gallery Image</DialogTitle>
+              <DialogDescription>
+                {selectedImage ? `${selectedImage.index + 1} of ${filteredImages.length}` : ''}
+              </DialogDescription>
             </DialogHeader>
             {selectedImage && (
-              <img
-                src={selectedImage}
-                alt="Gallery"
-                className="w-full max-h-[80vh] object-contain"
-              />
+              <div className="relative">
+                {/* Image Counter */}
+                <div className="absolute top-3 right-3 z-10 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full">
+                  {selectedImage.index + 1} of {filteredImages.length}
+                </div>
+
+                {/* Previous Button */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); goToPrev() }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors focus-visible:outline-2 focus-visible:outline-white"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+
+                {/* Next Button */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); goToNext() }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors focus-visible:outline-2 focus-visible:outline-white"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+
+                {/* Image */}
+                <img
+                  src={selectedImage.src}
+                  alt={filteredImages[selectedImage.index]?.title || 'Gallery'}
+                  className="w-full max-h-[75vh] object-contain"
+                />
+
+                {/* Title & Category Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-5">
+                  <h4 className="text-white font-semibold text-lg">
+                    {filteredImages[selectedImage.index]?.title}
+                  </h4>
+                  <Badge className="bg-upisha-gold/90 text-white text-xs mt-1.5 border-0">
+                    {filteredImages[selectedImage.index]?.category}
+                  </Badge>
+                </div>
+
+                {/* Mobile Swipe Hint */}
+                <div className="md:hidden absolute bottom-20 left-1/2 -translate-x-1/2 text-white/50 text-xs animate-pulse pointer-events-none">
+                  ← Swipe to navigate →
+                </div>
+              </div>
             )}
           </DialogContent>
         </Dialog>
@@ -2727,8 +2915,32 @@ function ContactSection() {
     subject: '',
     message: '',
   })
+  const [contactTouched, setContactTouched] = useState<Record<string, boolean>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  // Validation helpers for contact form
+  const contactErrors: Record<string, string> = {}
+  if (contactTouched.name && contactForm.name.trim().length < 2) contactErrors.name = 'Name must be at least 2 characters'
+  if (contactTouched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.email)) contactErrors.email = 'Please enter a valid email address'
+  if (contactTouched.subject && contactForm.subject.trim().length < 5) contactErrors.subject = 'Subject must be at least 5 characters'
+  if (contactTouched.message && contactForm.message.trim().length < 10) contactErrors.message = 'Message must be at least 10 characters'
+
+  const contactValid: Record<string, boolean> = {
+    name: contactForm.name.trim().length >= 2,
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.email),
+    subject: contactForm.subject.trim().length >= 5,
+    message: contactForm.message.trim().length >= 10,
+  }
+
+  const contactFieldClass = (field: string) => {
+    const touched = contactTouched[field]
+    const error = contactErrors[field]
+    const valid = contactValid[field]
+    if (touched && error) return 'border-red-400 dark:border-red-500 focus-visible:border-red-500'
+    if (touched && valid) return 'border-green-400 dark:border-green-500 focus-visible:border-green-500'
+    return 'input-focus-ring'
+  }
 
   // Auto-save contact form
   useEffect(() => {
@@ -2918,56 +3130,80 @@ function ContactSection() {
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                           Name *
                         </label>
-                        <Input
-                          required
-                          placeholder="Your name"
-                          value={contactForm.name}
-                          onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                          className="input-focus-ring"
-                        />
+                        <div className="relative">
+                          <Input
+                            required
+                            placeholder="Your name"
+                            value={contactForm.name}
+                            onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                            onBlur={() => setContactTouched((prev) => ({ ...prev, name: true }))}
+                            className={contactFieldClass('name')}
+                          />
+                          {contactTouched.name && contactValid.name && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
+                          {contactTouched.name && contactErrors.name && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                        </div>
+                        {contactTouched.name && contactErrors.name && <p className="text-xs text-red-500 mt-1">{contactErrors.name}</p>}
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                           Email *
                         </label>
-                        <Input
-                          required
-                          type="email"
-                          placeholder="you@example.com"
-                          value={contactForm.email}
-                          onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                          className="input-focus-ring"
-                        />
+                        <div className="relative">
+                          <Input
+                            required
+                            type="email"
+                            placeholder="you@example.com"
+                            value={contactForm.email}
+                            onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                            onBlur={() => setContactTouched((prev) => ({ ...prev, email: true }))}
+                            className={contactFieldClass('email')}
+                          />
+                          {contactTouched.email && contactValid.email && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
+                          {contactTouched.email && contactErrors.email && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                        </div>
+                        {contactTouched.email && contactErrors.email && <p className="text-xs text-red-500 mt-1">{contactErrors.email}</p>}
                       </div>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Subject *
                       </label>
-                      <Input
-                        required
-                        placeholder="How can we help?"
-                        value={contactForm.subject}
-                        onChange={(e) =>
-                          setContactForm({ ...contactForm, subject: e.target.value })
-                        }
-                        className="input-focus-ring"
-                      />
+                      <div className="relative">
+                        <Input
+                          required
+                          placeholder="How can we help?"
+                          value={contactForm.subject}
+                          onChange={(e) =>
+                            setContactForm({ ...contactForm, subject: e.target.value })
+                          }
+                          onBlur={() => setContactTouched((prev) => ({ ...prev, subject: true }))}
+                          className={contactFieldClass('subject')}
+                        />
+                        {contactTouched.subject && contactValid.subject && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
+                        {contactTouched.subject && contactErrors.subject && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                      </div>
+                      {contactTouched.subject && contactErrors.subject && <p className="text-xs text-red-500 mt-1">{contactErrors.subject}</p>}
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Message *
                       </label>
-                      <Textarea
-                        required
-                        placeholder="Your message..."
-                        value={contactForm.message}
-                        onChange={(e) =>
-                          setContactForm({ ...contactForm, message: e.target.value })
-                        }
-                        rows={5}
-                        className="input-focus-ring resize-none"
-                      />
+                      <div className="relative">
+                        <Textarea
+                          required
+                          placeholder="Your message..."
+                          value={contactForm.message}
+                          onChange={(e) =>
+                            setContactForm({ ...contactForm, message: e.target.value })
+                          }
+                          onBlur={() => setContactTouched((prev) => ({ ...prev, message: true }))}
+                          rows={5}
+                          className={`${contactFieldClass('message')} resize-none`}
+                        />
+                        {contactTouched.message && contactValid.message && <CheckCircle2 className="absolute right-3 top-4 h-4 w-4 text-green-500" />}
+                        {contactTouched.message && contactErrors.message && <AlertCircle className="absolute right-3 top-4 h-4 w-4 text-red-500" />}
+                      </div>
+                      {contactTouched.message && contactErrors.message && <p className="text-xs text-red-500 mt-1">{contactErrors.message}</p>}
                     </div>
                     <Button
                       type="submit"
@@ -2986,6 +3222,45 @@ function ContactSection() {
                         </>
                       )}
                     </Button>
+
+                    {/* Quick Contact Options */}
+                    <div className="space-y-2 pt-2">
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center uppercase tracking-wider font-medium">
+                        Or reach us directly
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <a
+                          href="tel:+915224567890"
+                          className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-upisha-teal/40 hover:bg-upisha-teal/5 dark:hover:bg-upisha-teal/10 transition-all group"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
+                            <PhoneCall className="h-3.5 w-3.5 text-upisha-teal group-hover:text-white transition-colors" />
+                          </div>
+                          <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-upisha-teal transition-colors">Schedule a Call</span>
+                        </a>
+                        <a
+                          href="https://wa.me/915224567890?text=Hello%20UP%20ISHA%2C%20I%20would%20like%20to%20know%20more%20about%20your%20association."
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-green-400/40 hover:bg-green-50 dark:hover:bg-green-900/10 transition-all group"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center group-hover:bg-green-500 transition-colors">
+                            <MessageSquare className="h-3.5 w-3.5 text-green-600 group-hover:text-white transition-colors" />
+                          </div>
+                          <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-green-600 transition-colors">WhatsApp</span>
+                        </a>
+                        <a
+                          href="mailto:info@upisha.org"
+                          className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-upisha-gold/40 hover:bg-upisha-gold/5 dark:hover:bg-upisha-gold/10 transition-all group"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-upisha-gold/10 flex items-center justify-center group-hover:bg-upisha-gold transition-colors">
+                            <Mail className="h-3.5 w-3.5 text-upisha-gold group-hover:text-white transition-colors" />
+                          </div>
+                          <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-upisha-gold transition-colors">Email Us</span>
+                        </a>
+                      </div>
+                    </div>
+
                     <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center">
                       Your data is auto-saved locally as you type.
                     </p>
@@ -3037,97 +3312,178 @@ function ContactSection() {
 
 /* ─── Footer ─── */
 function Footer() {
+  const [footerEmail, setFooterEmail] = useState('')
+  const { toast } = useToast()
+
+  const handleFooterNewsletter = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (footerEmail) {
+      toast({ title: 'Subscribed!', description: 'You have been subscribed to our newsletter.' })
+      setFooterEmail('')
+    }
+  }
+
   return (
-    <footer className="bg-upisha-navy dark:bg-gray-950 text-white border-t-2 border-t-upisha-gold/30">
-      <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Logo & About */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-upisha-teal rounded-lg flex items-center justify-center">
-                <Ear className="h-6 w-6 text-white" />
+    <footer className="bg-upisha-navy dark:bg-gray-950 text-white relative">
+      {/* Gradient accent bar at the very top */}
+      <div className="h-1.5 bg-gradient-to-r from-upisha-teal via-upisha-gold to-upisha-teal" />
+
+      <div className="footer-pattern">
+        <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-8">
+            {/* Logo & About */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-upisha-teal rounded-lg flex items-center justify-center">
+                  <Ear className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <div className="font-bold text-white text-sm">UP ISHA</div>
+                  <div className="text-xs text-gray-400">Speech & Hearing Association</div>
+                </div>
               </div>
-              <div>
-                <div className="font-bold text-white text-sm">UP ISHA</div>
-                <div className="text-xs text-gray-400">Speech & Hearing Association</div>
+              <p className="text-sm text-gray-400 leading-relaxed mb-5">
+                The Uttar Pradesh Speech & Hearing Association is dedicated to advancing audiology and
+                speech-language pathology in Uttar Pradesh, India.
+              </p>
+              {/* Social media icons row */}
+              <div className="flex items-center gap-3">
+                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="Facebook">
+                  <Facebook className="h-4 w-4" />
+                </a>
+                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="Twitter">
+                  <Twitter className="h-4 w-4" />
+                </a>
+                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="Instagram">
+                  <Instagram className="h-4 w-4" />
+                </a>
+                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="LinkedIn">
+                  <Linkedin className="h-4 w-4" />
+                </a>
+                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="YouTube">
+                  <Youtube className="h-4 w-4" />
+                </a>
               </div>
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              The Uttar Pradesh Speech & Hearing Association is dedicated to advancing audiology and
-              speech-language pathology in Uttar Pradesh, India.
-            </p>
-          </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Quick Links</h4>
-            <ul className="space-y-2">
-              {['About Us', 'Documents', 'Publications', 'Professionals'].map((link) => (
-                <li key={link}>
-                  <a
-                    href={`#${link.toLowerCase().replace(/\s/g, '')}`}
-                    className="text-sm text-gray-400 hover:text-upisha-teal transition-colors"
-                  >
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Membership */}
-          <div>
-            <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Membership</h4>
-            <ul className="space-y-2">
-              {['Join UP ISHA', 'Member Benefits', 'Life Membership', 'Student Membership'].map(
-                (link) => (
+            {/* Quick Links */}
+            <div>
+              <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Quick Links</h4>
+              <ul className="space-y-2">
+                {['About Us', 'Documents', 'Publications', 'Professionals'].map((link) => (
                   <li key={link}>
                     <a
-                      href="#join"
-                      className="text-sm text-gray-400 hover:text-upisha-teal transition-colors"
+                      href={`#${link.toLowerCase().replace(/\s/g, '')}`}
+                      className="text-sm text-gray-400 hover:text-upisha-teal transition-colors flex items-center gap-1.5"
                     >
+                      <ChevronRight className="h-3 w-3 text-upisha-teal/50" />
                       {link}
                     </a>
                   </li>
-                )
-              )}
-            </ul>
-          </div>
+                ))}
+              </ul>
+            </div>
 
-          {/* Contact */}
-          <div>
-            <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Contact</h4>
-            <div className="space-y-2 text-sm text-gray-400">
-              <p className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
-                KGMU, Lucknow, UP - 226003
-              </p>
-              <p className="flex items-center gap-2">
-                <Phone className="h-4 w-4 shrink-0" />
-                +91-522-456-7890
-              </p>
-              <p className="flex items-center gap-2">
-                <Mail className="h-4 w-4 shrink-0" />
-                info@upisha.org
-              </p>
+            {/* Membership */}
+            <div>
+              <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Membership</h4>
+              <ul className="space-y-2">
+                {['Join UP ISHA', 'Member Benefits', 'Life Membership', 'Student Membership'].map(
+                  (link) => (
+                    <li key={link}>
+                      <a
+                        href="#join"
+                        className="text-sm text-gray-400 hover:text-upisha-teal transition-colors flex items-center gap-1.5"
+                      >
+                        <ChevronRight className="h-3 w-3 text-upisha-teal/50" />
+                        {link}
+                      </a>
+                    </li>
+                  )
+                )}
+              </ul>
+            </div>
+
+            {/* Quick Actions - New 4th column */}
+            <div>
+              <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Quick Actions</h4>
+              <ul className="space-y-2">
+                {[
+                  { label: 'Join Now', href: '#join' },
+                  { label: 'Find Professional', href: '#professionals' },
+                  { label: 'Submit Paper', href: '#publications' },
+                  { label: 'Contact Us', href: '#contact' },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <a
+                      href={item.href}
+                      className="text-sm text-gray-400 hover:text-upisha-teal transition-colors flex items-center gap-1.5"
+                    >
+                      <ArrowRight className="h-3 w-3 text-upisha-gold/60" />
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Newsletter & Contact */}
+            <div>
+              <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Stay Updated</h4>
+              <p className="text-xs text-gray-400 mb-3">Subscribe to our newsletter for the latest updates.</p>
+              <form onSubmit={handleFooterNewsletter} className="flex gap-2 mb-4">
+                <Input
+                  type="email"
+                  placeholder="Your email"
+                  value={footerEmail}
+                  onChange={(e) => setFooterEmail(e.target.value)}
+                  required
+                  className="h-9 text-xs bg-white/10 border-white/10 text-white placeholder:text-gray-500 focus:border-upisha-teal input-focus-ring"
+                />
+                <Button type="submit" size="sm" className="h-9 bg-upisha-teal hover:bg-upisha-teal-dark text-white shrink-0 px-3">
+                  <Send className="h-3.5 w-3.5" />
+                </Button>
+              </form>
+              <div className="space-y-1.5 text-xs text-gray-400">
+                <p className="flex items-start gap-2">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5 text-upisha-teal" />
+                  KGMU, Lucknow, UP - 226003
+                </p>
+                <p className="flex items-center gap-2">
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-upisha-teal" />
+                  +91-522-456-7890
+                </p>
+                <p className="flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 shrink-0 text-upisha-teal" />
+                  info@upisha.org
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <Separator className="my-8 bg-gray-700" />
+          <Separator className="my-8 bg-gray-700" />
 
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} Uttar Pradesh Speech & Hearing Association. All rights
-            reserved.
-          </p>
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <a href="#" className="hover:text-upisha-teal transition-colors">
-              Privacy Policy
-            </a>
-            <a href="#" className="hover:text-upisha-teal transition-colors">
-              Terms of Service
-            </a>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-gray-500">
+              © {new Date().getFullYear()} Uttar Pradesh Speech & Hearing Association. All rights
+              reserved.
+            </p>
+            <div className="flex items-center gap-4 text-sm text-gray-500">
+              <a href="#" className="hover:text-upisha-teal transition-colors">
+                Privacy Policy
+              </a>
+              <a href="#" className="hover:text-upisha-teal transition-colors">
+                Terms of Service
+              </a>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="ml-2 text-upisha-teal hover:text-upisha-gold transition-colors flex items-center gap-1 text-xs font-medium"
+                aria-label="Back to top"
+              >
+                <ChevronUp className="h-3.5 w-3.5" />
+                Back to top
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -3558,7 +3914,15 @@ function CookieConsent() {
     const consent = localStorage.getItem('upisha-cookie-consent')
     if (!consent) {
       const showTimer = setTimeout(() => setIsVisible(true), 1200)
-      return () => clearTimeout(showTimer)
+      // Auto-hide after 15 seconds if not interacted with
+      const autoHideTimer = setTimeout(() => {
+        localStorage.setItem('upisha-cookie-consent', 'auto-dismissed')
+        setIsVisible(false)
+      }, 15000 + 1200) // 15s after it appears
+      return () => {
+        clearTimeout(showTimer)
+        clearTimeout(autoHideTimer)
+      }
     }
   }, [])
 
@@ -3580,34 +3944,34 @@ function CookieConsent() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 24, opacity: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[40] w-[calc(100%-1.5rem)] max-w-[440px]"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[40] w-[calc(100%-2rem)] max-w-[400px] translate-y-0"
           role="dialog"
           aria-label="Cookie consent"
         >
-          <div className="glass rounded-full shadow-lg border border-white/30 dark:border-white/10 px-3 py-2 flex items-center gap-2.5">
+          <div className="glass rounded-xl shadow-lg border border-white/30 dark:border-white/10 px-3.5 py-2.5 flex items-center gap-2.5">
             <div className="w-7 h-7 shrink-0 rounded-full bg-upisha-teal/15 flex items-center justify-center">
               <Shield className="h-3.5 w-3.5 text-upisha-teal" />
             </div>
-            <p className="flex-1 text-[11px] md:text-xs text-gray-700 dark:text-gray-200 leading-tight">
+            <p className="flex-1 text-[11px] text-gray-700 dark:text-gray-200 leading-tight">
               We use cookies to enhance your experience.
             </p>
             <button
               onClick={decline}
-              className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-white/10 transition-colors"
+              className="shrink-0 px-2.5 py-1.5 rounded-full text-[11px] font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-white/10 transition-colors min-h-[32px]"
               aria-label="Decline cookies"
             >
               Decline
             </button>
             <button
               onClick={accept}
-              className="shrink-0 px-3 py-1 rounded-full text-[11px] font-semibold bg-upisha-teal hover:bg-upisha-teal-dark text-white transition-colors shadow-sm"
+              className="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-upisha-teal hover:bg-upisha-teal-dark text-white transition-colors shadow-sm min-h-[32px]"
               aria-label="Accept cookies"
             >
               Accept
             </button>
             <button
               onClick={decline}
-              className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-white/10 transition-colors"
+              className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-white/10 transition-colors"
               aria-label="Dismiss"
             >
               <X className="h-3 w-3" />
@@ -3627,12 +3991,115 @@ function ScrollProgress() {
     damping: 30,
     restDelta: 0.001,
   })
+  const [showPercent, setShowPercent] = useState(false)
+  const scrollPercent = useTransform(scrollYProgress, (v) => Math.round(v * 100))
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>
+    const handleScroll = () => {
+      setShowPercent(true)
+      clearTimeout(timeout)
+      timeout = setTimeout(() => setShowPercent(false), 1500)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      clearTimeout(timeout)
+    }
+  }, [])
 
   return (
-    <motion.div
-      className="fixed top-0 left-0 right-0 h-1 bg-upisha-gold origin-left z-[60]"
-      style={{ scaleX }}
-    />
+    <>
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-1 bg-upisha-gold origin-left z-[60]"
+        style={{ scaleX }}
+      />
+      <AnimatePresence>
+        {showPercent && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-2 right-3 z-[60] bg-upisha-navy/80 dark:bg-white/80 backdrop-blur-sm text-white dark:text-upisha-navy text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums"
+          >
+            <motion.span>{scrollPercent}</motion.span>%
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+
+/* ─── Social Proof Notification ─── */
+function SocialProofNotification() {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isVisible, setIsVisible] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
+
+  const messages = [
+    { icon: Users, text: 'Dr. Priya from Lucknow just joined UP ISHA', emoji: '🎉' },
+    { icon: Calendar, text: '3 new events added this week', emoji: '📅' },
+    { icon: UserPlus, text: '12 professionals registered this month', emoji: '👥' },
+    { icon: Sparkles, text: 'UP ISHACON 2025 registration is now open!', emoji: '🏆' },
+  ]
+
+  useEffect(() => {
+    if (dismissed) return
+    const showInterval = setInterval(() => {
+      setIsVisible(true)
+      setTimeout(() => setIsVisible(false), 5000)
+      setCurrentIndex((prev) => (prev + 1) % messages.length)
+    }, 18000)
+
+    // Show first notification after 6 seconds
+    const initialTimeout = setTimeout(() => {
+      setIsVisible(true)
+      setTimeout(() => setIsVisible(false), 5000)
+    }, 6000)
+
+    return () => {
+      clearInterval(showInterval)
+      clearTimeout(initialTimeout)
+    }
+  }, [dismissed, messages.length])
+
+  if (dismissed) return null
+
+  const msg = messages[currentIndex]
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, y: 40, x: -20 }}
+          animate={{ opacity: 1, y: 0, x: 0 }}
+          exit={{ opacity: 0, y: 20, x: -20 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="fixed bottom-24 left-4 z-40 hidden md:block max-w-[300px]"
+        >
+          <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg border border-gray-200/60 dark:border-gray-700/60 p-3.5 flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-upisha-teal/15 to-upisha-gold/15 flex items-center justify-center shrink-0">
+              <msg.icon className="h-4 w-4 text-upisha-teal" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-upisha-navy dark:text-white leading-relaxed">
+                <span className="mr-1">{msg.emoji}</span>
+                {msg.text}
+              </p>
+              <p className="text-[10px] text-gray-400 mt-1">Just now</p>
+            </div>
+            <button
+              onClick={() => setDismissed(true)}
+              className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Dismiss notification"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -3997,6 +4464,223 @@ function TestimonialsSection() {
   )
 }
 
+/* ─── Event Calendar Mini-View ─── */
+function parseEventDates(dateStr: string): { year: number; month: number; days: number[] }[] {
+  // Parse formats like '18-20 Oct 2025', '25 Mar 2025', '03 Mar 2025'
+  const results: { year: number; month: number; days: number[] }[] = []
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+  // Try matching "DD-DD Mon YYYY" (range)
+  const rangeMatch = dateStr.match(/^(\d{1,2})-(\d{1,2})\s+(\w{3})\s+(\d{4})$/)
+  if (rangeMatch) {
+    const startDay = parseInt(rangeMatch[1])
+    const endDay = parseInt(rangeMatch[2])
+    const monthIdx = monthNames.indexOf(rangeMatch[3])
+    const year = parseInt(rangeMatch[4])
+    if (monthIdx !== -1) {
+      const days: number[] = []
+      for (let d = startDay; d <= endDay; d++) days.push(d)
+      results.push({ year, month: monthIdx, days })
+    }
+    return results
+  }
+
+  // Try matching "DD Mon YYYY"
+  const singleMatch = dateStr.match(/^(\d{1,2})\s+(\w{3})\s+(\d{4})$/)
+  if (singleMatch) {
+    const day = parseInt(singleMatch[1])
+    const monthIdx = monthNames.indexOf(singleMatch[2])
+    const year = parseInt(singleMatch[3])
+    if (monthIdx !== -1) {
+      results.push({ year, month: monthIdx, days: [day] })
+    }
+  }
+
+  return results
+}
+
+function EventCalendar({ onEventClick }: { onEventClick: (event: typeof eventsTimeline[0]) => void }) {
+  const [currentDate, setCurrentDate] = useState(() => new Date())
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null)
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null)
+  const [tooltipEvents, setTooltipEvents] = useState<typeof eventsTimeline>([])
+
+  const year = currentDate.getFullYear()
+  const month = currentDate.getMonth()
+  const today = new Date()
+
+  // Build event map: key = "YYYY-MM-DD" → events[]
+  const eventMap = useMemo(() => {
+    const map: Record<string, typeof eventsTimeline> = {}
+    eventsTimeline.forEach((event) => {
+      const parsed = parseEventDates(event.date)
+      parsed.forEach((p) => {
+        p.days.forEach((day) => {
+          const key = `${p.year}-${String(p.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          if (!map[key]) map[key] = []
+          map[key].push(event)
+        })
+      })
+    })
+    return map
+  }, [])
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const prevMonthDays = new Date(year, month, 0).getDate()
+
+  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1))
+  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1))
+
+  const handleDayHover = (day: number, e: React.MouseEvent) => {
+    const key = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    const events = eventMap[key]
+    if (events && events.length > 0) {
+      setHoveredDay(day)
+      const rect = (e.target as HTMLElement).getBoundingClientRect()
+      const calendarRect = (e.target as HTMLElement).closest('.calendar-container')?.getBoundingClientRect()
+      if (calendarRect) {
+        setTooltipPos({ x: rect.left - calendarRect.left + rect.width / 2, y: rect.top - calendarRect.top })
+      }
+      setTooltipEvents(events)
+    } else {
+      setHoveredDay(null)
+      setTooltipPos(null)
+      setTooltipEvents([])
+    }
+  }
+
+  const handleDayLeave = () => {
+    setHoveredDay(null)
+    setTooltipPos(null)
+    setTooltipEvents([])
+  }
+
+  // Build calendar cells
+  const cells: { day: number; isCurrentMonth: boolean; dateKey: string }[] = []
+  // Previous month padding
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const day = prevMonthDays - i
+    const prevM = month === 0 ? 11 : month - 1
+    const prevY = month === 0 ? year - 1 : year
+    cells.push({ day, isCurrentMonth: false, dateKey: `${prevY}-${String(prevM).padStart(2, '0')}-${String(day).padStart(2, '0')}` })
+  }
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push({ day: d, isCurrentMonth: true, dateKey: `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}` })
+  }
+  // Next month padding
+  const remaining = 42 - cells.length
+  for (let d = 1; d <= remaining; d++) {
+    const nextM = month === 11 ? 0 : month + 1
+    const nextY = month === 11 ? year + 1 : year
+    cells.push({ day: d, isCurrentMonth: false, dateKey: `${nextY}-${String(nextM).padStart(2, '0')}-${String(d).padStart(2, '0')}` })
+  }
+
+  const isToday = (day: number) =>
+    day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
+
+  return (
+    <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
+      <CardContent className="p-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <button
+            onClick={prevMonth}
+            className="w-7 h-7 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+          </button>
+          <h4 className="text-sm font-bold text-upisha-navy dark:text-white">
+            {monthNames[month]} {year}
+          </h4>
+          <button
+            onClick={nextMonth}
+            className="w-7 h-7 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
+            aria-label="Next month"
+          >
+            <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+          </button>
+        </div>
+
+        {/* Day names */}
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {dayNames.map((d) => (
+            <div key={d} className="text-center text-[10px] font-semibold text-gray-400 dark:text-gray-500 py-1">
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar grid */}
+        <div className="calendar-container relative grid grid-cols-7 gap-1">
+          {cells.slice(0, 35).map((cell, i) => {
+            const events = eventMap[cell.dateKey]
+            const hasEvents = cell.isCurrentMonth && events && events.length > 0
+            const todayHighlight = cell.isCurrentMonth && isToday(cell.day)
+
+            return (
+              <button
+                key={i}
+                className={`
+                  relative h-8 md:h-9 rounded-md text-xs font-medium flex items-center justify-center transition-all
+                  ${!cell.isCurrentMonth ? 'text-gray-300 dark:text-gray-600' : ''}
+                  ${todayHighlight ? 'bg-upisha-gold text-white font-bold ring-2 ring-upisha-gold/30' : ''}
+                  ${hasEvents && !todayHighlight ? 'bg-upisha-teal/15 text-upisha-teal font-semibold hover:bg-upisha-teal/25' : ''}
+                  ${!hasEvents && !todayHighlight && cell.isCurrentMonth ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
+                `}
+                onMouseEnter={hasEvents ? (e) => handleDayHover(cell.day, e) : undefined}
+                onMouseLeave={hasEvents ? handleDayLeave : undefined}
+                onClick={hasEvents ? () => onEventClick(events[0]) : undefined}
+                disabled={!hasEvents && !cell.isCurrentMonth}
+                aria-label={hasEvents ? `${events.length} event(s) on ${monthNames[month]} ${cell.day}` : `Day ${cell.day}`}
+              >
+                {cell.day}
+                {hasEvents && (
+                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-upisha-teal" />
+                )}
+              </button>
+            )
+          })}
+
+          {/* Tooltip */}
+          {hoveredDay !== null && tooltipPos && tooltipEvents.length > 0 && (
+            <div
+              className="absolute z-20 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 p-3 min-w-[200px] max-w-[260px] pointer-events-none"
+              style={{ left: Math.min(tooltipPos.x, 200), top: tooltipPos.y - 10, transform: 'translate(-50%, -100%)' }}
+            >
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-white dark:bg-gray-800 border-r border-b border-gray-200 dark:border-gray-600 rotate-45" />
+              {tooltipEvents.map((ev, i) => (
+                <div key={i} className="text-xs">
+                  <p className="font-semibold text-upisha-navy dark:text-white leading-tight">{ev.title}</p>
+                  <p className="text-gray-500 dark:text-gray-400 mt-0.5">{ev.date} • {ev.location}</p>
+                  {i < tooltipEvents.length - 1 && <Separator className="my-1.5" />}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-3 mt-3 text-[10px] text-gray-500 dark:text-gray-400">
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-sm bg-upisha-gold" />
+            Today
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-sm bg-upisha-teal/25" />
+            Event
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 /* ─── Events Timeline Section ─── */
 function EventsTimelineSection() {
   const [selectedEvent, setSelectedEvent] = useState<typeof eventsTimeline[0] | null>(null)
@@ -4006,6 +4690,26 @@ function EventsTimelineSection() {
     Workshop: 'bg-upisha-teal/10 text-upisha-teal border-upisha-teal/30',
     Outreach: 'bg-purple-100 text-purple-700 border-purple-200',
     Webinar: 'bg-blue-100 text-blue-700 border-blue-200',
+  }
+
+  // Check if event is happening today or within the current week
+  const isEventLive = (dateStr: string): boolean => {
+    const now = new Date()
+    const startOfWeek = new Date(now)
+    startOfWeek.setDate(now.getDate() - now.getDay())
+    startOfWeek.setHours(0, 0, 0, 0)
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 7)
+
+    // Parse date strings like '18-20 Oct 2025', '25 Mar 2025', '03 Mar 2025'
+    const parts = dateStr.match(/(\d{1,2})(?:-\d{1,2})?\s+([A-Za-z]+)\s+(\d{4})/)
+    if (!parts) return false
+    const day = parseInt(parts[1], 10)
+    const month = new Date(`${parts[2]} 1, ${parts[3]}`).getMonth()
+    const year = parseInt(parts[3], 10)
+    const eventDate = new Date(year, month, day)
+
+    return eventDate >= startOfWeek && eventDate <= endOfWeek
   }
 
   const handleShareEvent = (event: typeof eventsTimeline[0]) => {
@@ -4023,7 +4727,7 @@ function EventsTimelineSection() {
 
   return (
     <AnimatedSection className="py-16 md:py-20 bg-white dark:bg-gray-900 relative border-t-2 border-t-upisha-gold/10">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4">
         <SectionHeading
           badge="What's Coming Up"
           badgeIcon={Calendar}
@@ -4031,7 +4735,9 @@ function EventsTimelineSection() {
           subtitle="Stay informed about our upcoming conferences, workshops, webinars, and community outreach programs across Uttar Pradesh."
         />
 
-        <div className="relative">
+        <div className="grid lg:grid-cols-[1fr_300px] gap-8">
+          {/* Timeline - main content */}
+          <div className="relative">
           {/* Vertical line */}
           <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-upisha-teal via-upisha-gold to-upisha-teal opacity-30 md:-translate-x-1/2" />
 
@@ -4054,7 +4760,7 @@ function EventsTimelineSection() {
 
                 {/* Content card */}
                 <div className={`flex-1 ml-12 md:ml-0 ${i % 2 === 0 ? 'md:pr-12' : 'md:pl-12'}`}>
-                  <Card className="hover:shadow-lg transition-all duration-300 group hover:border-upisha-teal/40 dark:bg-gray-800 dark:border-gray-700 shadow-sm hover:shadow-md cursor-pointer" onClick={() => setSelectedEvent(event)}>
+                  <Card className="hover:shadow-lg transition-all duration-300 group hover:border-upisha-teal/40 dark:bg-gray-800 dark:border-gray-700 shadow-sm hover:shadow-md cursor-pointer card-gradient-border" onClick={() => setSelectedEvent(event)}>
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3">
@@ -4062,12 +4768,20 @@ function EventsTimelineSection() {
                             <event.icon className="h-5 w-5 text-upisha-teal group-hover:text-white transition-colors" />
                           </div>
                           <div>
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] mb-1 ${typeColors[event.type] || 'bg-gray-100 text-gray-700 border-gray-200'}`}
-                            >
-                              {event.type}
-                            </Badge>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] ${typeColors[event.type] || 'bg-gray-100 text-gray-700 border-gray-200'}`}
+                              >
+                                {event.type}
+                              </Badge>
+                              {isEventLive(event.date) && (
+                                <Badge className="bg-green-500/10 text-green-600 border-green-500/30 text-[9px] animate-pulse flex items-center gap-1" variant="outline">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping inline-block" />
+                                  LIVE
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-xs text-upisha-gold font-semibold flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               {event.date}
@@ -4106,6 +4820,39 @@ function EventsTimelineSection() {
               </motion.div>
             ))}
           </div>
+        </div>
+
+        {/* Calendar Sidebar */}
+        <div className="space-y-6">
+          <EventCalendar onEventClick={(event) => setSelectedEvent(event)} />
+
+          {/* Upcoming count */}
+          <Card className="border-upisha-gold/20 dark:bg-gray-800 dark:border-gray-700">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-lg bg-upisha-gold/10 flex items-center justify-center">
+                  <Bell className="h-4.5 w-4.5 text-upisha-gold" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-upisha-navy dark:text-white">{eventsTimeline.length}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Upcoming Events</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {Object.entries(
+                  eventsTimeline.reduce<Record<string, number>>((acc, e) => {
+                    acc[e.type] = (acc[e.type] || 0) + 1
+                    return acc
+                  }, {})
+                ).map(([type, count]) => (
+                  <Badge key={type} variant="outline" className={`text-[10px] ${typeColors[type] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                    {type} ({count})
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         </div>
 
         <div className="text-center mt-12">
@@ -4286,30 +5033,41 @@ function MemberSpotlightSection() {
 /* ─── Partners Section ─── */
 function PartnersSection() {
   return (
-    <section className="py-12 md:py-16 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800">
+    <section className="py-12 md:py-16 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-8">
           <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             Affiliated & Collaborating Organizations
           </p>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
-          {partners.map((partner, i) => (
-            <motion.div
-              key={partner.name}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.08 }}
-              viewport={{ once: true }}
-              className="flex flex-col items-center gap-2 text-center group cursor-pointer p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      </div>
+      {/* Marquee container */}
+      <div className="relative group">
+        {/* Left fade */}
+        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-white dark:from-gray-900 to-transparent z-10 pointer-events-none" />
+        {/* Right fade */}
+        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-white dark:from-gray-900 to-transparent z-10 pointer-events-none" />
+        {/* Scrolling track */}
+        <div className="flex animate-marquee-partners group-hover:[animation-play-state:paused]">
+          {[...partners, ...partners].map((partner, i) => (
+            <div
+              key={`${partner.name}-${i}`}
+              className="flex flex-col items-center gap-2 text-center shrink-0 w-[180px] md:w-[220px] py-5 px-4 group/item cursor-pointer"
             >
-              <div className="w-12 h-12 rounded-full bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
-                <partner.icon className="h-6 w-6 text-upisha-teal group-hover:text-white transition-colors" />
+              <div className="partner-card rounded-xl p-4 flex flex-col items-center gap-3 w-full bg-white dark:bg-gray-800/50">
+                <div className="w-12 h-12 rounded-full bg-upisha-teal/10 flex items-center justify-center group-hover/item:bg-upisha-teal transition-colors">
+                  <partner.icon className="h-6 w-6 text-upisha-teal group-hover/item:text-white transition-colors" />
+                </div>
+                <span className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-tight">
+                  {partner.name}
+                </span>
+                {/* Verified Partner badge */}
+                <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-upisha-teal bg-upisha-teal/8 px-2 py-0.5 rounded-full">
+                  <CheckCircle2 className="h-2.5 w-2.5" />
+                  Verified Partner
+                </span>
               </div>
-              <span className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-tight">
-                {partner.name}
-              </span>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
@@ -4319,6 +5077,7 @@ function PartnersSection() {
 
 /* ─── Section Navigation Indicator ─── */
 function SectionNavigationIndicator({ activeSection }: { activeSection: string }) {
+  const [scrollPercent, setScrollPercent] = useState(0)
   const sections = [
     { id: 'home', label: 'Home' },
     { id: 'about', label: 'About' },
@@ -4330,9 +5089,21 @@ function SectionNavigationIndicator({ activeSection }: { activeSection: string }
     { id: 'contact', label: 'Contact' },
   ]
 
+  useEffect(() => {
+    const handler = () => {
+      const scrollTop = window.scrollY
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight
+      setScrollPercent(docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0)
+    }
+    window.addEventListener('scroll', handler, { passive: true })
+    return () => window.removeEventListener('scroll', handler)
+  }, [])
+
   const handleClick = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  const activeLabel = sections.find((s) => s.id === activeSection)?.label || ''
 
   return (
     <div className="fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-center gap-3">
@@ -4360,6 +5131,16 @@ function SectionNavigationIndicator({ activeSection }: { activeSection: string }
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               className="rounded-full cursor-pointer hover:bg-upisha-teal transition-colors"
             />
+            {/* Active section label & percentage */}
+            {isActive && (
+              <motion.div
+                initial={{ opacity: 0, x: 5 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="absolute right-5 whitespace-nowrap text-[9px] font-semibold text-upisha-teal bg-upisha-teal/10 px-1.5 py-0.5 rounded pointer-events-none"
+              >
+                {activeLabel} {scrollPercent}%
+              </motion.div>
+            )}
           </button>
         )
       })}
@@ -4586,6 +5367,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <a href="#home" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-upisha-teal focus:text-white focus:rounded-md focus:shadow-lg">
+        Skip to main content
+      </a>
       <ScrollProgress />
       <TopBar />
       <Navbar
@@ -4599,9 +5383,12 @@ export default function Home() {
         <HeroSection />
         <QuickLinks />
         <CountdownTimer />
+        <WaveDivider color="#0d7377" />
         <AnnouncementSection />
         <FeaturesSection />
+        <WaveDivider color="#c7923e" />
         <AboutSection />
+        <WaveDivider color="#1a2332" />
         <StatsSection />
         <EventsTimelineSection />
         <DocumentsSection />
@@ -4612,6 +5399,7 @@ export default function Home() {
         <JoinSection />
         <TestimonialsSection />
         <GallerySection />
+        <WaveDivider color="#0d7377" />
         <NewsletterSection />
         <PartnersSection />
         <ContactSection />
@@ -4619,6 +5407,7 @@ export default function Home() {
       <Footer />
       <BackToTop />
       <FloatingContact />
+      <SocialProofNotification />
       <CookieConsent />
       <SectionNavigationIndicator activeSection={activeSection} />
       <CommandPalette

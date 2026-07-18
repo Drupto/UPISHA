@@ -32,11 +32,17 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const subscribers = await db.newsletterSubscriber.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: 'desc' },
-    })
-    return NextResponse.json({ subscribers })
+    const [subscribers, countResult] = await Promise.all([
+      db.newsletterSubscriber.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+      db.newsletterSubscriber.aggregate({
+        _count: { _all: true },
+        where: { isActive: true },
+      }),
+    ])
+    return NextResponse.json({ subscribers, count: countResult._count._all })
   } catch (error) {
     console.error('Error fetching subscribers:', error)
     return NextResponse.json(
