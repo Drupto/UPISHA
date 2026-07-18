@@ -83,6 +83,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -1036,8 +1037,9 @@ function HeroSection() {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${heroSlides[current].image})` }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-upisha-navy/90 via-upisha-navy/70 to-upisha-navy/30" />
-          <div className="absolute inset-0 bg-gradient-to-t from-upisha-navy/60 via-transparent to-transparent" />
+          {/* Deeper gradient for stronger text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-r from-upisha-navy/95 via-upisha-navy/80 to-upisha-navy/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-upisha-navy/80 via-upisha-navy/20 to-upisha-navy/30" />
         </motion.div>
       </AnimatePresence>
 
@@ -1057,22 +1059,22 @@ function HeroSection() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="inline-flex items-center gap-2 bg-upisha-gold/90 text-white px-3 py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 backdrop-blur-sm badge-pulse"
+                className="inline-flex items-center gap-1.5 bg-white/10 text-upisha-gold border border-upisha-gold/40 px-2.5 py-1 rounded-full text-[11px] md:text-xs font-semibold mb-5 backdrop-blur-sm"
               >
-                <Star className="h-3 w-3 fill-white" />
+                <Star className="h-3 w-3 fill-upisha-gold text-upisha-gold" />
                 Serving Since 2005
               </motion.div>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-4 leading-tight drop-shadow-lg">
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-5 leading-[1.1] drop-shadow-2xl">
                 {heroSlides[current].title}
               </h1>
-              <div className="h-1 w-20 bg-upisha-gold rounded-full mb-6" />
-              <p className="text-base md:text-xl text-gray-100 mb-8 leading-relaxed max-w-xl">
+              <div className="h-1 w-24 bg-gradient-to-r from-upisha-gold to-upisha-teal rounded-full mb-6" />
+              <p className="text-base md:text-xl text-gray-100 mb-8 leading-relaxed max-w-xl drop-shadow-md">
                 {heroSlides[current].subtitle}
               </p>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-3 md:gap-4">
                 <Button
                   size="lg"
-                  className="bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-lg hover:shadow-xl transition-all"
+                  className="bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-xl hover:shadow-2xl transition-all glow-teal"
                   onClick={() =>
                     document
                       .getElementById(heroSlides[current].ctaLink.slice(1))
@@ -1085,7 +1087,7 @@ function HeroSection() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white/70 text-white hover:bg-white/10 backdrop-blur-sm bg-white/5"
+                  className="border-white/60 text-white hover:bg-white/15 hover:border-white/80 backdrop-blur-sm bg-white/5"
                   onClick={() =>
                     document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
                   }
@@ -1095,7 +1097,7 @@ function HeroSection() {
                 <Button
                   size="lg"
                   variant="ghost"
-                  className="text-white/80 hover:text-white hover:bg-white/10"
+                  className="text-white/85 hover:text-white hover:bg-white/10"
                   onClick={() => {
                     if (navigator.share) {
                       navigator.share({
@@ -1121,14 +1123,14 @@ function HeroSection() {
       {/* Navigation Arrows */}
       <button
         onClick={goPrev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full p-2 text-white transition-all"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/15 hover:bg-white/35 backdrop-blur-md border border-white/20 rounded-full p-2.5 text-white transition-all"
         aria-label="Previous slide"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
       <button
         onClick={goNext}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full p-2 text-white transition-all"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/15 hover:bg-white/35 backdrop-blur-md border border-white/20 rounded-full p-2.5 text-white transition-all"
         aria-label="Next slide"
       >
         <ChevronRight className="h-6 w-6" />
@@ -1141,12 +1143,28 @@ function HeroSection() {
             key={i}
             onClick={() => goTo(i)}
             className={`h-2.5 rounded-full transition-all duration-300 ${
-              i === current ? 'w-8 bg-upisha-gold' : 'w-2.5 bg-white/50 hover:bg-white/80'
+              i === current ? 'w-8 bg-upisha-gold shadow-md shadow-upisha-gold/40' : 'w-2.5 bg-white/50 hover:bg-white/80'
             }`}
             aria-label={`Go to slide ${i + 1}`}
           />
         ))}
       </div>
+
+      {/* Scroll hint */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 hidden md:flex flex-col items-center gap-1 text-white/60 pointer-events-none"
+      >
+        <span className="text-[10px] uppercase tracking-widest">Scroll</span>
+        <motion.div
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <ChevronDown className="h-4 w-4" />
+        </motion.div>
+      </motion.div>
     </section>
   )
 }
@@ -2118,6 +2136,28 @@ function JoinSection() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [showRestored, setShowRestored] = useState(false)
+
+  // Auto-save form data to localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('upisha-join-form')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (parsed && (parsed.fullName || parsed.email)) {
+          setFormData(parsed)
+          setShowRestored(true)
+          setTimeout(() => setShowRestored(false), 6000)
+        }
+      } catch {}
+    }
+  }, [])
+
+  useEffect(() => {
+    if (formData.fullName || formData.email || formData.phone) {
+      localStorage.setItem('upisha-join-form', JSON.stringify(formData))
+    }
+  }, [formData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -2138,6 +2178,7 @@ function JoinSection() {
       })
       if (res.ok) {
         setSubmitted(true)
+        localStorage.removeItem('upisha-join-form')
         toast({
           title: 'Application submitted!',
           description: 'We will review your application and contact you soon.',
@@ -2159,6 +2200,20 @@ function JoinSection() {
       setIsSubmitting(false)
     }
   }
+
+  const handleClearForm = () => {
+    setFormData({
+      fullName: '', email: '', phone: '', qualification: '',
+      rciNumber: '', membershipType: '', city: '', message: '',
+    })
+    localStorage.removeItem('upisha-join-form')
+    toast({ title: 'Form cleared', description: 'All entered data has been removed.' })
+  }
+
+  // Compute form completion percentage
+  const filledFields = Object.values(formData).filter(v => v && v.trim() !== '').length
+  const totalFields = 8
+  const completionPct = Math.round((filledFields / totalFields) * 100)
 
   return (
     <AnimatedSection id="join" className="py-16 md:py-20 bg-upisha-teal-light dark:bg-upisha-teal/10 border-t-2 border-t-upisha-gold/10">
@@ -2183,40 +2238,44 @@ function JoinSection() {
               viewport={{ once: true }}
             >
               <Card
-                className={`h-full relative card-gradient-top ${
+                className={`h-full relative card-gradient-top card-lift ${
                   plan.popular
-                    ? 'border-upisha-teal shadow-lg scale-[1.02] dark:bg-gray-800'
+                    ? 'border-upisha-teal shadow-lg md:scale-[1.03] dark:bg-gray-800'
                     : 'border-gray-200 dark:bg-gray-800 dark:border-gray-700'
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-upisha-teal text-white">Most Popular</Badge>
+                    <Badge className="bg-upisha-gold text-white shadow-md">★ Most Popular</Badge>
                   </div>
                 )}
                 <CardContent className="p-6 text-center">
                   <h3 className="font-bold text-upisha-navy dark:text-white text-lg">{plan.type}</h3>
                   <div className="my-4">
-                    <span className="text-3xl font-bold text-upisha-teal">{plan.price}</span>
+                    <span className="text-3xl font-bold text-gradient-teal-gold">{plan.price}</span>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{plan.description}</p>
                   <ul className="space-y-2 text-left mb-6">
                     {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                        <CheckCircle2 className="h-4 w-4 text-upisha-teal shrink-0" />
-                        {f}
+                      <li key={f} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                        <CheckCircle2 className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
+                        <span>{f}</span>
                       </li>
                     ))}
                   </ul>
                   <Button
                     className={`w-full ${
                       plan.popular
-                        ? 'bg-upisha-teal hover:bg-upisha-teal-dark text-white'
-                        : 'bg-white border-upisha-teal text-upisha-teal hover:bg-upisha-teal-light'
+                        ? 'bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal'
+                        : 'bg-white border-upisha-teal text-upisha-teal hover:bg-upisha-teal-light dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600'
                     }`}
                     variant={plan.popular ? 'default' : 'outline'}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, membershipType: plan.type }))
+                      document.getElementById('join-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    }}
                   >
-                    Apply Now
+                    {plan.popular ? 'Apply Now' : 'Choose Plan'}
                   </Button>
                 </CardContent>
               </Card>
@@ -2246,17 +2305,51 @@ function JoinSection() {
           </div>
 
           {/* Application Form */}
-          <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
+          <Card id="join-form" className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top scroll-mt-32">
             <CardHeader>
-              <CardTitle className="text-upisha-navy dark:text-white flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-upisha-teal" />
-                Membership Application
-              </CardTitle>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <CardTitle className="text-upisha-navy dark:text-white flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-upisha-teal" />
+                  Membership Application
+                </CardTitle>
+                {completionPct > 0 && completionPct < 100 && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    {completionPct}% complete
+                  </span>
+                )}
+              </div>
+              {completionPct > 0 && completionPct < 100 && (
+                <div className="mt-2 h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-upisha-teal to-upisha-gold transition-all duration-500"
+                    style={{ width: `${completionPct}%` }}
+                  />
+                </div>
+              )}
             </CardHeader>
             <CardContent>
+              {showRestored && (
+                <div className="mb-4 p-3 rounded-lg bg-upisha-gold/10 border border-upisha-gold/30 text-xs text-upisha-navy dark:text-gray-200 flex items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5 text-upisha-gold shrink-0" />
+                  <span className="flex-1">We restored your previously entered form data.</span>
+                  <button
+                    onClick={handleClearForm}
+                    className="shrink-0 underline hover:text-upisha-teal"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
               {submitted ? (
                 <div className="text-center py-8">
-                  <CheckCircle2 className="h-16 w-16 text-upisha-teal mx-auto mb-4" />
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                    className="w-20 h-20 bg-upisha-teal/10 rounded-full flex items-center justify-center mx-auto mb-4"
+                  >
+                    <CheckCircle2 className="h-12 w-12 text-upisha-teal" />
+                  </motion.div>
                   <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">
                     Application Submitted!
                   </h3>
@@ -2266,10 +2359,10 @@ function JoinSection() {
                   </p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="grid sm:grid-cols-2 gap-5">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Full Name *
                       </label>
                       <Input
@@ -2279,10 +2372,11 @@ function JoinSection() {
                         onChange={(e) =>
                           setFormData({ ...formData, fullName: e.target.value })
                         }
+                        className="input-focus-ring"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Email *
                       </label>
                       <Input
@@ -2291,12 +2385,13 @@ function JoinSection() {
                         placeholder="you@example.com"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="input-focus-ring"
                       />
                     </div>
                   </div>
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-5">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Phone *
                       </label>
                       <Input
@@ -2305,10 +2400,11 @@ function JoinSection() {
                         placeholder="+91-XXXXXXXXXX"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        className="input-focus-ring"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         City *
                       </label>
                       <Input
@@ -2316,12 +2412,13 @@ function JoinSection() {
                         placeholder="Lucknow"
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="input-focus-ring"
                       />
                     </div>
                   </div>
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-5">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Qualification *
                       </label>
                       <Input
@@ -2331,10 +2428,11 @@ function JoinSection() {
                         onChange={(e) =>
                           setFormData({ ...formData, qualification: e.target.value })
                         }
+                        className="input-focus-ring"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         RCI Registration No.
                       </label>
                       <Input
@@ -2343,11 +2441,12 @@ function JoinSection() {
                         onChange={(e) =>
                           setFormData({ ...formData, rciNumber: e.target.value })
                         }
+                        className="input-focus-ring"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                       Membership Type *
                     </label>
                     <Select
@@ -2365,9 +2464,15 @@ function JoinSection() {
                         <SelectItem value="student">Student Member - ₹200/year</SelectItem>
                       </SelectContent>
                     </Select>
+                    {formData.membershipType && (
+                      <p className="text-xs text-upisha-teal mt-1.5 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Selected: {membershipTypes.find(t => t.type.toLowerCase().includes(formData.membershipType))?.type || formData.membershipType}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                       Additional Message
                     </label>
                     <Textarea
@@ -2375,16 +2480,41 @@ function JoinSection() {
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                       rows={3}
+                      className="input-focus-ring"
                     />
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit Application'}
-                    <Send className="h-4 w-4 ml-2" />
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          Submit Application
+                          <Send className="h-4 w-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                    {(formData.fullName || formData.email) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleClearForm}
+                        className="border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center">
+                    Your data is auto-saved locally as you type. Clearing browser data will remove it.
+                  </p>
                 </form>
               )}
             </CardContent>
@@ -2464,27 +2594,34 @@ function GallerySection() {
 
         {/* Filters */}
         <div className="flex flex-wrap justify-center gap-2 mb-8">
-          {categories.map((cat) => (
-            <Button
-              key={cat}
-              variant={filter === cat ? 'default' : 'outline'}
-              size="sm"
-              className={
-                filter === cat
-                  ? 'bg-upisha-teal text-white'
-                  : 'border-upisha-teal/30 text-upisha-teal hover:bg-upisha-teal-light'
-              }
-              onClick={() => { setFilter(cat); setVisibleCount(6) }}
-            >
-              {cat}
-            </Button>
-          ))}
+          {categories.map((cat) => {
+            const isActive = filter === cat
+            const count = cat === 'All' ? galleryImages.length : galleryImages.filter(g => g.category === cat).length
+            return (
+              <Button
+                key={cat}
+                variant={isActive ? 'default' : 'outline'}
+                size="sm"
+                className={`rounded-full transition-all duration-200 ${
+                  isActive
+                    ? 'bg-upisha-teal text-white filter-pill-active hover:bg-upisha-teal-dark'
+                    : 'border-upisha-teal/30 text-upisha-teal hover:bg-upisha-teal-light hover:border-upisha-teal/60 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'
+                }`}
+                onClick={() => { setFilter(cat); setVisibleCount(6) }}
+              >
+                {cat}
+                <span className={`ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full ${
+                  isActive ? 'bg-white/25' : 'bg-upisha-teal/10 text-upisha-teal dark:bg-gray-700 dark:text-gray-300'
+                }`}>{count}</span>
+              </Button>
+            )
+          })}
         </div>
 
         {/* Image count */}
         {visibleImages.length < filteredImages.length && (
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-4">
-            Showing {visibleImages.length} of {filteredImages.length} images
+            Showing <span className="font-semibold text-upisha-teal dark:text-upisha-teal">{visibleImages.length}</span> of <span className="font-semibold text-upisha-teal dark:text-upisha-teal">{filteredImages.length}</span> images
           </p>
         )}
 
@@ -2495,23 +2632,28 @@ function GallerySection() {
               key={`${img.title}-${i}`}
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: Math.min(i * 0.08, 0.4) }}
               viewport={{ once: true }}
-              className="group cursor-pointer relative overflow-hidden rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300"
+              className="group cursor-pointer relative overflow-hidden rounded-xl shadow-sm hover:shadow-xl card-lift bg-gray-100 dark:bg-gray-800"
               onClick={() => setSelectedImage(img.src)}
             >
               <div className="aspect-[4/3] overflow-hidden">
                 <img
                   src={img.src}
                   alt={img.title}
+                  loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 backdrop-blur-[2px]">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 backdrop-blur-[2px]">
                 <div>
                   <h4 className="text-white font-semibold text-sm">{img.title}</h4>
-                  <Badge className="bg-white/20 text-white text-xs mt-1">{img.category}</Badge>
+                  <Badge className="bg-upisha-gold/90 text-white text-xs mt-1 border-0">{img.category}</Badge>
                 </div>
+              </div>
+              {/* Top-right zoom icon */}
+              <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Eye className="h-4 w-4 text-white" />
               </div>
             </motion.div>
           ))}
@@ -3265,7 +3407,7 @@ function NewsletterSection() {
           ) : (
             <form
               onSubmit={handleSubmit}
-              className="bg-white dark:bg-upisha-navy-light rounded-2xl p-6 md:p-8 shadow-xl max-w-lg mx-auto flex flex-col sm:flex-row gap-3 border border-upisha-teal/10"
+              className="bg-white dark:bg-upisha-navy-light rounded-2xl p-6 md:p-8 shadow-xl max-w-xl mx-auto flex flex-col sm:flex-row gap-4 border border-upisha-teal/20"
             >
               <div className="flex-1 relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -3275,22 +3417,32 @@ function NewsletterSection() {
                   placeholder="Enter your email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12 bg-gray-50 dark:bg-upisha-navy border-gray-200 dark:border-gray-700"
+                  className="pl-10 h-12 bg-gray-50 dark:bg-upisha-navy border-gray-200 dark:border-gray-700 input-focus-ring"
                 />
               </div>
               <Button
                 type="submit"
                 size="lg"
-                className="bg-upisha-gold hover:bg-upisha-gold-dark text-white h-12 px-6 shadow-md hover:shadow-lg transition-all"
+                className="bg-upisha-teal hover:bg-upisha-teal-dark text-white h-12 px-6 shadow-md hover:shadow-lg transition-all glow-teal"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Subscribing...' : 'Subscribe'}
-                <Sparkles className="h-4 w-4 ml-2" />
+                {isSubmitting ? (
+                  <>
+                    <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Subscribing...
+                  </>
+                ) : (
+                  <>
+                    Subscribe
+                    <Sparkles className="h-4 w-4 ml-2" />
+                  </>
+                )}
               </Button>
             </form>
           )}
-          <p className="text-xs text-upisha-navy/60 dark:text-gray-400 mt-4 font-medium">
-            🔒 No spam. Unsubscribe at any time. We respect your privacy.
+          <p className="text-xs text-upisha-navy/60 dark:text-gray-400 mt-5 font-medium flex items-center justify-center gap-1.5">
+            <Shield className="h-3 w-3" />
+            No spam. Unsubscribe at any time. We respect your privacy.
           </p>
         </div>
       </div>
@@ -3387,6 +3539,7 @@ function ScrollProgress() {
 /* ─── Back to Top Button ─── */
 function BackToTop() {
   const [isVisible, setIsVisible] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => setIsVisible(window.scrollY > 500)
@@ -3396,21 +3549,77 @@ function BackToTop() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
+  const quickLinks = [
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About' },
+    { id: 'join', label: 'Join' },
+    { id: 'contact', label: 'Contact' },
+  ]
+
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.5 }}
-          onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-lg flex items-center justify-center transition-colors group"
-          aria-label="Back to top"
-        >
-          <ChevronUp className="h-6 w-6 group-hover:-translate-y-0.5 transition-transform" />
-        </motion.button>
-      )}
-    </AnimatePresence>
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+      <AnimatePresence>
+        {showMenu && isVisible && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 min-w-[140px]"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 px-2 py-1">Quick jump</p>
+            {quickLinks.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => {
+                  document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' })
+                  setShowMenu(false)
+                }}
+                className="w-full text-left px-2 py-1.5 rounded-md text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-upisha-teal-light dark:hover:bg-gray-700 hover:text-upisha-teal transition-colors flex items-center gap-1.5"
+              >
+                <ChevronRight className="h-3 w-3" />
+                {link.label}
+              </button>
+            ))}
+            <div className="h-px bg-gray-100 dark:bg-gray-700 my-1" />
+            <button
+              onClick={scrollToTop}
+              className="w-full text-left px-2 py-1.5 rounded-md text-xs font-medium text-upisha-teal hover:bg-upisha-teal-light dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5"
+            >
+              <ChevronUp className="h-3 w-3" />
+              Back to Top
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isVisible && (
+          <div className="flex items-center gap-2">
+            <motion.button
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              onClick={() => setShowMenu(s => !s)}
+              className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-upisha-teal shadow-md flex items-center justify-center transition-colors border border-gray-100 dark:border-gray-700"
+              aria-label="Quick navigation menu"
+              aria-expanded={showMenu}
+            >
+              <Menu className="h-4 w-4" />
+            </motion.button>
+            <motion.button
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              onClick={scrollToTop}
+              className="w-12 h-12 rounded-full bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-lg flex items-center justify-center transition-colors group"
+              aria-label="Back to top"
+            >
+              <ChevronUp className="h-6 w-6 group-hover:-translate-y-0.5 transition-transform" />
+            </motion.button>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
@@ -4028,10 +4237,126 @@ function SectionNavigationIndicator({ activeSection }: { activeSection: string }
   )
 }
 
+/* ─── Breadcrumb Indicator (shows current section in navbar) ─── */
+function BreadcrumbIndicator({ activeSection }: { activeSection: string }) {
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    const handler = () => setIsVisible(window.scrollY > 600)
+    window.addEventListener('scroll', handler)
+    return () => window.removeEventListener('scroll', handler)
+  }, [])
+
+  const current = navLinks.find((l) => l.href.slice(1) === activeSection)
+
+  return (
+    <AnimatePresence>
+      {isVisible && current && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.25 }}
+          className="fixed top-[88px] md:top-[104px] left-1/2 -translate-x-1/2 z-30 hidden md:block pointer-events-none"
+        >
+          <div className="glass rounded-full shadow-md px-4 py-1.5 flex items-center gap-2 text-xs">
+            <span className="text-gray-500 dark:text-gray-400">You are here:</span>
+            <span className="text-upisha-teal font-semibold flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-upisha-gold animate-pulse" />
+              {current.label}
+            </span>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+/* ─── Keyboard Shortcuts Help Dialog ─── */
+function KeyboardShortcutsHelp({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const shortcuts = [
+    { keys: ['Ctrl', 'K'], desc: 'Open command palette / search' },
+    { keys: ['?'], desc: 'Toggle this shortcuts help' },
+    { keys: ['Esc'], desc: 'Close any open dialog' },
+    { keys: ['Home'], desc: 'Scroll to top of page' },
+    { keys: ['End'], desc: 'Scroll to bottom of page' },
+    { keys: ['g', 'h'], desc: 'Go to Home section' },
+    { keys: ['g', 'a'], desc: 'Go to About section' },
+    { keys: ['g', 'j'], desc: 'Go to Join section' },
+    { keys: ['g', 'c'], desc: 'Go to Contact section' },
+    { keys: ['g', 'g'], desc: 'Go to Gallery section' },
+  ]
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-upisha-navy dark:text-white">
+            <Command className="h-5 w-5 text-upisha-teal" />
+            Keyboard Shortcuts
+          </DialogTitle>
+          <DialogDescription>
+            Use these shortcuts to navigate the site faster.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 mt-2">
+          {shortcuts.map((s, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <span className="text-sm text-gray-700 dark:text-gray-300">{s.desc}</span>
+              <div className="flex items-center gap-1">
+                {s.keys.map((k, j) => (
+                  <span key={j} className="flex items-center gap-1">
+                    {j > 0 && <span className="text-gray-400 text-xs">+</span>}
+                    <kbd className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-mono font-semibold text-gray-700 dark:text-gray-200 shadow-sm">
+                      {k}
+                    </kbd>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+/* ─── Floating Contact Button (mobile quick contact) ─── */
+function FloatingContact() {
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    const handler = () => setIsVisible(window.scrollY > 800)
+    window.addEventListener('scroll', handler)
+    return () => window.removeEventListener('scroll', handler)
+  }, [])
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.a
+          href="tel:+915224001234"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.5 }}
+          className="fixed bottom-20 left-4 z-40 md:hidden w-12 h-12 rounded-full bg-upisha-gold hover:bg-upisha-gold/90 text-white shadow-lg flex items-center justify-center float-soft"
+          aria-label="Call us"
+        >
+          <PhoneCall className="h-5 w-5" />
+        </motion.a>
+      )}
+    </AnimatePresence>
+  )
+}
+
 /* ─── Main Page ─── */
 export default function Home() {
   const [activeSection, setActiveSection] = useState('home')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -4051,16 +4376,77 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Ctrl/Cmd + K to open search
+  // Keyboard shortcuts
   useEffect(() => {
+    let gPressed = false
+    let gTimer: ReturnType<typeof setTimeout> | null = null
+
     const handleKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable
+
+      // Ctrl/Cmd + K
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault()
         setSearchOpen((prev) => !prev)
+        return
+      }
+
+      if (isTyping) return
+
+      // ? for help
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault()
+        setShortcutsOpen((prev) => !prev)
+        return
+      }
+
+      // Esc closes dialogs
+      if (e.key === 'Escape') {
+        setSearchOpen(false)
+        setShortcutsOpen(false)
+        return
+      }
+
+      // Home / End
+      if (e.key === 'Home' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+      if (e.key === 'End' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+        return
+      }
+
+      // g + letter combos
+      if (e.key === 'g' && !e.ctrlKey && !e.metaKey) {
+        if (gPressed) return
+        gPressed = true
+        if (gTimer) clearTimeout(gTimer)
+        gTimer = setTimeout(() => { gPressed = false }, 800)
+        return
+      }
+      if (gPressed) {
+        const map: Record<string, string> = {
+          h: 'home', a: 'about', j: 'join', c: 'contact', g: 'gallery',
+          d: 'documents', p: 'professionals',
+        }
+        const target = map[e.key.toLowerCase()]
+        if (target) {
+          e.preventDefault()
+          document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' })
+        }
+        gPressed = false
+        if (gTimer) clearTimeout(gTimer)
       }
     }
     window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
+    return () => {
+      window.removeEventListener('keydown', handleKey)
+      if (gTimer) clearTimeout(gTimer)
+    }
   }, [])
 
   const handleNavClick = useCallback((href: string) => {
@@ -4077,6 +4463,7 @@ export default function Home() {
         onNavClick={handleNavClick}
         onOpenSearch={() => setSearchOpen(true)}
       />
+      <BreadcrumbIndicator activeSection={activeSection} />
       <NewsTicker />
       <main className="flex-1">
         <HeroSection />
@@ -4101,6 +4488,7 @@ export default function Home() {
       </main>
       <Footer />
       <BackToTop />
+      <FloatingContact />
       <CookieConsent />
       <SectionNavigationIndicator activeSection={activeSection} />
       <CommandPalette
@@ -4108,6 +4496,7 @@ export default function Home() {
         onClose={() => setSearchOpen(false)}
         onNavigate={handleNavClick}
       />
+      <KeyboardShortcutsHelp open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </div>
   )
 }
