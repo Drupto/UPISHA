@@ -1382,15 +1382,16 @@ function AboutSection() {
               <img
                 src="/images/about-illustration.png"
                 alt="About UP ISHA"
+                loading="lazy"
                 className="w-full h-[400px] object-cover"
               />
             </div>
-            {/* Stats overlay */}
-            <div className="absolute -bottom-6 -right-6 md:right-6 bg-upisha-teal text-white rounded-xl p-5 shadow-lg">
+            {/* Stats overlay - improved dark mode */}
+            <div className="absolute -bottom-6 -right-6 md:right-6 bg-upisha-teal text-white rounded-xl p-5 shadow-lg ring-4 ring-white/20 dark:ring-gray-900/20">
               <div className="text-3xl font-bold">20+</div>
               <div className="text-sm opacity-90">Years of Service</div>
             </div>
-            <div className="absolute -top-4 -left-4 md:left-6 bg-upisha-gold text-white rounded-xl p-4 shadow-lg">
+            <div className="absolute -top-4 -left-4 md:left-6 bg-upisha-gold text-white rounded-xl p-4 shadow-lg ring-4 ring-white/20 dark:ring-gray-900/20">
               <div className="text-2xl font-bold">550+</div>
               <div className="text-xs opacity-90">Members</div>
             </div>
@@ -1402,6 +1403,7 @@ function AboutSection() {
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white mb-6">
               Uttar Pradesh Speech & Hearing Association
             </h2>
+            <div className="h-1 w-16 bg-gradient-to-r from-upisha-teal to-upisha-gold rounded-full mb-6" />
             <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed mb-4">
               The Uttar Pradesh Speech & Hearing Association (UP ISHA) is the premier professional
               body representing audiologists and speech-language pathologists in Uttar Pradesh,
@@ -1414,11 +1416,13 @@ function AboutSection() {
               as a unified voice for speech and hearing professionals across Uttar Pradesh.
             </p>
 
-            {/* Mission & Vision */}
+            {/* Mission & Vision - enhanced cards */}
             <div className="grid sm:grid-cols-2 gap-4 mb-6">
-              <div className="bg-upisha-teal-light dark:bg-upisha-teal/20 rounded-xl p-5">
+              <div className="bg-gradient-to-br from-upisha-teal-light to-white dark:from-upisha-teal/20 dark:to-gray-800 rounded-xl p-5 border border-upisha-teal/10 dark:border-upisha-teal/20 card-lift">
                 <div className="flex items-center gap-2 mb-2">
-                  <Heart className="h-5 w-5 text-upisha-teal" />
+                  <div className="w-8 h-8 bg-upisha-teal/15 rounded-lg flex items-center justify-center">
+                    <Heart className="h-4 w-4 text-upisha-teal" />
+                  </div>
                   <h4 className="font-bold text-upisha-navy dark:text-white">Our Mission</h4>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -1426,9 +1430,11 @@ function AboutSection() {
                   and to advocate for individuals with communication disorders.
                 </p>
               </div>
-              <div className="bg-upisha-gold-light dark:bg-upisha-gold/20 rounded-xl p-5">
+              <div className="bg-gradient-to-br from-upisha-gold-light to-white dark:from-upisha-gold/15 dark:to-gray-800 rounded-xl p-5 border border-upisha-gold/10 dark:border-upisha-gold/20 card-lift">
                 <div className="flex items-center gap-2 mb-2">
-                  <Eye className="h-5 w-5 text-upisha-gold" />
+                  <div className="w-8 h-8 bg-upisha-gold/15 rounded-lg flex items-center justify-center">
+                    <Eye className="h-4 w-4 text-upisha-gold" />
+                  </div>
                   <h4 className="font-bold text-upisha-navy dark:text-white">Our Vision</h4>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -1438,37 +1444,46 @@ function AboutSection() {
               </div>
             </div>
 
-            <Button className="bg-upisha-teal hover:bg-upisha-teal-dark text-white">
+            <Button className="bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal">
               Learn More <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
         </div>
 
-        {/* President's Message */}
+        {/* President's Message - enhanced with avatar */}
         <div className="mt-16 md:mt-20">
-          <Card className="border-upisha-teal/20 bg-gradient-to-r from-upisha-teal-light to-white dark:from-upisha-teal/20 dark:to-gray-800 dark:bg-gray-800 card-gradient-top">
-            <CardContent className="p-6 md:p-8">
-              <div className="flex flex-col md:flex-row gap-6 items-start">
-                <div className="shrink-0">
-                  <div className="w-24 h-24 rounded-full bg-upisha-teal/20 dark:bg-upisha-teal/30 flex items-center justify-center">
-                    <Users className="h-12 w-12 text-upisha-teal" />
+          <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top overflow-hidden">
+            <CardContent className="p-0">
+              <div className="flex flex-col md:flex-row">
+                {/* Left: Avatar area with gradient bg */}
+                <div className="md:w-64 shrink-0 bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/15 p-6 md:p-8 flex flex-col items-center justify-center text-center">
+                  <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg mb-3">
+                    <img
+                      src="/images/avatar-president.png"
+                      alt="Dr. Rajesh Kumar Sharma"
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </div>
+                  <h4 className="font-bold text-upisha-navy dark:text-white text-sm">Dr. Rajesh Kumar Sharma</h4>
+                  <p className="text-xs text-upisha-teal font-medium flex items-center gap-1 mt-1">
+                    <Star className="h-3 w-3 fill-upisha-gold text-upisha-gold" />
+                    President, UP ISHA
+                  </p>
                 </div>
-                <div>
-                  <Badge className="bg-upisha-gold text-white mb-3">President&apos;s Message</Badge>
-                  <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-3">
-                    Dr. Rajesh Kumar Sharma
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed italic mb-4">
+                {/* Right: Message content */}
+                <div className="flex-1 p-6 md:p-8">
+                  <Badge className="bg-upisha-gold text-white mb-4">President&apos;s Message</Badge>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed italic text-base mb-4">
                     &ldquo;It is my privilege to serve as the President of UP ISHA. Our association
                     continues to grow and strengthen, uniting professionals across Uttar Pradesh in
                     our shared commitment to improving communication health. Together, we can ensure
                     that every person with a speech or hearing challenge receives the care they
                     deserve. I invite you to join us in this noble mission.&rdquo;
                   </p>
-                  <div className="flex items-center gap-2 text-upisha-teal font-medium">
-                    <Star className="h-4 w-4" />
-                    President, UP ISHA
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gradient-to-r from-upisha-teal/20 to-transparent" />
+                    <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Est. 2005</span>
                   </div>
                 </div>
               </div>
@@ -1494,14 +1509,15 @@ function AboutSection() {
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="text-center hover:shadow-lg transition-all duration-300 group overflow-hidden dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
+                <Card className="text-center hover:shadow-lg transition-all duration-300 group overflow-hidden dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-lift">
                   <CardContent className="pt-6 pb-6">
-                    <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-upisha-teal/10 group-hover:border-upisha-teal transition-colors">
+                    <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-upisha-teal/10 group-hover:border-upisha-teal transition-colors shadow-sm">
                       {member.image ? (
                         <img
                           src={member.image}
                           alt={member.name}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-full h-full bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
@@ -1511,7 +1527,7 @@ function AboutSection() {
                     </div>
                     <h4 className="font-bold text-upisha-navy dark:text-white">{member.name}</h4>
                     <p className="text-upisha-teal font-medium text-sm">{member.role}</p>
-                    <Badge variant="outline" className="mt-2 text-xs">
+                    <Badge variant="outline" className="mt-2 text-xs dark:border-gray-600 dark:text-gray-300">
                       {member.speciality}
                     </Badge>
                   </CardContent>
@@ -2714,6 +2730,25 @@ function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
+  // Auto-save contact form
+  useEffect(() => {
+    const saved = localStorage.getItem('upisha-contact-form')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (parsed && (parsed.name || parsed.email)) {
+          setContactForm(parsed)
+        }
+      } catch {}
+    }
+  }, [])
+
+  useEffect(() => {
+    if (contactForm.name || contactForm.email) {
+      localStorage.setItem('upisha-contact-form', JSON.stringify(contactForm))
+    }
+  }, [contactForm])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -2725,6 +2760,7 @@ function ContactSection() {
       })
       if (res.ok) {
         setSubmitted(true)
+        localStorage.removeItem('upisha-contact-form')
         toast({
           title: 'Message sent!',
           description: 'Thank you for reaching out. We will get back to you shortly.',
@@ -2747,8 +2783,35 @@ function ContactSection() {
     }
   }
 
+  const contactMethods = [
+    {
+      icon: MapPin,
+      title: 'Office Address',
+      details: ['Department of Audiology & Speech-Language Pathology', "King George's Medical University", 'Lucknow, Uttar Pradesh - 226003'],
+      action: null,
+    },
+    {
+      icon: Phone,
+      title: 'Phone',
+      details: ['+91-522-456-7890', '+91-522-456-7891'],
+      action: 'tel:+915224567890',
+    },
+    {
+      icon: Mail,
+      title: 'Email',
+      details: ['info@upisha.org', 'secretary@upisha.org'],
+      action: 'mailto:info@upisha.org',
+    },
+    {
+      icon: Clock,
+      title: 'Office Hours',
+      details: ['Monday - Friday: 9:00 AM - 5:00 PM', 'Saturday: 9:00 AM - 1:00 PM'],
+      action: null,
+    },
+  ]
+
   return (
-    <AnimatedSection id="contact" className="py-16 md:py-20 bg-gray-50 dark:bg-gray-800 border-t-2 border-t-upisha-teal/10">
+    <AnimatedSection id="contact" className="py-16 md:py-20 bg-gray-50 dark:bg-gray-900 border-t-2 border-t-upisha-teal/10">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">Get in Touch</Badge>
@@ -2759,86 +2822,62 @@ function ContactSection() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Contact Info */}
-          <div className="space-y-6">
-            <Card className="border-upisha-teal/20 dark:bg-gray-900 dark:border-gray-700 card-gradient-top">
-              <CardContent className="p-6">
-                <h3 className="font-bold text-upisha-navy dark:text-white text-lg mb-6">Contact Information</h3>
-                <div className="space-y-5">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-upisha-teal/10 rounded-lg flex items-center justify-center shrink-0">
-                      <MapPin className="h-5 w-5 text-upisha-teal" />
+        <div className="grid lg:grid-cols-5 gap-8">
+          {/* Contact Info - 2 cols */}
+          <div className="lg:col-span-2 space-y-5">
+            {/* Contact method cards */}
+            {contactMethods.map((method, i) => (
+              <motion.div
+                key={method.title}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.08 }}
+                viewport={{ once: true }}
+              >
+                <Card className="border-gray-100 dark:bg-gray-800 dark:border-gray-700 card-lift overflow-hidden">
+                  <CardContent className="p-4 flex items-start gap-4">
+                    <div className="w-11 h-11 bg-gradient-to-br from-upisha-teal/15 to-upisha-gold/15 rounded-xl flex items-center justify-center shrink-0 icon-tilt">
+                      <method.icon className="h-5 w-5 text-upisha-teal" />
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200">Office Address</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Department of Audiology & Speech-Language Pathology
-                        <br />
-                        King George&apos;s Medical University
-                        <br />
-                        Lucknow, Uttar Pradesh - 226003
-                      </p>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-upisha-navy dark:text-white text-sm mb-1">{method.title}</h4>
+                      {method.details.map((d, j) => (
+                        <p key={j} className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{d}</p>
+                      ))}
                     </div>
-                  </div>
-                  <Separator />
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-upisha-teal/10 rounded-lg flex items-center justify-center shrink-0">
-                      <Phone className="h-5 w-5 text-upisha-teal" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200">Phone</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">+91-522-456-7890</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">+91-522-456-7891</p>
-                    </div>
-                  </div>
-                  <Separator />
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-upisha-teal/10 rounded-lg flex items-center justify-center shrink-0">
-                      <Mail className="h-5 w-5 text-upisha-teal" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200">Email</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">info@upisha.org</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">secretary@upisha.org</p>
-                    </div>
-                  </div>
-                  <Separator />
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-upisha-teal/10 rounded-lg flex items-center justify-center shrink-0">
-                      <Clock className="h-5 w-5 text-upisha-teal" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200">Office Hours</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Monday - Friday: 9:00 AM - 5:00 PM
-                      </p>
-                      <p className="text-sm text-gray-500">Saturday: 9:00 AM - 1:00 PM</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                    {method.action && (
+                      <a
+                        href={method.action}
+                        className="shrink-0 w-8 h-8 rounded-lg bg-upisha-teal/10 flex items-center justify-center hover:bg-upisha-teal hover:text-white transition-all group"
+                        aria-label={`Contact via ${method.title}`}
+                      >
+                        <ArrowRight className="h-3.5 w-3.5 text-upisha-teal group-hover:text-white" />
+                      </a>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
 
             {/* Social Links */}
-            <Card className="border-upisha-teal/20 dark:bg-gray-900 dark:border-gray-700">
-              <CardContent className="p-6">
-                <h3 className="font-bold text-upisha-navy dark:text-white text-lg mb-4">Follow Us</h3>
-                <div className="flex gap-3">
+            <Card className="border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-upisha-navy dark:text-white text-sm mb-3">Follow Us</h4>
+                <div className="flex gap-2.5">
                   {[
-                    { icon: Facebook, label: 'Facebook' },
-                    { icon: Twitter, label: 'Twitter' },
-                    { icon: Instagram, label: 'Instagram' },
-                    { icon: Linkedin, label: 'LinkedIn' },
-                    { icon: Youtube, label: 'YouTube' },
+                    { icon: Facebook, label: 'Facebook', color: 'hover:bg-blue-600' },
+                    { icon: Twitter, label: 'Twitter', color: 'hover:bg-sky-500' },
+                    { icon: Instagram, label: 'Instagram', color: 'hover:bg-pink-600' },
+                    { icon: Linkedin, label: 'LinkedIn', color: 'hover:bg-blue-700' },
+                    { icon: Youtube, label: 'YouTube', color: 'hover:bg-red-600' },
                   ].map((social) => (
                     <a
                       key={social.label}
                       href="#"
-                      className="w-10 h-10 bg-upisha-teal/10 rounded-lg flex items-center justify-center hover:bg-upisha-teal hover:text-white transition-all group"
+                      className={`w-9 h-9 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 ${social.color} hover:text-white transition-all`}
                       aria-label={social.label}
                     >
-                      <social.icon className="h-5 w-5 text-upisha-teal group-hover:text-white" />
+                      <social.icon className="h-4 w-4" />
                     </a>
                   ))}
                 </div>
@@ -2846,89 +2885,150 @@ function ContactSection() {
             </Card>
           </div>
 
-          {/* Contact Form */}
-          <Card className="border-upisha-teal/20 dark:bg-gray-900 dark:border-gray-700 card-gradient-top">
-            <CardHeader>
-              <CardTitle className="text-upisha-navy dark:text-white flex items-center gap-2">
-                <Send className="h-5 w-5 text-upisha-teal" />
-                Send us a Message
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {submitted ? (
-                <div className="text-center py-8">
-                  <CheckCircle2 className="h-16 w-16 text-upisha-teal mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">Message Sent!</h3>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Thank you for reaching out. We will get back to you shortly.
-                  </p>
+          {/* Right side: Form + Map - 3 cols */}
+          <div className="lg:col-span-3 space-y-5">
+            {/* Contact Form */}
+            <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-upisha-navy dark:text-white flex items-center gap-2 text-lg">
+                  <Send className="h-5 w-5 text-upisha-teal" />
+                  Send us a Message
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {submitted ? (
+                  <div className="text-center py-8">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                      className="w-20 h-20 bg-upisha-teal/10 rounded-full flex items-center justify-center mx-auto mb-4"
+                    >
+                      <CheckCircle2 className="h-12 w-12 text-upisha-teal" />
+                    </motion.div>
+                    <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">Message Sent!</h3>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      Thank you for reaching out. We will get back to you shortly.
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="grid sm:grid-cols-2 gap-5">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                          Name *
+                        </label>
+                        <Input
+                          required
+                          placeholder="Your name"
+                          value={contactForm.name}
+                          onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                          className="input-focus-ring"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                          Email *
+                        </label>
+                        <Input
+                          required
+                          type="email"
+                          placeholder="you@example.com"
+                          value={contactForm.email}
+                          onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                          className="input-focus-ring"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                        Subject *
+                      </label>
+                      <Input
+                        required
+                        placeholder="How can we help?"
+                        value={contactForm.subject}
+                        onChange={(e) =>
+                          setContactForm({ ...contactForm, subject: e.target.value })
+                        }
+                        className="input-focus-ring"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                        Message *
+                      </label>
+                      <Textarea
+                        required
+                        placeholder="Your message..."
+                        value={contactForm.message}
+                        onChange={(e) =>
+                          setContactForm({ ...contactForm, message: e.target.value })
+                        }
+                        rows={5}
+                        className="input-focus-ring resize-none"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          Send Message
+                          <Send className="h-4 w-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center">
+                      Your data is auto-saved locally as you type.
+                    </p>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Embedded Map */}
+            <Card className="border-gray-100 dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
+              <CardContent className="p-0">
+                <div className="relative h-[220px] bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                  <iframe
+                    src="https://www.openstreetmap.org/export/embed.html?bbox=80.95%2C26.84%2C81.0%2C26.88&layer=mapnik&marker=26.86%2C80.97"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    title="UP ISHA Office Location - King George's Medical University, Lucknow"
+                    className="w-full h-full"
+                  />
+                  {/* Map overlay card */}
+                  <div className="absolute bottom-3 left-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-lg shadow-md p-3 max-w-[220px] border border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MapPin className="h-3.5 w-3.5 text-upisha-teal" />
+                      <span className="text-xs font-semibold text-upisha-navy dark:text-white">KGMU, Lucknow</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                      Dept. of Audiology & SLP, King George&apos;s Medical University
+                    </p>
+                    <a
+                      href="https://www.google.com/maps/search/King+George%27s+Medical+University+Lucknow"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[10px] text-upisha-teal font-semibold mt-1.5 hover:underline"
+                    >
+                      Get Directions <ExternalLink className="h-2.5 w-2.5" />
+                    </a>
+                  </div>
                 </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                        Name *
-                      </label>
-                      <Input
-                        required
-                        placeholder="Your name"
-                        value={contactForm.name}
-                        onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                        Email *
-                      </label>
-                      <Input
-                        required
-                        type="email"
-                        placeholder="you@example.com"
-                        value={contactForm.email}
-                        onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                      Subject *
-                    </label>
-                    <Input
-                      required
-                      placeholder="How can we help?"
-                      value={contactForm.subject}
-                      onChange={(e) =>
-                        setContactForm({ ...contactForm, subject: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                      Message *
-                    </label>
-                    <Textarea
-                      required
-                      placeholder="Your message..."
-                      value={contactForm.message}
-                      onChange={(e) =>
-                        setContactForm({ ...contactForm, message: e.target.value })
-                      }
-                      rows={5}
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Sending...' : 'Send Message'}
-                    <Send className="h-4 w-4 ml-2" />
-                  </Button>
-                </form>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </AnimatedSection>
@@ -3793,13 +3893,18 @@ function WebinarsSection() {
 /* ─── Testimonials Section ─── */
 function TestimonialsSection() {
   const [current, setCurrent] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
 
   useEffect(() => {
+    if (isPaused) return
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % testimonials.length)
-    }, 7000)
+    }, 6000)
     return () => clearInterval(timer)
-  }, [])
+  }, [isPaused])
+
+  const goNext = () => setCurrent((prev) => (prev + 1) % testimonials.length)
+  const goPrev = () => setCurrent((prev) => (prev - 1 + testimonials.length) % testimonials.length)
 
   return (
     <section className="py-16 md:py-20 bg-upisha-navy dark:bg-gray-950 relative overflow-hidden border-t-2 border-t-upisha-gold/20">
@@ -3818,7 +3923,27 @@ function TestimonialsSection() {
           </h2>
         </div>
 
-        <div className="relative min-h-[260px] md:min-h-[220px]">
+        <div
+          className="relative min-h-[260px] md:min-h-[220px]"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          {/* Nav arrows */}
+          <button
+            onClick={goPrev}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+            aria-label="Previous testimonial"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={goNext}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+            aria-label="Next testimonial"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+
           <AnimatePresence mode="wait">
             <motion.div
               key={current}
@@ -3826,7 +3951,7 @@ function TestimonialsSection() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
-              className="text-center"
+              className="text-center px-8"
             >
               <div className="flex justify-center gap-1 mb-4">
                 {Array.from({ length: testimonials[current].rating }).map((_, i) => (
@@ -3849,18 +3974,23 @@ function TestimonialsSection() {
           </AnimatePresence>
         </div>
 
-        {/* Dots */}
-        <div className="flex justify-center gap-2 mt-8">
-          {testimonials.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`h-2.5 rounded-full transition-all duration-300 ${
-                i === current ? 'w-8 bg-upisha-gold' : 'w-2.5 bg-white/30 hover:bg-white/50'
-              }`}
-              aria-label={`Go to testimonial ${i + 1}`}
-            />
-          ))}
+        {/* Dots + pause indicator */}
+        <div className="flex justify-center items-center gap-3 mt-8">
+          {isPaused && (
+            <span className="text-[10px] text-white/40 uppercase tracking-wider">Paused</span>
+          )}
+          <div className="flex gap-2">
+            {testimonials.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`h-2.5 rounded-full transition-all duration-300 ${
+                  i === current ? 'w-8 bg-upisha-gold' : 'w-2.5 bg-white/30 hover:bg-white/50'
+                }`}
+                aria-label={`Go to testimonial ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -4259,9 +4389,9 @@ function BreadcrumbIndicator({ activeSection }: { activeSection: string }) {
           transition={{ duration: 0.25 }}
           className="fixed top-[88px] md:top-[104px] left-1/2 -translate-x-1/2 z-30 hidden md:block pointer-events-none"
         >
-          <div className="glass rounded-full shadow-md px-4 py-1.5 flex items-center gap-2 text-xs">
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-full shadow-md border border-gray-200/60 dark:border-gray-700/60 px-4 py-1.5 flex items-center gap-2 text-xs">
             <span className="text-gray-500 dark:text-gray-400">You are here:</span>
-            <span className="text-upisha-teal font-semibold flex items-center gap-1.5">
+            <span className="text-upisha-teal dark:text-upisha-teal font-semibold flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-upisha-gold animate-pulse" />
               {current.label}
             </span>
