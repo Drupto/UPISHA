@@ -1,0 +1,2002 @@
+     1→'use client'
+     2→
+     3→import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+     4→import { motion, AnimatePresence, useInView, useScroll, useSpring } from 'framer-motion'
+     5→import {
+     6→  Menu,
+     7→  X,
+     8→  Phone,
+     9→  Mail,
+    10→  MapPin,
+    11→  ChevronRight,
+    12→  ChevronLeft,
+    13→  ChevronUp,
+    14→  ChevronDown,
+    15→  Users,
+    16→  BookOpen,
+    17→  FileText,
+    18→  Award,
+    19→  Camera,
+    20→  UserPlus,
+    21→  Ear,
+    22→  MessageSquare,
+    23→  Heart,
+    24→  Stethoscope,
+    25→  GraduationCap,
+    26→  Globe,
+    27→  Facebook,
+    28→  Twitter,
+    29→  Instagram,
+    30→  Linkedin,
+    31→  Youtube,
+    32→  Send,
+    33→  Clock,
+    34→  Calendar,
+    35→  ArrowRight,
+    36→  CheckCircle2,
+    37→  Star,
+    38→  Briefcase,
+    39→  Shield,
+    40→  ExternalLink,
+    41→  Download,
+    42→  Eye,
+    43→  Quote,
+    44→  Activity,
+    45→  Microscope,
+    46→  HandHeart,
+    47→  TrendingUp,
+    48→  Building2,
+    49→  Newspaper,
+    50→  PlayCircle,
+    51→  Sun,
+    52→  Moon,
+    53→  Bell,
+    54→  Timer,
+    55→  Sparkles,
+    56→  Search,
+    57→  AlertCircle,
+    58→  Megaphone,
+    59→  Lightbulb,
+    60→  Trophy,
+    61→  MapPinned,
+    62→  Command,
+    63→  Share2,
+    64→  Printer,
+    65→  PhoneCall,
+    66→  Building,
+    67→  Mailbox,
+    68→} from 'lucide-react'
+    69→import { useToast } from '@/hooks/use-toast'
+    70→import { Button } from '@/components/ui/button'
+    71→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    72→import { Input } from '@/components/ui/input'
+    73→import { Textarea } from '@/components/ui/textarea'
+    74→import { Badge } from '@/components/ui/badge'
+    75→import { Separator } from '@/components/ui/separator'
+    76→import {
+    77→  Select,
+    78→  SelectContent,
+    79→  SelectItem,
+    80→  SelectTrigger,
+    81→  SelectValue,
+    82→} from '@/components/ui/select'
+    83→import {
+    84→  Dialog,
+    85→  DialogContent,
+    86→  DialogHeader,
+    87→  DialogTitle,
+    88→  DialogTrigger,
+    89→} from '@/components/ui/dialog'
+    90→import {
+    91→  Accordion,
+    92→  AccordionContent,
+    93→  AccordionItem,
+    94→  AccordionTrigger,
+    95→} from '@/components/ui/accordion'
+    96→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    97→
+    98→/* ─── Data ─── */
+    99→
+   100→const navLinks = [
+   101→  { label: 'Home', href: '#home' },
+   102→  { label: 'About Us', href: '#about' },
+   103→  { label: 'Documents', href: '#documents' },
+   104→  { label: 'Publications', href: '#publications' },
+   105→  { label: 'Professionals', href: '#professionals' },
+   106→  { label: 'Join UP ISHA', href: '#join' },
+   107→  { label: 'Gallery', href: '#gallery' },
+   108→  { label: 'Contact Us', href: '#contact' },
+   109→]
+   110→
+   111→const heroSlides = [
+   112→  {
+   113→    image: '/images/hero-1.png',
+   114→    title: 'Uttar Pradesh Speech & Hearing Association',
+   115→    subtitle: 'Dedicated to Excellence in Audiology & Speech-Language Pathology',
+   116→    cta: 'Join UP ISHA',
+   117→    ctaLink: '#join',
+   118→  },
+   119→  {
+   120→    image: '/images/hero-2.png',
+   121→    title: 'Empowering Communication',
+   122→    subtitle: 'Supporting professionals who transform lives through speech and hearing care',
+   123→    cta: 'Find a Professional',
+   124→    ctaLink: '#professionals',
+   125→  },
+   126→  {
+   127→    image: '/images/hero-3.png',
+   128→    title: 'Together We Advance',
+   129→    subtitle: 'Building a stronger community of speech and hearing professionals across UP',
+   130→    cta: 'Learn More',
+   131→    ctaLink: '#about',
+   132→  },
+   133→]
+   134→
+   135→const announcements = [
+   136→  {
+   137→    date: '15 Mar 2025',
+   138→    title: 'UP ISHA Annual Conference 2025 - Registration Open',
+   139→    type: 'Event',
+   140→  },
+   141→  {
+   142→    date: '28 Feb 2025',
+   143→    title: 'Call for Papers - UP Journal of Speech & Hearing',
+   144→    type: 'Publication',
+   145→  },
+   146→  {
+   147→    date: '10 Feb 2025',
+   148→    title: 'Workshop on Pediatric Audiology - Lucknow Chapter',
+   149→    type: 'Workshop',
+   150→  },
+   151→  {
+   152→    date: '25 Jan 2025',
+   153→    title: 'New Membership Benefits for 2025 Announced',
+   154→    type: 'Announcement',
+   155→  },
+   156→  {
+   157→    date: '15 Jan 2025',
+   158→    title: 'Republic Day Special Webinar on Hearing Health',
+   159→    type: 'Webinar',
+   160→  },
+   161→]
+   162→
+   163→const features = [
+   164→  {
+   165→    icon: BookOpen,
+   166→    title: 'UP ISHA Newsletter',
+   167→    description:
+   168→      'Stay updated with activities, events, and developments from the Uttar Pradesh Speech & Hearing Association.',
+   169→  },
+   170→  {
+   171→    icon: Users,
+   172→    title: 'Executive Council',
+   173→    description:
+   174→      'Meet the dedicated team of professionals governing UP ISHA and guiding its mission forward.',
+   175→  },
+   176→  {
+   177→    icon: GraduationCap,
+   178→    title: 'Webinars & Workshops',
+   179→    description:
+   180→      'Access recordings and schedules of professional development webinars and hands-on workshops.',
+   181→  },
+   182→  {
+   183→    icon: Globe,
+   184→    title: 'Regional Chapters',
+   185→    description:
+   186→      'UP ISHA has chapters across Lucknow, Varanasi, Agra, Kanpur, and other major cities in Uttar Pradesh.',
+   187→  },
+   188→]
+   189→
+   190→const executiveCouncil = [
+   191→  {
+   192→    name: 'Dr. Rajesh Kumar Sharma',
+   193→    role: 'President',
+   194→    image: '/images/avatar-president.png',
+   195→    speciality: 'Audiology',
+   196→  },
+   197→  {
+   198→    name: 'Dr. Sunita Verma',
+   199→    role: 'Vice President',
+   200→    image: '/images/avatar-vp.png',
+   201→    speciality: 'Speech-Language Pathology',
+   202→  },
+   203→  {
+   204→    name: 'Dr. Amit Mishra',
+   205→    role: 'Secretary',
+   206→    image: '/images/avatar-secretary.png',
+   207→    speciality: 'Audiology',
+   208→  },
+   209→  {
+   210→    name: 'Dr. Priya Singh',
+   211→    role: 'Treasurer',
+   212→    image: '/images/avatar-treasurer.png',
+   213→    speciality: 'Speech-Language Pathology',
+   214→  },
+   215→  {
+   216→    name: 'Dr. Vikram Pandey',
+   217→    role: 'Joint Secretary',
+   218→    image: null,
+   219→    speciality: 'Neuro-Audiology',
+   220→  },
+   221→  {
+   222→    name: 'Dr. Ananya Gupta',
+   223→    role: 'Executive Member',
+   224→    image: null,
+   225→    speciality: 'Pediatric Audiology',
+   226→  },
+   227→]
+   228→
+   229→const documents = [
+   230→  {
+   231→    title: 'UP ISHA Constitution & Bye-Laws',
+   232→    description: 'Official constitution and bye-laws governing the association',
+   233→    category: 'Governance',
+   234→    icon: Shield,
+   235→  },
+   236→  {
+   237→    title: 'Scope of Practice - Audiology',
+   238→    description: 'Defined scope of practice for audiologists in Uttar Pradesh',
+   239→    category: 'Practice',
+   240→    icon: Stethoscope,
+   241→  },
+   242→  {
+   243→    title: 'Scope of Practice - Speech-Language Pathology',
+   244→    description: 'Defined scope of practice for SLPs in Uttar Pradesh',
+   245→    category: 'Practice',
+   246→    icon: MessageSquare,
+   247→  },
+   248→  {
+   249→    title: 'Code of Ethics',
+   250→    description: 'Professional code of ethics for all UP ISHA members',
+   251→    category: 'Governance',
+   252→    icon: Award,
+   253→  },
+   254→  {
+   255→    title: 'RCI Guidelines & Notifications',
+   256→    description: 'Rehabilitation Council of India regulatory mandates',
+   257→    category: 'Regulatory',
+   258→    icon: FileText,
+   259→  },
+   260→  {
+   261→    title: 'Clinical Practice Guidelines',
+   262→    description: 'Evidence-based guidelines for clinical practice',
+   263→    category: 'Practice',
+   264→    icon: BookOpen,
+   265→  },
+   266→]
+   267→
+   268→const publications = [
+   269→  {
+   270→    title: 'UP Journal of Speech & Hearing',
+   271→    description:
+   272→      'The official peer-reviewed journal of UP ISHA featuring research articles, case studies, and reviews.',
+   273→    type: 'Journal',
+   274→    icon: BookOpen,
+   275→  },
+   276→  {
+   277→    title: 'Clinical Monograph Series',
+   278→    description:
+   279→      'Focused monographs on specialized topics in audiology and speech-language pathology.',
+   280→    type: 'Monograph',
+   281→    icon: FileText,
+   282→  },
+   283→  {
+   284→    title: 'Research in Uttar Pradesh',
+   285→    description:
+   286→      'Directory of ongoing and completed research projects in speech and hearing across UP.',
+   287→    type: 'Research',
+   288→    icon: GraduationCap,
+   289→  },
+   290→]
+   291→
+   292→const professionalCategories = [
+   293→  {
+   294→    title: 'Audiology',
+   295→    description: 'Find qualified audiologists across Uttar Pradesh',
+   296→    icon: Ear,
+   297→    count: '250+',
+   298→  },
+   299→  {
+   300→    title: 'Speech-Language Pathology',
+   301→    description: 'Connect with certified speech-language pathologists',
+   302→    icon: MessageSquare,
+   303→    count: '300+',
+   304→  },
+   305→  {
+   306→    title: 'Clinic Accreditation',
+   307→    description: 'Locate accredited speech and hearing clinics',
+   308→    icon: Briefcase,
+   309→    count: '100+',
+   310→  },
+   311→  {
+   312→    title: 'Academic Programs',
+   313→    description: 'Universities offering ASLP programs in UP',
+   314→    icon: GraduationCap,
+   315→    count: '15+',
+   316→  },
+   317→]
+   318→
+   319→const membershipBenefits = [
+   320→  'Access to professional development webinars and workshops',
+   321→  'Subscription to UP Journal of Speech & Hearing',
+   322→  'Networking opportunities with professionals across UP',
+   323→  'Discounted registration for UP ISHA conferences',
+   324→  'Access to clinical practice guidelines and resources',
+   325→  'Voting rights in association elections',
+   326→  'Professional liability insurance guidance',
+   327→  'Career advancement and job opportunity notifications',
+   328→]
+   329→
+   330→const membershipTypes = [
+   331→  {
+   332→    type: 'Life Member',
+   333→    price: '₹5,000',
+   334→    description: 'One-time payment for lifetime membership',
+   335→    features: ['All standard benefits', 'Voting rights', 'Conference discounts', 'Journal access'],
+   336→    popular: true,
+   337→  },
+   338→  {
+   339→    type: 'Annual Member',
+   340→    price: '₹500/year',
+   341→    description: 'Annual renewable membership',
+   342→    features: ['Standard benefits', 'Journal access', 'Webinar access', 'Networking'],
+   343→    popular: false,
+   344→  },
+   345→  {
+   346→    type: 'Student Member',
+   347→    price: '₹200/year',
+   348→    description: 'For current ASLP students in UP',
+   349→    features: ['Student benefits', 'Mentorship program', 'Workshop access', 'Career guidance'],
+   350→    popular: false,
+   351→  },
+   352→]
+   353→
+   354→const galleryImages = [
+   355→  { src: '/images/hero-1.png', title: 'Annual Conference 2024', category: 'Events' },
+   356→  { src: '/images/hero-2.png', title: 'Pediatric Workshop', category: 'Workshops' },
+   357→  { src: '/images/hero-3.png', title: 'Executive Council Meeting', category: 'Meetings' },
+   358→  { src: '/images/professionals.png', title: 'World Hearing Day 2024', category: 'Events' },
+   359→  { src: '/images/about-illustration.png', title: 'Audiology Awareness Camp', category: 'Outreach' },
+   360→  { src: '/images/gallery-cover.png', title: 'SLP Training Session', category: 'Training' },
+   361→]
+   362→
+   363→const faqItems = [
+   364→  {
+   365→    question: 'Who can join UP ISHA?',
+   366→    answer:
+   367→      'Any professional with a recognized qualification in Audiology and/or Speech-Language Pathology, registered with RCI, and residing or working in Uttar Pradesh is eligible for membership. Students currently enrolled in recognized ASLP programs can apply for student membership.',
+   368→  },
+   369→  {
+   370→    question: 'What are the benefits of UP ISHA membership?',
+   371→    answer:
+   372→      'UP ISHA members enjoy access to professional development webinars, subscription to our journal, networking opportunities, conference discounts, clinical guidelines, voting rights, and career support among many other benefits.',
+   373→  },
+   374→  {
+   375→    question: 'How do I find a qualified audiologist or SLP in UP?',
+   376→    answer:
+   377→      'Use our "Locate a Professional" directory to search for RCI-registered audiologists and speech-language pathologists in Uttar Pradesh. You can search by city, speciality, and practice setting.',
+   378→  },
+   379→  {
+   380→    question: 'Does UP ISHA organize continuing education programs?',
+   381→    answer:
+   382→      'Yes, UP ISHA regularly organizes webinars, workshops, and conferences for continuing education. Check our events calendar and announcements section for upcoming programs.',
+   383→  },
+   384→  {
+   385→    question: 'How can I contribute to the UP Journal of Speech & Hearing?',
+   386→    answer:
+   387→      'We welcome research articles, case studies, and reviews. Please refer to our "Guidelines to Authors" section in the Publications tab for detailed submission guidelines.',
+   388→  },
+   389→]
+   390→
+   391→const stats = [
+   392→  { value: 550, suffix: '+', label: 'Active Members', icon: Users },
+   393→  { value: 20, suffix: '+', label: 'Years of Service', icon: Activity },
+   394→  { value: 15, suffix: '+', label: 'Regional Chapters', icon: Globe },
+   395→  { value: 50, suffix: '+', label: 'Annual Events', icon: Calendar },
+   396→]
+   397→
+   398→const testimonials = [
+   399→  {
+   400→    name: 'Dr. Meera Tiwari',
+   401→    role: 'Senior Audiologist, Lucknow',
+   402→    content:
+   403→      'UP ISHA has been instrumental in my professional growth. The webinars and conferences have kept me updated with the latest advancements in audiology. The networking opportunities are invaluable.',
+   404→    rating: 5,
+   405→  },
+   406→  {
+   407→    name: 'Dr. Sanjay Gupta',
+   408→    role: 'Speech-Language Pathologist, Varanasi',
+   409→    content:
+   410→      'Being a member of UP ISHA has connected me with a wonderful community of professionals. The journal provides excellent research insights, and the workshops are truly enriching.',
+   411→    rating: 5,
+   412→  },
+   413→  {
+   414→    name: 'Dr. Kavita Rathore',
+   415→    role: 'Pediatric SLP, Kanpur',
+   416→    content:
+   417→      'The association has given me a platform to contribute to the field. The mentoring program and clinical guidelines have significantly improved my practice. Highly recommended!',
+   418→    rating: 5,
+   419→  },
+   420→  {
+   421→    name: 'Dr. Rakesh Pandey',
+   422→    role: 'Academic Researcher, Agra',
+   423→    content:
+   424→      'UP ISHA publications are of exceptional quality. The peer-review process is rigorous, and the journal has helped me share my research with a wider audience across the state.',
+   425→    rating: 5,
+   426→  },
+   427→]
+   428→
+   429→const partners = [
+   430→  { name: 'Rehabilitation Council of India', icon: Shield },
+   431→  { name: 'All India Institute of Speech & Hearing', icon: Ear },
+   432→  { name: 'King George\'s Medical University', icon: Building2 },
+   433→  { name: 'AIIMS Delhi', icon: Stethoscope },
+   434→  { name: 'Indian Speech-Language & Hearing Association', icon: Globe },
+   435→  { name: 'WHO India', icon: Heart },
+   436→]
+   437→
+   438→const upcomingWebinars = [
+   439→  {
+   440→    title: 'Advanced Audiological Assessment in Pediatric Population',
+   441→    date: 'March 25, 2025',
+   442→    time: '4:00 PM IST',
+   443→    speaker: 'Dr. Anita Deshpande',
+   444→    duration: '90 min',
+   445→  },
+   446→  {
+   447→    title: 'Tele-Practice in Speech-Language Pathology',
+   448→    date: 'April 8, 2025',
+   449→    time: '5:00 PM IST',
+   450→    speaker: 'Dr. Manoj Kumar',
+   451→    duration: '60 min',
+   452→  },
+   453→  {
+   454→    title: 'Cochlear Implant Rehabilitation: Best Practices',
+   455→    date: 'April 22, 2025',
+   456→    time: '4:30 PM IST',
+   457→    speaker: 'Dr. Sunita Verma',
+   458→    duration: '75 min',
+   459→  },
+   460→]
+   461→
+   462→/* Sample professional directory data */
+   463→const sampleProfessionals = [
+   464→  {
+   465→    name: 'Dr. Rajesh Kumar Sharma',
+   466→    speciality: 'Audiology',
+   467→    city: 'Lucknow',
+   468→    qualification: 'Ph.D. (Audiology), AIISH Mysuru',
+   469→    experience: '22 years',
+   470→    setting: 'Hospital',
+   471→    rci: 'A-12345',
+   472→  },
+   473→  {
+   474→    name: 'Dr. Sunita Verma',
+   475→    speciality: 'Speech-Language Pathology',
+   476→    city: 'Lucknow',
+   477→    qualification: 'Ph.D. (SLP), KGMU',
+   478→    experience: '18 years',
+   479→    setting: 'Hospital',
+   480→    rci: 'B-23456',
+   481→  },
+   482→  {
+   483→    name: 'Dr. Amit Mishra',
+   484→    speciality: 'Audiology',
+   485→    city: 'Varanasi',
+   486→    qualification: 'M.Sc. (Audiology), AIISH',
+   487→    experience: '15 years',
+   488→    setting: 'Clinic',
+   489→    rci: 'A-34567',
+   490→  },
+   491→  {
+   492→    name: 'Dr. Priya Singh',
+   493→    speciality: 'Speech-Language Pathology',
+   494→    city: 'Kanpur',
+   495→    qualification: 'M.Sc. (SLP), AIISH',
+   496→    experience: '12 years',
+   497→    setting: 'Clinic',
+   498→    rci: 'B-45678',
+   499→  },
+   500→  {
+   501→    name: 'Dr. Vikram Pandey',
+   502→    speciality: 'Neuro-Audiology',
+   503→    city: 'Agra',
+   504→    qualification: 'Ph.D. (Neuro-Audiology), AIIMS',
+   505→    experience: '20 years',
+   506→    setting: 'Hospital',
+   507→    rci: 'A-56789',
+   508→  },
+   509→  {
+   510→    name: 'Dr. Ananya Gupta',
+   511→    speciality: 'Pediatric Audiology',
+   512→    city: 'Lucknow',
+   513→    qualification: 'M.Sc. (Audiology), KGMU',
+   514→    experience: '10 years',
+   515→    setting: 'Clinic',
+   516→    rci: 'A-67890',
+   517→  },
+   518→  {
+   519→    name: 'Dr. Meera Tiwari',
+   520→    speciality: 'Audiology',
+   521→    city: 'Lucknow',
+   522→    qualification: 'Ph.D. (Audiology), AIISH',
+   523→    experience: '25 years',
+   524→    setting: 'Hospital',
+   525→    rci: 'A-78901',
+   526→  },
+   527→  {
+   528→    name: 'Dr. Sanjay Gupta',
+   529→    speciality: 'Speech-Language Pathology',
+   530→    city: 'Varanasi',
+   531→    qualification: 'M.Sc. (SLP), AIISH',
+   532→    experience: '14 years',
+   533→    setting: 'Academic',
+   534→    rci: 'B-89012',
+   535→  },
+   536→  {
+   537→    name: 'Dr. Kavita Rathore',
+   538→    speciality: 'Speech-Language Pathology',
+   539→    city: 'Kanpur',
+   540→    qualification: 'M.Sc. (SLP), KGMU',
+   541→    experience: '11 years',
+   542→    setting: 'Clinic',
+   543→    rci: 'B-90123',
+   544→  },
+   545→  {
+   546→    name: 'Dr. Rakesh Pandey',
+   547→    speciality: 'Audiology',
+   548→    city: 'Agra',
+   549→    qualification: 'Ph.D. (Audiology), AIIMS',
+   550→    experience: '19 years',
+   551→    setting: 'Academic',
+   552→    rci: 'A-01234',
+   553→  },
+   554→  {
+   555→    name: 'Dr. Neha Saxena',
+   556→    speciality: 'Speech-Language Pathology',
+   557→    city: 'Gorakhpur',
+   558→    qualification: 'M.Sc. (SLP), AIISH',
+   559→    experience: '8 years',
+   560→    setting: 'Clinic',
+   561→    rci: 'B-11223',
+   562→  },
+   563→  {
+   564→    name: 'Dr. Arjun Yadav',
+   565→    speciality: 'Audiology',
+   566→    city: 'Allahabad',
+   567→    qualification: 'M.Sc. (Audiology), AIISH',
+   568→    experience: '13 years',
+   569→    setting: 'Hospital',
+   570→    rci: 'A-22334',
+   571→  },
+   572→]
+   573→
+   574→const upCities = ['All Cities', 'Lucknow', 'Varanasi', 'Kanpur', 'Agra', 'Gorakhpur', 'Allahabad']
+   575→const specialities = ['All Specialities', 'Audiology', 'Speech-Language Pathology', 'Neuro-Audiology', 'Pediatric Audiology']
+   576→
+   577→/* Events Timeline data */
+   578→const eventsTimeline = [
+   579→  {
+   580→    date: '18-20 Oct 2025',
+   581→    title: 'UP ISHACON 2025 - Annual State Conference',
+   582→    location: 'KGMU, Lucknow',
+   583→    description:
+   584→      'Three-day flagship conference featuring keynote lectures, scientific paper presentations, panel discussions, and hands-on workshops on the latest advances in audiology and speech-language pathology.',
+   585→    type: 'Conference',
+   586→    icon: Trophy,
+   587→  },
+   588→  {
+   589→    date: '25 Mar 2025',
+   590→    title: 'Workshop on Pediatric Audiology',
+   591→    location: 'Lucknow Chapter',
+   592→    description:
+   593→      'Hands-on workshop covering ABR, OAE, and behavioral audiometry for infants and young children. Limited to 30 participants.',
+   594→    type: 'Workshop',
+   595→    icon: Microscope,
+   596→  },
+   597→  {
+   598→    date: '03 Mar 2025',
+   599→    title: 'World Hearing Day Awareness Walk',
+   600→    location: 'Hazratganj, Lucknow',
+   601→    description:
+   602→      'Public awareness walk and free hearing screening camp in observance of WHO World Hearing Day 2025.',
+   603→    type: 'Outreach',
+   604→    icon: Megaphone,
+   605→  },
+   606→  {
+   607→    date: '15 Feb 2025',
+   608→    title: 'Continuing Education - Voice Disorders',
+   609→    location: 'Webinar (Online)',
+   610→    description:
+   611→      'Expert-led session on assessment and management of voice disorders across the lifespan, including latest evidence-based practices.',
+   612→    type: 'Webinar',
+   613→    icon: PlayCircle,
+   614→  },
+   615→  {
+   616→    date: '28 Jan 2025',
+   617→    title: 'Research Methodology Workshop',
+   618→    location: 'KGMU, Lucknow',
+   619→    description:
+   620→      'Two-day workshop for early-career researchers on research design, statistical analysis, and scientific writing for ASLP professionals.',
+   621→    type: 'Workshop',
+   622→    icon: GraduationCap,
+   623→  },
+   624→]
+   625→
+   626→/* Member Spotlight data */
+   627→const memberSpotlights = [
+   628→  {
+   629→    name: 'Dr. Meera Tiwari',
+   630→    role: 'Senior Audiologist',
+   631→    location: 'Lucknow',
+   632→    achievement: 'Recognized for pioneering community-based newborn hearing screening program across 12 districts of UP.',
+   633→    years: '25 years',
+   634→    specialty: 'Audiology',
+   635→  },
+   636→  {
+   637→    name: 'Dr. Vikram Pandey',
+   638→    role: 'Neuro-Audiologist',
+   639→    location: 'Agra',
+   640→    achievement: 'Published 35+ peer-reviewed papers on central auditory processing disorders and traumatic brain injury.',
+   641→    years: '20 years',
+   642→    specialty: 'Neuro-Audiology',
+   643→  },
+   644→  {
+   645→    name: 'Dr. Kavita Rathore',
+   646→    role: 'Pediatric SLP',
+   647→    location: 'Kanpur',
+   648→    achievement: 'Established first free pediatric speech therapy clinic in Kanpur serving 500+ children annually.',
+   649→    years: '11 years',
+   650→    specialty: 'Speech-Language Pathology',
+   651→  },
+   652→]
+   653→
+   654→/* News ticker items */
+   655→const newsTickerItems = [
+   656→  'UP ISHACON 2025 Registration Now Open — Early Bird Discount Until September 15',
+   657→  'Call for Papers: UP Journal of Speech & Hearing Vol. 12 — Submit by August 30',
+   658→  'New RCI Continuing Education Credits Now Available for UP ISHA Webinars',
+   659→  'Free Hearing Screening Camp on World Hearing Day — March 3, 2025',
+   660→  'Student Scholarship Program 2025 — Applications Open for ASLP Researchers',
+   661→]
+   662→
+   663→/* ─── Animated Section Wrapper ─── */
+   664→function AnimatedSection({
+   665→  children,
+   666→  className = '',
+   667→  id = '',
+   668→}: {
+   669→  children: React.ReactNode
+   670→  className?: string
+   671→  id?: string
+   672→}) {
+   673→  const ref = useRef(null)
+   674→  const isInView = useInView(ref, { once: true, margin: '-50px' })
+   675→
+   676→  return (
+   677→    <motion.section
+   678→      ref={ref}
+   679→      id={id}
+   680→      initial={{ opacity: 0, y: 40 }}
+   681→      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+   682→      transition={{ duration: 0.7, ease: 'easeOut' }}
+   683→      className={className}
+   684→    >
+   685→      {children}
+   686→    </motion.section>
+   687→  )
+   688→}
+   689→
+   690→/* ─── Reusable Section Heading ─── */
+   691→function SectionHeading({
+   692→  badge,
+   693→  badgeIcon: BadgeIcon,
+   694→  title,
+   695→  subtitle,
+   696→  light = false,
+   697→  align = 'center',
+   698→}: {
+   699→  badge: string
+   700→  badgeIcon?: React.ElementType
+   701→  title: string
+   702→  subtitle?: string
+   703→  light?: boolean
+   704→  align?: 'center' | 'left'
+   705→}) {
+   706→  return (
+   707→    <div className={`mb-12 ${align === 'center' ? 'text-center' : 'text-left'}`}>
+   708→      <motion.div
+   709→        initial={{ opacity: 0, y: 10 }}
+   710→        whileInView={{ opacity: 1, y: 0 }}
+   711→        viewport={{ once: true }}
+   712→        className={`inline-flex items-center gap-1.5 ${
+   713→          light ? 'bg-white/10 text-white' : 'bg-upisha-teal/10 text-upisha-teal'
+   714→        } px-3 py-1.5 rounded-full text-xs font-semibold mb-3`}
+   715→      >
+   716→        {BadgeIcon && <BadgeIcon className="h-3.5 w-3.5" />}
+   717→        {badge}
+   718→      </motion.div>
+   719→      <motion.h2
+   720→        initial={{ opacity: 0, y: 15 }}
+   721→        whileInView={{ opacity: 1, y: 0 }}
+   722→        viewport={{ once: true }}
+   723→        transition={{ delay: 0.1 }}
+   724→        className={`text-3xl md:text-4xl font-bold mb-3 ${light ? 'text-white' : 'text-upisha-navy'}`}
+   725→      >
+   726→        {title}
+   727→      </motion.h2>
+   728→      <div
+   729→        className={`h-1 w-16 bg-upisha-gold rounded-full mb-4 ${align === 'center' ? 'mx-auto' : ''}`}
+   730→      />
+   731→      {subtitle && (
+   732→        <p
+   733→          className={`max-w-2xl ${
+   734→            align === 'center' ? 'mx-auto' : ''
+   735→          } text-base ${light ? 'text-gray-300' : 'text-gray-600'}`}
+   736→        >
+   737→          {subtitle}
+   738→        </p>
+   739→      )}
+   740→    </div>
+   741→  )
+   742→}
+   743→
+   744→/* ─── News Ticker ─── */
+   745→function NewsTicker() {
+   746→  return (
+   747→    <div className="bg-upisha-navy text-white py-2.5 overflow-hidden border-b border-upisha-teal/30">
+   748→      <div className="max-w-7xl mx-auto px-4 flex items-center gap-4">
+   749→        <div className="flex items-center gap-2 shrink-0 bg-upisha-gold text-upisha-navy px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">
+   750→          <Megaphone className="h-3.5 w-3.5" />
+   751→          Latest
+   752→        </div>
+   753→        <div className="flex-1 overflow-hidden relative">
+   754→          <motion.div
+   755→            className="flex gap-12 whitespace-nowrap"
+   756→            animate={{ x: ['0%', '-50%'] }}
+   757→            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+   758→          >
+   759→            {[...newsTickerItems, ...newsTickerItems].map((item, i) => (
+   760→              <span key={i} className="text-sm text-gray-200 flex items-center gap-2">
+   761→                <span className="h-1.5 w-1.5 rounded-full bg-upisha-gold" />
+   762→                {item}
+   763→              </span>
+   764→            ))}
+   765→          </motion.div>
+   766→        </div>
+   767→      </div>
+   768→    </div>
+   769→  )
+   770→}
+   771→
+   772→/* ─── Top Bar ─── */
+   773→function TopBar() {
+   774→  return (
+   775→    <div className="bg-upisha-navy text-white text-sm py-2 border-b border-white/5">
+   776→      <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+   777→        <div className="flex items-center gap-4 flex-wrap justify-center">
+   778→          <a
+   779→            href="tel:+915224567890"
+   780→            className="flex items-center gap-1.5 hover:text-upisha-gold transition-colors group"
+   781→          >
+   782→            <PhoneCall className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+   783→            +91-522-456-7890
+   784→          </a>
+   785→          <a
+   786→            href="mailto:info@upisha.org"
+   787→            className="flex items-center gap-1.5 hover:text-upisha-gold transition-colors group"
+   788→          >
+   789→            <Mailbox className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+   790→            info@upisha.org
+   791→          </a>
+   792→        </div>
+   793→        <div className="flex items-center gap-2">
+   794→          <span className="text-xs text-gray-400 mr-1 hidden sm:inline">Follow us:</span>
+   795→          {[
+   796→            { icon: Facebook, label: 'Facebook' },
+   797→            { icon: Twitter, label: 'Twitter' },
+   798→            { icon: Instagram, label: 'Instagram' },
+   799→            { icon: Linkedin, label: 'LinkedIn' },
+   800→            { icon: Youtube, label: 'YouTube' },
+   801→          ].map((social) => (
+   802→            <a
+   803→              key={social.label}
+   804→              href="#"
+   805→              className="w-7 h-7 rounded-full bg-white/5 hover:bg-upisha-gold flex items-center justify-center transition-all duration-200 hover:scale-110 hover:text-upisha-navy"
+   806→              aria-label={social.label}
+   807→            >
+   808→              <social.icon className="h-3.5 w-3.5" />
+   809→            </a>
+   810→          ))}
+   811→        </div>
+   812→      </div>
+   813→    </div>
+   814→  )
+   815→}
+   816→
+   817→/* ─── Navbar ─── */
+   818→function Navbar({
+   819→  activeSection,
+   820→  onNavClick,
+   821→  onOpenSearch,
+   822→}: {
+   823→  activeSection: string
+   824→  onNavClick: (href: string) => void
+   825→  onOpenSearch: () => void
+   826→}) {
+   827→  const [isScrolled, setIsScrolled] = useState(false)
+   828→  const [isMobileOpen, setIsMobileOpen] = useState(false)
+   829→
+   830→  useEffect(() => {
+   831→    const handleScroll = () => setIsScrolled(window.scrollY > 40)
+   832→    window.addEventListener('scroll', handleScroll)
+   833→    return () => window.removeEventListener('scroll', handleScroll)
+   834→  }, [])
+   835→
+   836→  return (
+   837→    <header
+   838→      className={`sticky top-0 z-50 transition-all duration-300 ${
+   839→        isScrolled
+   840→          ? 'bg-white/95 dark:bg-upisha-navy/95 backdrop-blur-md shadow-lg border-b border-gray-100 dark:border-gray-800'
+   841→          : 'bg-white dark:bg-upisha-navy shadow-sm'
+   842→      }`}
+   843→    >
+   844→      <div className="max-w-7xl mx-auto px-4">
+   845→        <div className="flex items-center justify-between h-16 md:h-20">
+   846→          {/* Logo */}
+   847→          <a
+   848→            href="#home"
+   849→            onClick={(e) => {
+   850→              e.preventDefault()
+   851→              onNavClick('#home')
+   852→            }}
+   853→            className="flex items-center gap-3 shrink-0 group"
+   854→          >
+   855→            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-upisha-teal to-upisha-teal-dark rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
+   856→              <Ear className="h-6 w-6 md:h-7 md:w-7 text-white" />
+   857→            </div>
+   858→            <div className="hidden sm:block">
+   859→              <div className="font-bold text-upisha-navy dark:text-white text-sm md:text-base leading-tight">
+   860→                UP ISHA
+   861→              </div>
+   862→              <div className="text-[10px] md:text-xs text-upisha-teal font-medium leading-tight">
+   863→                Speech & Hearing Association
+   864→              </div>
+   865→            </div>
+   866→          </a>
+   867→
+   868→          {/* Desktop Nav */}
+   869→          <nav className="hidden lg:flex items-center gap-1">
+   870→            {navLinks.map((link) => {
+   871→              const isActive = activeSection === link.href.slice(1)
+   872→              return (
+   873→                <a
+   874→                  key={link.href}
+   875→                  href={link.href}
+   876→                  onClick={(e) => {
+   877→                    e.preventDefault()
+   878→                    onNavClick(link.href)
+   879→                  }}
+   880→                  className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+   881→                    isActive
+   882→                      ? 'text-upisha-teal bg-upisha-teal-light dark:bg-upisha-teal/20'
+   883→                      : 'text-gray-600 dark:text-gray-300 hover:text-upisha-teal hover:bg-upisha-teal-light/50 dark:hover:bg-upisha-teal/10'
+   884→                  }`}
+   885→                >
+   886→                  {link.label}
+   887→                  {isActive && (
+   888→                    <motion.span
+   889→                      layoutId="nav-active-indicator"
+   890→                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 w-6 bg-upisha-gold rounded-full"
+   891→                    />
+   892→                  )}
+   893→                </a>
+   894→              )
+   895→            })}
+   896→          </nav>
+   897→
+   898→          {/* CTA + Search + Theme Toggle + Mobile Toggle */}
+   899→          <div className="flex items-center gap-1.5 md:gap-2">
+   900→            <button
+   901→              onClick={onOpenSearch}
+   902→              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-upisha-navy-light dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs transition-colors"
+   903→              aria-label="Open search (Ctrl+K)"
+   904→            >
+   905→              <Search className="h-3.5 w-3.5" />
+   906→              <span className="hidden xl:inline">Search</span>
+   907→              <kbd className="hidden xl:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white border border-gray-200 text-[10px] font-mono">
+   908→                <Command className="h-2.5 w-2.5" />K
+   909→              </kbd>
+   910→            </button>
+   911→            <ThemeToggle />
+   912→            <Button
+   913→              className="hidden md:inline-flex bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md"
+   914→              onClick={() => onNavClick('#join')}
+   915→            >
+   916→              <UserPlus className="h-4 w-4 mr-2" />
+   917→              Join Now
+   918→            </Button>
+   919→            <button
+   920→              className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+   921→              onClick={() => setIsMobileOpen(!isMobileOpen)}
+   922→              aria-label="Toggle navigation menu"
+   923→            >
+   924→              {isMobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+   925→            </button>
+   926→          </div>
+   927→        </div>
+   928→      </div>
+   929→
+   930→      {/* Mobile Nav */}
+   931→      <AnimatePresence>
+   932→        {isMobileOpen && (
+   933→          <motion.div
+   934→            initial={{ height: 0, opacity: 0 }}
+   935→            animate={{ height: 'auto', opacity: 1 }}
+   936→            exit={{ height: 0, opacity: 0 }}
+   937→            transition={{ duration: 0.3 }}
+   938→            className="lg:hidden overflow-hidden bg-white dark:bg-upisha-navy border-t border-gray-100 dark:border-gray-800"
+   939→          >
+   940→            <nav className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1">
+   941→              {navLinks.map((link) => (
+   942→                <a
+   943→                  key={link.href}
+   944→                  href={link.href}
+   945→                  onClick={(e) => {
+   946→                    e.preventDefault()
+   947→                    onNavClick(link.href)
+   948→                    setIsMobileOpen(false)
+   949→                  }}
+   950→                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+   951→                    activeSection === link.href.slice(1)
+   952→                      ? 'text-upisha-teal bg-upisha-teal-light dark:bg-upisha-teal/20'
+   953→                      : 'text-gray-600 dark:text-gray-300 hover:text-upisha-teal hover:bg-gray-50 dark:hover:bg-upisha-navy-light'
+   954→                  }`}
+   955→                >
+   956→                  <ChevronRight className="h-4 w-4 opacity-50" />
+   957→                  {link.label}
+   958→                </a>
+   959→              ))}
+   960→              <Button
+   961→                className="mt-2 bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+   962→                onClick={() => {
+   963→                  onNavClick('#join')
+   964→                  setIsMobileOpen(false)
+   965→                }}
+   966→              >
+   967→                <UserPlus className="h-4 w-4 mr-2" />
+   968→                Join Now
+   969→              </Button>
+   970→            </nav>
+   971→          </motion.div>
+   972→        )}
+   973→      </AnimatePresence>
+   974→    </header>
+   975→  )
+   976→}
+   977→
+   978→/* ─── Hero Section ─── */
+   979→function HeroSection() {
+   980→  const [current, setCurrent] = useState(0)
+   981→
+   982→  useEffect(() => {
+   983→    const timer = setInterval(() => {
+   984→      setCurrent((prev) => (prev + 1) % heroSlides.length)
+   985→    }, 6000)
+   986→    return () => clearInterval(timer)
+   987→  }, [])
+   988→
+   989→  const goTo = (index: number) => setCurrent(index)
+   990→  const goPrev = () => setCurrent((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)
+   991→  const goNext = () => setCurrent((prev) => (prev + 1) % heroSlides.length)
+   992→
+   993→  return (
+   994→    <section id="home" className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+   995→      <AnimatePresence mode="wait">
+   996→        <motion.div
+   997→          key={current}
+   998→          initial={{ opacity: 0, scale: 1.1 }}
+   999→          animate={{ opacity: 1, scale: 1 }}
+  1000→          exit={{ opacity: 0 }}
+  1001→          transition={{ duration: 0.8 }}
+  1002→          className="absolute inset-0"
+  1003→        >
+  1004→          <div
+  1005→            className="absolute inset-0 bg-cover bg-center"
+  1006→            style={{ backgroundImage: `url(${heroSlides[current].image})` }}
+  1007→          />
+  1008→          <div className="absolute inset-0 bg-gradient-to-r from-upisha-navy/90 via-upisha-navy/70 to-upisha-navy/30" />
+  1009→          <div className="absolute inset-0 bg-gradient-to-t from-upisha-navy/60 via-transparent to-transparent" />
+  1010→        </motion.div>
+  1011→      </AnimatePresence>
+  1012→
+  1013→      {/* Content */}
+  1014→      <div className="relative z-10 h-full flex items-center">
+  1015→        <div className="max-w-7xl mx-auto px-4 w-full">
+  1016→          <AnimatePresence mode="wait">
+  1017→            <motion.div
+  1018→              key={current}
+  1019→              initial={{ opacity: 0, y: 30 }}
+  1020→              animate={{ opacity: 1, y: 0 }}
+  1021→              exit={{ opacity: 0, y: -30 }}
+  1022→              transition={{ duration: 0.6, delay: 0.2 }}
+  1023→              className="max-w-2xl"
+  1024→            >
+  1025→              <motion.div
+  1026→                initial={{ opacity: 0, x: -20 }}
+  1027→                animate={{ opacity: 1, x: 0 }}
+  1028→                transition={{ delay: 0.3 }}
+  1029→                className="inline-flex items-center gap-2 bg-upisha-gold/90 text-white px-3 py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 backdrop-blur-sm"
+  1030→              >
+  1031→                <Star className="h-3 w-3 fill-white" />
+  1032→                Serving Since 2005
+  1033→              </motion.div>
+  1034→              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight drop-shadow-lg">
+  1035→                {heroSlides[current].title}
+  1036→              </h1>
+  1037→              <div className="h-1 w-20 bg-upisha-gold rounded-full mb-6" />
+  1038→              <p className="text-base md:text-xl text-gray-100 mb-8 leading-relaxed max-w-xl">
+  1039→                {heroSlides[current].subtitle}
+  1040→              </p>
+  1041→              <div className="flex flex-wrap gap-4">
+  1042→                <Button
+  1043→                  size="lg"
+  1044→                  className="bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-lg hover:shadow-xl transition-all"
+  1045→                  onClick={() =>
+  1046→                    document
+  1047→                      .getElementById(heroSlides[current].ctaLink.slice(1))
+  1048→                      ?.scrollIntoView({ behavior: 'smooth' })
+  1049→                  }
+  1050→                >
+  1051→                  {heroSlides[current].cta}
+  1052→                  <ArrowRight className="h-4 w-4 ml-2" />
+  1053→                </Button>
+  1054→                <Button
+  1055→                  size="lg"
+  1056→                  variant="outline"
+  1057→                  className="border-white/70 text-white hover:bg-white/10 backdrop-blur-sm bg-white/5"
+  1058→                  onClick={() =>
+  1059→                    document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
+  1060→                  }
+  1061→                >
+  1062→                  Learn More
+  1063→                </Button>
+  1064→              </div>
+  1065→            </motion.div>
+  1066→          </AnimatePresence>
+  1067→        </div>
+  1068→      </div>
+  1069→
+  1070→      {/* Navigation Arrows */}
+  1071→      <button
+  1072→        onClick={goPrev}
+  1073→        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full p-2 text-white transition-all"
+  1074→        aria-label="Previous slide"
+  1075→      >
+  1076→        <ChevronLeft className="h-6 w-6" />
+  1077→      </button>
+  1078→      <button
+  1079→        onClick={goNext}
+  1080→        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full p-2 text-white transition-all"
+  1081→        aria-label="Next slide"
+  1082→      >
+  1083→        <ChevronRight className="h-6 w-6" />
+  1084→      </button>
+  1085→
+  1086→      {/* Dots */}
+  1087→      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+  1088→        {heroSlides.map((_, i) => (
+  1089→          <button
+  1090→            key={i}
+  1091→            onClick={() => goTo(i)}
+  1092→            className={`h-2.5 rounded-full transition-all duration-300 ${
+  1093→              i === current ? 'w-8 bg-upisha-gold' : 'w-2.5 bg-white/50 hover:bg-white/80'
+  1094→            }`}
+  1095→            aria-label={`Go to slide ${i + 1}`}
+  1096→          />
+  1097→        ))}
+  1098→      </div>
+  1099→    </section>
+  1100→  )
+  1101→}
+  1102→
+  1103→/* ─── Quick Links ─── */
+  1104→function QuickLinks() {
+  1105→  const links = [
+  1106→    { icon: Ear, label: 'Audiology', href: '#professionals', color: 'bg-teal-500' },
+  1107→    {
+  1108→      icon: MessageSquare,
+  1109→      label: 'Speech Language Pathology',
+  1110→      href: '#professionals',
+  1111→      color: 'bg-emerald-600',
+  1112→    },
+  1113→    {
+  1114→      icon: Users,
+  1115→      label: 'Locate Professional',
+  1116→      href: '#professionals',
+  1117→      color: 'bg-upisha-gold',
+  1118→    },
+  1119→    { icon: Award, label: 'Clinic Accreditation', href: '#documents', color: 'bg-upisha-navy' },
+  1120→  ]
+  1121→
+  1122→  return (
+  1123→    <div className="relative z-20 -mt-16 md:-mt-20">
+  1124→      <div className="max-w-7xl mx-auto px-4">
+  1125→        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+  1126→          {links.map((link, i) => (
+  1127→            <motion.a
+  1128→              key={link.label}
+  1129→              href={link.href}
+  1130→              initial={{ opacity: 0, y: 20 }}
+  1131→              animate={{ opacity: 1, y: 0 }}
+  1132→              transition={{ delay: i * 0.1 }}
+  1133→              className="bg-white rounded-xl shadow-lg hover:shadow-xl p-4 md:p-6 flex flex-col items-center gap-3 text-center transition-all duration-300 hover:-translate-y-1 group"
+  1134→            >
+  1135→              <div
+  1136→                className={`${link.color} w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}
+  1137→              >
+  1138→                <link.icon className="h-6 w-6 md:h-7 md:w-7 text-white" />
+  1139→              </div>
+  1140→              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-upisha-teal transition-colors">
+  1141→                {link.label}
+  1142→              </span>
+  1143→            </motion.a>
+  1144→          ))}
+  1145→        </div>
+  1146→      </div>
+  1147→    </div>
+  1148→  )
+  1149→}
+  1150→
+  1151→/* ─── Announcement Section ─── */
+  1152→function AnnouncementSection() {
+  1153→  return (
+  1154→    <section className="py-16 md:py-20 bg-white">
+  1155→      <div className="max-w-7xl mx-auto px-4">
+  1156→        <div className="grid lg:grid-cols-3 gap-8">
+  1157→          {/* Announcements */}
+  1158→          <div className="lg:col-span-2">
+  1159→            <div className="flex items-center gap-3 mb-6">
+  1160→              <div className="w-1.5 h-8 bg-upisha-gold rounded-full" />
+  1161→              <h2 className="text-2xl md:text-3xl font-bold text-upisha-navy">Announcements</h2>
+  1162→            </div>
+  1163→            <div className="space-y-3">
+  1164→              {announcements.map((item, i) => (
+  1165→                <motion.div
+  1166→                  key={i}
+  1167→                  initial={{ opacity: 0, x: -20 }}
+  1168→                  whileInView={{ opacity: 1, x: 0 }}
+  1169→                  transition={{ delay: i * 0.1 }}
+  1170→                  viewport={{ once: true }}
+  1171→                  className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors group cursor-pointer"
+  1172→                >
+  1173→                  <div className="shrink-0 w-16 text-center">
+  1174→                    <div className="bg-upisha-teal-light rounded-lg p-2">
+  1175→                      <Calendar className="h-5 w-5 text-upisha-teal mx-auto" />
+  1176→                      <div className="text-xs text-upisha-teal font-medium mt-1">
+  1177→                        {item.date.split(' ').slice(0, 2).join(' ')}
+  1178→                      </div>
+  1179→                    </div>
+  1180→                  </div>
+  1181→                  <div className="flex-1 min-w-0">
+  1182→                    <h4 className="font-semibold text-gray-800 group-hover:text-upisha-teal transition-colors text-sm md:text-base">
+  1183→                      {item.title}
+  1184→                    </h4>
+  1185→                  </div>
+  1186→                  <Badge
+  1187→                    variant="outline"
+  1188→                    className="shrink-0 text-xs border-upisha-teal/30 text-upisha-teal"
+  1189→                  >
+  1190→                    {item.type}
+  1191→                  </Badge>
+  1192→                </motion.div>
+  1193→              ))}
+  1194→            </div>
+  1195→            <Button
+  1196→              variant="outline"
+  1197→              className="mt-4 border-upisha-teal text-upisha-teal hover:bg-upisha-teal-light"
+  1198→            >
+  1199→              View All Announcements
+  1200→              <ArrowRight className="h-4 w-4 ml-2" />
+  1201→            </Button>
+  1202→          </div>
+  1203→
+  1204→          {/* News & Events Sidebar */}
+  1205→          <div>
+  1206→            <div className="flex items-center gap-3 mb-6">
+  1207→              <div className="w-1.5 h-8 bg-upisha-teal rounded-full" />
+  1208→              <h2 className="text-2xl md:text-3xl font-bold text-upisha-navy">News & Events</h2>
+  1209→            </div>
+  1210→            <Card className="border-upisha-teal/20">
+  1211→              <CardContent className="p-5 space-y-4">
+  1212→                <div className="space-y-1">
+  1213→                  <h4 className="font-semibold text-upisha-navy">UP ISHACON 2025</h4>
+  1214→                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+  1215→                    <Calendar className="h-3.5 w-3.5" /> October 18-20, 2025
+  1216→                  </p>
+  1217→                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+  1218→                    <MapPin className="h-3.5 w-3.5" /> Lucknow, UP
+  1219→                  </p>
+  1220→                </div>
+  1221→                <Separator />
+  1222→                <div className="space-y-1">
+  1223→                  <h4 className="font-semibold text-upisha-navy">World Hearing Day 2025</h4>
+  1224→                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+  1225→                    <Calendar className="h-3.5 w-3.5" /> March 3, 2025
+  1226→                  </p>
+  1227→                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+  1228→                    <MapPin className="h-3.5 w-3.5" /> Across UP
+  1229→                  </p>
+  1230→                </div>
+  1231→                <Separator />
+  1232→                <div className="space-y-1">
+  1233→                  <h4 className="font-semibold text-upisha-navy">Pediatric SLP Workshop</h4>
+  1234→                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+  1235→                    <Calendar className="h-3.5 w-3.5" /> April 12, 2025
+  1236→                  </p>
+  1237→                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+  1238→                    <MapPin className="h-3.5 w-3.5" /> Varanasi, UP
+  1239→                  </p>
+  1240→                </div>
+  1241→                <Button
+  1242→                  variant="outline"
+  1243→                  size="sm"
+  1244→                  className="w-full border-upisha-teal text-upisha-teal hover:bg-upisha-teal-light"
+  1245→                >
+  1246→                  View All Events
+  1247→                </Button>
+  1248→              </CardContent>
+  1249→            </Card>
+  1250→          </div>
+  1251→        </div>
+  1252→      </div>
+  1253→    </section>
+  1254→  )
+  1255→}
+  1256→
+  1257→/* ─── Features Section ─── */
+  1258→function FeaturesSection() {
+  1259→  return (
+  1260→    <section className="py-16 md:py-20 bg-upisha-teal-light">
+  1261→      <div className="max-w-7xl mx-auto px-4">
+  1262→        <div className="text-center mb-12">
+  1263→          <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">What We Offer</Badge>
+  1264→          <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">
+  1265→            UP ISHA Features
+  1266→          </h2>
+  1267→          <p className="text-gray-500 mt-3 max-w-2xl mx-auto">
+  1268→            Discover the resources, services, and community that make UP ISHA the leading
+  1269→            association for speech and hearing professionals in Uttar Pradesh.
+  1270→          </p>
+  1271→        </div>
+  1272→        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+  1273→          {features.map((feature, i) => (
+  1274→            <motion.div
+  1275→              key={feature.title}
+  1276→              initial={{ opacity: 0, y: 30 }}
+  1277→              whileInView={{ opacity: 1, y: 0 }}
+  1278→              transition={{ delay: i * 0.1 }}
+  1279→              viewport={{ once: true }}
+  1280→            >
+  1281→              <Card className="h-full border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
+  1282→                <CardContent className="p-6 text-center">
+  1283→                  <div className="w-16 h-16 mx-auto mb-4 bg-upisha-teal/10 rounded-2xl flex items-center justify-center group-hover:bg-upisha-teal group-hover:text-white transition-all duration-300">
+  1284→                    <feature.icon className="h-8 w-8 text-upisha-teal group-hover:text-white transition-colors" />
+  1285→                  </div>
+  1286→                  <h3 className="font-bold text-upisha-navy mb-2">{feature.title}</h3>
+  1287→                  <p className="text-sm text-gray-500">{feature.description}</p>
+  1288→                  <Button
+  1289→                    variant="link"
+  1290→                    className="mt-3 text-upisha-teal p-0 h-auto font-semibold"
+  1291→                  >
+  1292→                    Read More <ArrowRight className="h-3.5 w-3.5 ml-1" />
+  1293→                  </Button>
+  1294→                </CardContent>
+  1295→              </Card>
+  1296→            </motion.div>
+  1297→          ))}
+  1298→        </div>
+  1299→      </div>
+  1300→    </section>
+  1301→  )
+  1302→}
+  1303→
+  1304→/* ─── About Section ─── */
+  1305→function AboutSection() {
+  1306→  return (
+  1307→    <AnimatedSection id="about" className="py-16 md:py-20 bg-white">
+  1308→      <div className="max-w-7xl mx-auto px-4">
+  1309→        <div className="grid lg:grid-cols-2 gap-12 items-center">
+  1310→          {/* Image */}
+  1311→          <div className="relative">
+  1312→            <div className="rounded-2xl overflow-hidden shadow-2xl">
+  1313→              <img
+  1314→                src="/images/about-illustration.png"
+  1315→                alt="About UP ISHA"
+  1316→                className="w-full h-[400px] object-cover"
+  1317→              />
+  1318→            </div>
+  1319→            {/* Stats overlay */}
+  1320→            <div className="absolute -bottom-6 -right-6 md:right-6 bg-upisha-teal text-white rounded-xl p-5 shadow-lg">
+  1321→              <div className="text-3xl font-bold">20+</div>
+  1322→              <div className="text-sm opacity-90">Years of Service</div>
+  1323→            </div>
+  1324→            <div className="absolute -top-4 -left-4 md:left-6 bg-upisha-gold text-white rounded-xl p-4 shadow-lg">
+  1325→              <div className="text-2xl font-bold">550+</div>
+  1326→              <div className="text-xs opacity-90">Members</div>
+  1327→            </div>
+  1328→          </div>
+  1329→
+  1330→          {/* Content */}
+  1331→          <div>
+  1332→            <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">About Us</Badge>
+  1333→            <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy mb-6">
+  1334→              Uttar Pradesh Speech & Hearing Association
+  1335→            </h2>
+  1336→            <p className="text-gray-600 leading-relaxed mb-4">
+  1337→              The Uttar Pradesh Speech & Hearing Association (UP ISHA) is the premier professional
+  1338→              body representing audiologists and speech-language pathologists in Uttar Pradesh,
+  1339→              India. Established in 2005, UP ISHA has been at the forefront of advancing the
+  1340→              professions of audiology and speech-language pathology in the state.
+  1341→            </p>
+  1342→            <p className="text-gray-600 leading-relaxed mb-6">
+  1343→              Our mission is to promote the highest standards of professional practice, foster
+  1344→              research and education, advocate for persons with communication disorders, and serve
+  1345→              as a unified voice for speech and hearing professionals across Uttar Pradesh.
+  1346→            </p>
+  1347→
+  1348→            {/* Mission & Vision */}
+  1349→            <div className="grid sm:grid-cols-2 gap-4 mb-6">
+  1350→              <div className="bg-upisha-teal-light rounded-xl p-5">
+  1351→                <div className="flex items-center gap-2 mb-2">
+  1352→                  <Heart className="h-5 w-5 text-upisha-teal" />
+  1353→                  <h4 className="font-bold text-upisha-navy">Our Mission</h4>
+  1354→                </div>
+  1355→                <p className="text-sm text-gray-600">
+  1356→                  To advance the science and practice of audiology and speech-language pathology,
+  1357→                  and to advocate for individuals with communication disorders.
+  1358→                </p>
+  1359→              </div>
+  1360→              <div className="bg-upisha-gold-light rounded-xl p-5">
+  1361→                <div className="flex items-center gap-2 mb-2">
+  1362→                  <Eye className="h-5 w-5 text-upisha-gold" />
+  1363→                  <h4 className="font-bold text-upisha-navy">Our Vision</h4>
+  1364→                </div>
+  1365→                <p className="text-sm text-gray-600">
+  1366→                  Every individual in Uttar Pradesh has access to quality speech and hearing
+  1367→                  healthcare services provided by qualified professionals.
+  1368→                </p>
+  1369→              </div>
+  1370→            </div>
+  1371→
+  1372→            <Button className="bg-upisha-teal hover:bg-upisha-teal-dark text-white">
+  1373→              Learn More <ArrowRight className="h-4 w-4 ml-2" />
+  1374→            </Button>
+  1375→          </div>
+  1376→        </div>
+  1377→
+  1378→        {/* President's Message */}
+  1379→        <div className="mt-16 md:mt-20">
+  1380→          <Card className="border-upisha-teal/20 bg-gradient-to-r from-upisha-teal-light to-white">
+  1381→            <CardContent className="p-6 md:p-8">
+  1382→              <div className="flex flex-col md:flex-row gap-6 items-start">
+  1383→                <div className="shrink-0">
+  1384→                  <div className="w-24 h-24 rounded-full bg-upisha-teal/20 flex items-center justify-center">
+  1385→                    <Users className="h-12 w-12 text-upisha-teal" />
+  1386→                  </div>
+  1387→                </div>
+  1388→                <div>
+  1389→                  <Badge className="bg-upisha-gold text-white mb-3">President&apos;s Message</Badge>
+  1390→                  <h3 className="text-xl font-bold text-upisha-navy mb-3">
+  1391→                    Dr. Rajesh Kumar Sharma
+  1392→                  </h3>
+  1393→                  <p className="text-gray-600 leading-relaxed italic mb-4">
+  1394→                    &ldquo;It is my privilege to serve as the President of UP ISHA. Our association
+  1395→                    continues to grow and strengthen, uniting professionals across Uttar Pradesh in
+  1396→                    our shared commitment to improving communication health. Together, we can ensure
+  1397→                    that every person with a speech or hearing challenge receives the care they
+  1398→                    deserve. I invite you to join us in this noble mission.&rdquo;
+  1399→                  </p>
+  1400→                  <div className="flex items-center gap-2 text-upisha-teal font-medium">
+  1401→                    <Star className="h-4 w-4" />
+  1402→                    President, UP ISHA
+  1403→                  </div>
+  1404→                </div>
+  1405→              </div>
+  1406→            </CardContent>
+  1407→          </Card>
+  1408→        </div>
+  1409→
+  1410→        {/* Executive Council */}
+  1411→        <div className="mt-16 md:mt-20">
+  1412→          <div className="text-center mb-10">
+  1413→            <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">Leadership</Badge>
+  1414→            <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">Executive Council</h2>
+  1415→            <p className="text-gray-500 mt-3">
+  1416→              Meet the dedicated professionals leading UP ISHA
+  1417→            </p>
+  1418→          </div>
+  1419→          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  1420→            {executiveCouncil.map((member, i) => (
+  1421→              <motion.div
+  1422→                key={member.name}
+  1423→                initial={{ opacity: 0, y: 20 }}
+  1424→                whileInView={{ opacity: 1, y: 0 }}
+  1425→                transition={{ delay: i * 0.1 }}
+  1426→                viewport={{ once: true }}
+  1427→              >
+  1428→                <Card className="text-center hover:shadow-lg transition-all duration-300 group overflow-hidden">
+  1429→                  <CardContent className="pt-6 pb-6">
+  1430→                    <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-upisha-teal/10 group-hover:border-upisha-teal transition-colors">
+  1431→                      {member.image ? (
+  1432→                        <img
+  1433→                          src={member.image}
+  1434→                          alt={member.name}
+  1435→                          className="w-full h-full object-cover"
+  1436→                        />
+  1437→                      ) : (
+  1438→                        <div className="w-full h-full bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
+  1439→                          <Users className="h-10 w-10 text-upisha-teal group-hover:text-white transition-colors" />
+  1440→                        </div>
+  1441→                      )}
+  1442→                    </div>
+  1443→                    <h4 className="font-bold text-upisha-navy dark:text-white">{member.name}</h4>
+  1444→                    <p className="text-upisha-teal font-medium text-sm">{member.role}</p>
+  1445→                    <Badge variant="outline" className="mt-2 text-xs">
+  1446→                      {member.speciality}
+  1447→                    </Badge>
+  1448→                  </CardContent>
+  1449→                </Card>
+  1450→              </motion.div>
+  1451→            ))}
+  1452→          </div>
+  1453→        </div>
+  1454→      </div>
+  1455→    </AnimatedSection>
+  1456→  )
+  1457→}
+  1458→
+  1459→/* ─── Documents Section ─── */
+  1460→function DocumentsSection() {
+  1461→  return (
+  1462→    <AnimatedSection id="documents" className="py-16 md:py-20 bg-gray-50">
+  1463→      <div className="max-w-7xl mx-auto px-4">
+  1464→        <div className="text-center mb-12">
+  1465→          <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">Resources</Badge>
+  1466→          <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">
+  1467→            Documents & Resources
+  1468→          </h2>
+  1469→          <p className="text-gray-500 mt-3 max-w-2xl mx-auto">
+  1470→            Access official documents, practice guidelines, regulatory mandates, and professional
+  1471→            resources for speech and hearing practitioners.
+  1472→          </p>
+  1473→        </div>
+  1474→
+  1475→        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  1476→          {documents.map((doc, i) => (
+  1477→            <motion.div
+  1478→              key={doc.title}
+  1479→              initial={{ opacity: 0, y: 20 }}
+  1480→              whileInView={{ opacity: 1, y: 0 }}
+  1481→              transition={{ delay: i * 0.1 }}
+  1482→              viewport={{ once: true }}
+  1483→            >
+  1484→              <Card className="h-full hover:shadow-lg transition-all duration-300 group border-l-4 border-l-upisha-teal">
+  1485→                <CardContent className="p-6">
+  1486→                  <div className="flex items-start gap-4">
+  1487→                    <div className="w-12 h-12 shrink-0 rounded-lg bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
+  1488→                      <doc.icon className="h-6 w-6 text-upisha-teal group-hover:text-white transition-colors" />
+  1489→                    </div>
+  1490→                    <div>
+  1491→                      <Badge
+  1492→                        variant="outline"
+  1493→                        className="text-xs border-upisha-gold/30 text-upisha-gold mb-2"
+  1494→                      >
+  1495→                        {doc.category}
+  1496→                      </Badge>
+  1497→                      <h4 className="font-bold text-upisha-navy mb-1 group-hover:text-upisha-teal transition-colors">
+  1498→                        {doc.title}
+  1499→                      </h4>
+  1500→                      <p className="text-sm text-gray-500">{doc.description}</p>
+  1501→                    </div>
+  1502→                  </div>
+  1503→                  <Button
+  1504→                    variant="link"
+  1505→                    className="mt-4 text-upisha-teal p-0 h-auto font-semibold"
+  1506→                  >
+  1507→                    <Download className="h-4 w-4 mr-1" />
+  1508→                    Download PDF
+  1509→                  </Button>
+  1510→                </CardContent>
+  1511→              </Card>
+  1512→            </motion.div>
+  1513→          ))}
+  1514→        </div>
+  1515→      </div>
+  1516→    </AnimatedSection>
+  1517→  )
+  1518→}
+  1519→
+  1520→/* ─── Publications Section ─── */
+  1521→function PublicationsSection() {
+  1522→  return (
+  1523→    <AnimatedSection id="publications" className="py-16 md:py-20 bg-white">
+  1524→      <div className="max-w-7xl mx-auto px-4">
+  1525→        <div className="text-center mb-12">
+  1526→          <Badge className="bg-upisha-gold/10 text-upisha-gold mb-3">Research & Knowledge</Badge>
+  1527→          <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">Publications</h2>
+  1528→          <p className="text-gray-500 mt-3 max-w-2xl mx-auto">
+  1529→            Explore our journal, monographs, and research contributions that advance the field of
+  1530→            speech and hearing sciences.
+  1531→          </p>
+  1532→        </div>
+  1533→
+  1534→        <Tabs defaultValue="journal" className="w-full">
+  1535→          <TabsList className="mx-auto flex w-fit bg-upisha-teal-light">
+  1536→            <TabsTrigger
+  1537→              value="journal"
+  1538→              className="data-[state=active]:bg-upisha-teal data-[state=active]:text-white"
+  1539→            >
+  1540→              Journal
+  1541→            </TabsTrigger>
+  1542→            <TabsTrigger
+  1543→              value="monograph"
+  1544→              className="data-[state=active]:bg-upisha-teal data-[state=active]:text-white"
+  1545→            >
+  1546→              Monograph
+  1547→            </TabsTrigger>
+  1548→            <TabsTrigger
+  1549→              value="research"
+  1550→              className="data-[state=active]:bg-upisha-teal data-[state=active]:text-white"
+  1551→            >
+  1552→              Research
+  1553→            </TabsTrigger>
+  1554→          </TabsList>
+  1555→          <TabsContent value="journal" className="mt-8">
+  1556→            <div className="grid md:grid-cols-2 gap-8">
+  1557→              <Card className="border-upisha-teal/20">
+  1558→                <CardContent className="p-6">
+  1559→                  <div className="flex items-center gap-3 mb-4">
+  1560→                    <BookOpen className="h-8 w-8 text-upisha-teal" />
+  1561→                    <div>
+  1562→                      <h3 className="font-bold text-upisha-navy text-lg">
+  1563→                        UP Journal of Speech & Hearing
+  1564→                      </h3>
+  1565→                      <p className="text-sm text-gray-500">Official Peer-Reviewed Journal</p>
+  1566→                    </div>
+  1567→                  </div>
+  1568→                  <p className="text-gray-600 mb-4">
+  1569→                    The UP Journal of Speech & Hearing is the official peer-reviewed publication of
+  1570→                    UP ISHA, featuring original research, case studies, clinical reports, and review
+  1571→                    articles in audiology and speech-language pathology.
+  1572→                  </p>
+  1573→                  <div className="space-y-2 mb-4">
+  1574→                    <h4 className="font-semibold text-upisha-navy text-sm">Current Issue Highlights:</h4>
+  1575→                    <ul className="space-y-1.5">
+  1576→                      <li className="text-sm text-gray-600 flex items-start gap-2">
+  1577→                        <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
+  1578→                        Effectiveness of Tele-Audiology in Rural UP
+  1579→                      </li>
+  1580→                      <li className="text-sm text-gray-600 flex items-start gap-2">
+  1581→                        <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
+  1582→                        Language Development in Hindi-Speaking Children
+  1583→                      </li>
+  1584→                      <li className="text-sm text-gray-600 flex items-start gap-2">
+  1585→                        <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
+  1586→                        Cochlear Implant Outcomes: A 5-Year Review
+  1587→                      </li>
+  1588→                    </ul>
+  1589→                  </div>
+  1590→                  <div className="flex gap-3">
+  1591→                    <Button size="sm" className="bg-upisha-teal hover:bg-upisha-teal-dark text-white">
+  1592→                      <Eye className="h-4 w-4 mr-1" />
+  1593→                      Current Issue
+  1594→                    </Button>
+  1595→                    <Button size="sm" variant="outline" className="border-upisha-teal text-upisha-teal">
+  1596→                      <FileText className="h-4 w-4 mr-1" />
+  1597→                      Previous Issues
+  1598→                    </Button>
+  1599→                  </div>
+  1600→                </CardContent>
+  1601→              </Card>
+  1602→              <Card className="border-upisha-gold/20 bg-upisha-gold-light/30">
+  1603→                <CardContent className="p-6">
+  1604→                  <h3 className="font-bold text-upisha-navy mb-4">Call for Papers</h3>
+  1605→                  <p className="text-gray-600 mb-4">
+  1606→                    We invite researchers, clinicians, and academicians to submit original research
+  1607→                    articles, case studies, and reviews for publication in the UP Journal of Speech
+  1608→                    & Hearing.
+  1609→                  </p>
+  1610→                  <div className="space-y-3 mb-4">
+  1611→                    <div className="flex items-center gap-2 text-sm text-gray-600">
+  1612→                      <Clock className="h-4 w-4 text-upisha-gold" />
+  1613→                      Submission Deadline: June 30, 2025
+  1614→                    </div>
+  1615→                    <div className="flex items-center gap-2 text-sm text-gray-600">
+  1616→                      <FileText className="h-4 w-4 text-upisha-gold" />
+  1617→                      Follow APA 7th Edition formatting
+  1618→                    </div>
+  1619→                    <div className="flex items-center gap-2 text-sm text-gray-600">
+  1620→                      <Send className="h-4 w-4 text-upisha-gold" />
+  1621→                      Submit to: editor@upisha.org
+  1622→                    </div>
+  1623→                  </div>
+  1624→                  <Button size="sm" className="bg-upisha-gold hover:bg-upisha-gold/90 text-white">
+  1625→                    <Download className="h-4 w-4 mr-1" />
+  1626→                    Author Guidelines
+  1627→                  </Button>
+  1628→                </CardContent>
+  1629→              </Card>
+  1630→            </div>
+  1631→          </TabsContent>
+  1632→          <TabsContent value="monograph" className="mt-8">
+  1633→            <Card className="border-upisha-teal/20">
+  1634→              <CardContent className="p-6">
+  1635→                <div className="flex items-center gap-3 mb-4">
+  1636→                  <FileText className="h-8 w-8 text-upisha-teal" />
+  1637→                  <div>
+  1638→                    <h3 className="font-bold text-upisha-navy text-lg">Clinical Monograph Series</h3>
+  1639→                    <p className="text-sm text-gray-500">Specialized Topic Publications</p>
+  1640→                  </div>
+  1641→                </div>
+  1642→                <p className="text-gray-600 mb-4">
+  1643→                  Our monograph series provides in-depth coverage of specialized topics in audiology
+  1644→                  and speech-language pathology, authored by leading experts in the field.
+  1645→                </p>
+  1646→                <div className="space-y-3">
+  1647→                  {[
+  1648→                    'Pediatric Audiology Assessment in Hindi-Speaking Populations',
+  1649→                    'Neurogenic Communication Disorders: Clinical Management',
+  1650→                    'Aural Rehabilitation for Adult Cochlear Implant Users',
+  1651→                  ].map((title, i) => (
+  1652→                    <div
+  1653→                      key={i}
+  1654→                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-upisha-teal-light/50 transition-colors"
+  1655→                    >
+  1656→                      <span className="text-sm font-medium text-gray-700">{title}</span>
+  1657→                      <Button variant="ghost" size="sm" className="text-upisha-teal">
+  1658→                        <ExternalLink className="h-4 w-4" />
+  1659→                      </Button>
+  1660→                    </div>
+  1661→                  ))}
+  1662→                </div>
+  1663→              </CardContent>
+  1664→            </Card>
+  1665→          </TabsContent>
+  1666→          <TabsContent value="research" className="mt-8">
+  1667→            <Card className="border-upisha-teal/20">
+  1668→              <CardContent className="p-6">
+  1669→                <div className="flex items-center gap-3 mb-4">
+  1670→                  <GraduationCap className="h-8 w-8 text-upisha-teal" />
+  1671→                  <div>
+  1672→                    <h3 className="font-bold text-upisha-navy text-lg">
+  1673→                      Research in Uttar Pradesh
+  1674→                    </h3>
+  1675→                    <p className="text-sm text-gray-500">Ongoing & Completed Research</p>
+  1676→                  </div>
+  1677→                </div>
+  1678→                <p className="text-gray-600 mb-4">
+  1679→                  Browse the directory of research projects being conducted in the field of speech
+  1680→                  and hearing across Uttar Pradesh. Submit your research for inclusion.
+  1681→                </p>
+  1682→                <div className="space-y-3">
+  1683→                  {[
+  1684→                    'Prevalence of Hearing Loss in School Children of Lucknow District',
+  1685→                    'Effectiveness of Early Intervention for Speech Sound Disorders',
+  1686→                    'Tele-Practice Feasibility Study for Rural Communities in UP',
+  1687→                  ].map((title, i) => (
+  1688→                    <div
+  1689→                      key={i}
+  1690→                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-upisha-teal-light/50 transition-colors"
+  1691→                    >
+  1692→                      <span className="text-sm font-medium text-gray-700">{title}</span>
+  1693→                      <Button variant="ghost" size="sm" className="text-upisha-teal">
+  1694→                        <ExternalLink className="h-4 w-4" />
+  1695→                      </Button>
+  1696→                    </div>
+  1697→                  ))}
+  1698→                </div>
+  1699→              </CardContent>
+  1700→            </Card>
+  1701→          </TabsContent>
+  1702→        </Tabs>
+  1703→      </div>
+  1704→    </AnimatedSection>
+  1705→  )
+  1706→}
+  1707→
+  1708→/* ─── Professionals Section ─── */
+  1709→function ProfessionalsSection() {
+  1710→  const [searchQuery, setSearchQuery] = useState('')
+  1711→  const [cityFilter, setCityFilter] = useState('All Cities')
+  1712→  const [specialityFilter, setSpecialityFilter] = useState('All Specialities')
+  1713→  const [visibleCount, setVisibleCount] = useState(6)
+  1714→  const [selectedProfessional, setSelectedProfessional] = useState<typeof sampleProfessionals[0] | null>(null)
+  1715→
+  1716→  const filtered = useMemo(() => {
+  1717→    return sampleProfessionals.filter((p) => {
+  1718→      const matchesQuery =
+  1719→        !searchQuery ||
+  1720→        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  1721→        p.qualification.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  1722→        p.speciality.toLowerCase().includes(searchQuery.toLowerCase())
+  1723→      const matchesCity = cityFilter === 'All Cities' || p.city === cityFilter
+  1724→      const matchesSpeciality =
+  1725→        specialityFilter === 'All Specialities' || p.speciality === specialityFilter
+  1726→      return matchesQuery && matchesCity && matchesSpeciality
+  1727→    })
+  1728→  }, [searchQuery, cityFilter, specialityFilter])
+  1729→
+  1730→  const resetFilters = () => {
+  1731→    setSearchQuery('')
+  1732→    setCityFilter('All Cities')
+  1733→    setSpecialityFilter('All Specialities')
+  1734→    setVisibleCount(6)
+  1735→  }
+  1736→
+  1737→  const updateSearchQuery = (value: string) => {
+  1738→    setSearchQuery(value)
+  1739→    setVisibleCount(6)
+  1740→  }
+  1741→
+  1742→  const updateCityFilter = (value: string) => {
+  1743→    setCityFilter(value)
+  1744→    setVisibleCount(6)
+  1745→  }
+  1746→
+  1747→  const updateSpecialityFilter = (value: string) => {
+  1748→    setSpecialityFilter(value)
+  1749→    setVisibleCount(6)
+  1750→  }
+  1751→
+  1752→  const visible = filtered.slice(0, visibleCount)
+  1753→
+  1754→  return (
+  1755→    <AnimatedSection id="professionals" className="py-16 md:py-20 bg-upisha-navy relative overflow-hidden">
+  1756→      {/* Decorative pattern */}
+  1757→      <div
+  1758→        className="absolute inset-0 opacity-[0.03]"
+  1759→        style={{
+  1760→          backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+  1761→          backgroundSize: '32px 32px',
+  1762→        }}
+  1763→      />
+  1764→      <div className="max-w-7xl mx-auto px-4 relative">
+  1765→        <SectionHeading
+  1766→          badge="Find Experts"
+  1767→          badgeIcon={Users}
+  1768→          title="Professionals Directory"
+  1769→          subtitle="Locate qualified audiologists, speech-language pathologists, and accredited clinics across Uttar Pradesh. Search by name, city, or speciality."
+  1770→          light
+  1771→        />
+  1772→
+  1773→        {/* Category Cards */}
+  1774→        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+  1775→          {professionalCategories.map((cat, i) => (
+  1776→            <motion.div
+  1777→              key={cat.title}
+  1778→              initial={{ opacity: 0, y: 20 }}
+  1779→              whileInView={{ opacity: 1, y: 0 }}
+  1780→              transition={{ delay: i * 0.1 }}
+  1781→              viewport={{ once: true }}
+  1782→            >
+  1783→              <Card className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all duration-300 group hover:-translate-y-1">
+  1784→                <CardContent className="p-6 text-center">
+  1785→                  <div className="w-16 h-16 mx-auto mb-4 bg-upisha-teal/20 rounded-2xl flex items-center justify-center group-hover:bg-upisha-teal group-hover:rotate-6 transition-all">
+  1786→                    <cat.icon className="h-8 w-8 text-upisha-teal group-hover:text-white transition-colors" />
+  1787→                  </div>
+  1788→                  <h3 className="font-bold text-white mb-1">{cat.title}</h3>
+  1789→                  <p className="text-sm text-gray-400 mb-3">{cat.description}</p>
+  1790→                  <div className="text-3xl font-bold text-upisha-teal">{cat.count}</div>
+  1791→                  <p className="text-xs text-gray-500">Professionals Listed</p>
+  1792→                </CardContent>
+  1793→              </Card>
+  1794→            </motion.div>
+  1795→          ))}
+  1796→        </div>
+  1797→
+  1798→        {/* Search & Filter Bar */}
+  1799→        <Card className="bg-upisha-navy-light border-upisha-navy-light mb-8">
+  1800→          <CardContent className="p-6 md:p-8">
+  1801→            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+  1802→              <Search className="h-5 w-5 text-upisha-teal" />
+  1803→              Locate a Professional
+  1804→            </h3>
+  1805→            <div className="grid md:grid-cols-3 gap-4 mb-4">
+  1806→              <div>
+  1807→                <label className="text-sm text-gray-400 mb-1.5 block">Search by name or qualification</label>
+  1808→                <div className="relative">
+  1809→                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+  1810→                  <Input
+  1811→                    placeholder="e.g. Dr. Rajesh..."
+  1812→                    value={searchQuery}
+  1813→                    onChange={(e) => updateSearchQuery(e.target.value)}
+  1814→                    className="bg-upisha-navy border-upisha-navy-light text-white placeholder:text-gray-500 pl-10"
+  1815→                  />
+  1816→                </div>
+  1817→              </div>
+  1818→              <div>
+  1819→                <label className="text-sm text-gray-400 mb-1.5 block">City</label>
+  1820→                <Select value={cityFilter} onValueChange={updateCityFilter}>
+  1821→                  <SelectTrigger className="bg-upisha-navy border-upisha-navy-light text-white">
+  1822→                    <SelectValue placeholder="Select city" />
+  1823→                  </SelectTrigger>
+  1824→                  <SelectContent>
+  1825→                    {upCities.map((city) => (
+  1826→                      <SelectItem key={city} value={city}>
+  1827→                        {city}
+  1828→                      </SelectItem>
+  1829→                    ))}
+  1830→                  </SelectContent>
+  1831→                </Select>
+  1832→              </div>
+  1833→              <div>
+  1834→                <label className="text-sm text-gray-400 mb-1.5 block">Speciality</label>
+  1835→                <Select value={specialityFilter} onValueChange={updateSpecialityFilter}>
+  1836→                  <SelectTrigger className="bg-upisha-navy border-upisha-navy-light text-white">
+  1837→                    <SelectValue placeholder="Select speciality" />
+  1838→                  </SelectTrigger>
+  1839→                  <SelectContent>
+  1840→                    {specialities.map((spec) => (
+  1841→                      <SelectItem key={spec} value={spec}>
+  1842→                        {spec}
+  1843→                      </SelectItem>
+  1844→                    ))}
+  1845→                  </SelectContent>
+  1846→                </Select>
+  1847→              </div>
+  1848→            </div>
+  1849→            <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-upisha-navy-light">
+  1850→              <p className="text-sm text-gray-400">
+  1851→                Showing <span className="text-white font-semibold">{visible.length}</span> of{' '}
+  1852→                <span className="text-white font-semibold">{filtered.length}</span> professionals
+  1853→              </p>
+  1854→              {(searchQuery || cityFilter !== 'All Cities' || specialityFilter !== 'All Specialities') && (
+  1855→                <Button
+  1856→                  variant="outline"
+  1857→                  size="sm"
+  1858→                  className="border-upisha-navy-light text-gray-300 hover:bg-upisha-navy-light hover:text-white"
+  1859→                  onClick={resetFilters}
+  1860→                >
+  1861→                  <X className="h-3.5 w-3.5 mr-1" />
+  1862→                  Clear filters
+  1863→                </Button>
+  1864→              )}
+  1865→            </div>
+  1866→          </CardContent>
+  1867→        </Card>
+  1868→
+  1869→        {/* Results */}
+  1870→        {visible.length === 0 ? (
+  1871→          <div className="text-center py-16 bg-upisha-navy-light rounded-2xl">
+  1872→            <Users className="h-12 w-12 text-gray-600 mx-auto mb-3" />
+  1873→            <h4 className="text-lg font-semibold text-white mb-1">No professionals found</h4>
+  1874→            <p className="text-sm text-gray-400">Try adjusting your search or filters.</p>
+  1875→          </div>
+  1876→        ) : (
+  1877→          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  1878→            {visible.map((pro, i) => (
+  1879→              <motion.div
+  1880→                key={`${pro.name}-${pro.rci}`}
+  1881→                initial={{ opacity: 0, y: 20 }}
+  1882→                animate={{ opacity: 1, y: 0 }}
+  1883→                transition={{ delay: i * 0.05 }}
+  1884→              >
+  1885→                <Card
+  1886→                  className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all cursor-pointer group"
+  1887→                  onClick={() => setSelectedProfessional(pro)}
+  1888→                >
+  1889→                  <CardContent className="p-5">
+  1890→                    <div className="flex items-start gap-4">
+  1891→                      <div className="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-upisha-teal to-upisha-teal-dark flex items-center justify-center text-white font-bold">
+  1892→                        {pro.name.split(' ').slice(-2, -1)[0]?.[0] || pro.name[2]}
+  1893→                        {pro.name.split(' ').slice(-1)[0]?.[0]}
+  1894→                      </div>
+  1895→                      <div className="flex-1 min-w-0">
+  1896→                        <h4 className="font-bold text-white truncate group-hover:text-upisha-teal transition-colors">
+  1897→                          {pro.name}
+  1898→                        </h4>
+  1899→                        <p className="text-xs text-upisha-teal mb-2">{pro.speciality}</p>
+  1900→                        <div className="flex flex-wrap gap-2 text-xs text-gray-400">
+  1901→                          <span className="flex items-center gap-1">
+  1902→                            <MapPinned className="h-3 w-3 text-upisha-gold" />
+  1903→                            {pro.city}
+  1904→                          </span>
+  1905→                          <span className="flex items-center gap-1">
+  1906→                            <Briefcase className="h-3 w-3 text-upisha-gold" />
+  1907→                            {pro.experience}
+  1908→                          </span>
+  1909→                          <span className="flex items-center gap-1">
+  1910→                            <Building className="h-3 w-3 text-upisha-gold" />
+  1911→                            {pro.setting}
+  1912→                          </span>
+  1913→                        </div>
+  1914→                      </div>
+  1915→                    </div>
+  1916→                    <div className="mt-4 pt-3 border-t border-upisha-navy-light flex items-center justify-between">
+  1917→                      <Badge className="bg-upisha-teal/20 text-upisha-teal text-[10px]">
+  1918→                        RCI: {pro.rci}
+  1919→                      </Badge>
+  1920→                      <span className="text-xs text-gray-400 group-hover:text-upisha-teal flex items-center gap-1 transition-colors">
+  1921→                        View
+  1922→                        <ArrowRight className="h-3 w-3" />
+  1923→                      </span>
+  1924→                    </div>
+  1925→                  </CardContent>
+  1926→                </Card>
+  1927→              </motion.div>
+  1928→            ))}
+  1929→          </div>
+  1930→        )}
+  1931→
+  1932→        {/* Load more */}
+  1933→        {visibleCount < filtered.length && (
+  1934→          <div className="text-center mt-8">
+  1935→            <Button
+  1936→              variant="outline"
+  1937→              onClick={() => setVisibleCount((prev) => prev + 6)}
+  1938→              className="border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
+  1939→            >
+  1940→              Load More ({filtered.length - visibleCount} remaining)
+  1941→            </Button>
+  1942→          </div>
+  1943→        )}
+  1944→      </div>
+  1945→
+  1946→      {/* Professional Detail Dialog */}
+  1947→      <Dialog open={!!selectedProfessional} onOpenChange={(open) => !open && setSelectedProfessional(null)}>
+  1948→        <DialogContent className="max-w-md">
+  1949→          <DialogHeader>
+  1950→            <DialogTitle className="sr-only">Professional details</DialogTitle>
+  1951→          </DialogHeader>
+  1952→          {selectedProfessional && (
+  1953→            <div>
+  1954→              <div className="flex items-center gap-4 mb-6">
+  1955→                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-upisha-teal to-upisha-teal-dark flex items-center justify-center text-white font-bold text-xl">
+  1956→                  {selectedProfessional.name.split(' ').slice(-2, -1)[0]?.[0] || selectedProfessional.name[2]}
+  1957→                  {selectedProfessional.name.split(' ').slice(-1)[0]?.[0]}
+  1958→                </div>
+  1959→                <div>
+  1960→                  <h3 className="text-xl font-bold text-upisha-navy">{selectedProfessional.name}</h3>
+  1961→                  <p className="text-sm text-upisha-teal">{selectedProfessional.speciality}</p>
+  1962→                </div>
+  1963→              </div>
+  1964→              <div className="space-y-3">
+  1965→                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+  1966→                  <GraduationCap className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
+  1967→                  <div>
+  1968→                    <p className="text-xs text-gray-500 uppercase tracking-wide">Qualification</p>
+  1969→                    <p className="text-sm font-medium text-gray-800">{selectedProfessional.qualification}</p>
+  1970→                  </div>
+  1971→                </div>
+  1972→                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+  1973→                  <MapPinned className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
+  1974→                  <div>
+  1975→                    <p className="text-xs text-gray-500 uppercase tracking-wide">City</p>
+  1976→                    <p className="text-sm font-medium text-gray-800">{selectedProfessional.city}</p>
+  1977→                  </div>
+  1978→                </div>
+  1979→                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+  1980→                  <Briefcase className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
+  1981→                  <div>
+  1982→                    <p className="text-xs text-gray-500 uppercase tracking-wide">Experience & Setting</p>
+  1983→                    <p className="text-sm font-medium text-gray-800">
+  1984→                      {selectedProfessional.experience} • {selectedProfessional.setting}
+  1985→                    </p>
+  1986→                  </div>
+  1987→                </div>
+  1988→                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+  1989→                  <Shield className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
+  1990→                  <div>
+  1991→                    <p className="text-xs text-gray-500 uppercase tracking-wide">RCI Registration</p>
+  1992→                    <p className="text-sm font-medium text-gray-800">{selectedProfessional.rci}</p>
+  1993→                  </div>
+  1994→                </div>
+  1995→              </div>
+  1996→              <Button className="w-full mt-6 bg-upisha-teal hover:bg-upisha-teal-dark text-white">
+  1997→                <Mail className="h-4 w-4 mr-2" />
+  1998→                Contact via UP ISHA
+  1999→              </Button>
+  2000→            </div>
+
+[showing lines 1-2000 of 3798; use offset=2001 with limit to continue reading]

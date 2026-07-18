@@ -148,4 +148,296 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background-color: rgba(0, 0, 0, 0.3);
   }
+
+  /* Card gradient top bar */
+  .card-gradient-top {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-gradient-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(to right, #0d7377, #c7923e, #0d7377);
+    z-index: 1;
+  }
+
+  /* Dot grid pattern for card hover */
+  .card-dot-pattern {
+    background-image: radial-gradient(circle at 1px 1px, rgba(13, 115, 119, 0.06) 1px, transparent 0);
+    background-size: 16px 16px;
+  }
+
+  /* Animated pulse for badge */
+  @keyframes badge-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(199, 146, 62, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(199, 146, 62, 0); }
+  }
+  .badge-pulse {
+    animation: badge-pulse 2s ease-in-out infinite;
+  }
+
+  /* Social icon hover bounce */
+  @keyframes social-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  .social-icon-hover:hover {
+    animation: social-bounce 0.4s ease;
+  }
+
+  /* Gallery image shimmer overlay */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Smooth section wave divider */
+  .wave-divider {
+    position: relative;
+  }
+  .wave-divider::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: inherit;
+    clip-path: ellipse(55% 100% at 50% 0%);
+  }
+
+  /* Scrollbar styling for dark mode */
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  /* ─── New Round 6 Utilities ─── */
+
+  /* Soft fade-in for images on load */
+  .img-fade-in {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .img-fade-in.loaded {
+    opacity: 1;
+  }
+
+  /* Blur placeholder for lazy images */
+  .img-blur-placeholder {
+    filter: blur(8px);
+    transition: filter 0.4s ease;
+  }
+  .img-blur-placeholder.loaded {
+    filter: blur(0);
+  }
+
+  /* Card hover lift - more pronounced */
+  .card-lift {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  }
+  .card-lift:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Gradient text */
+  .text-gradient-teal-gold {
+    background: linear-gradient(135deg, #0d7377 0%, #c7923e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Glow effect for primary CTAs */
+  .glow-teal {
+    box-shadow: 0 0 0 0 rgba(13, 115, 119, 0.5);
+    transition: box-shadow 0.3s ease;
+  }
+  .glow-teal:hover {
+    box-shadow: 0 0 24px 4px rgba(13, 115, 119, 0.35);
+  }
+
+  /* Glow effect for gold CTAs */
+  .glow-gold {
+    box-shadow: 0 0 0 0 rgba(199, 146, 62, 0.5);
+    transition: box-shadow 0.3s ease;
+  }
+  .glow-gold:hover {
+    box-shadow: 0 0 24px 4px rgba(199, 146, 62, 0.35);
+  }
+
+  /* Active filter pill (gallery/publications) */
+  .filter-pill-active {
+    box-shadow: 0 6px 16px -4px rgba(13, 115, 119, 0.45);
+    transform: translateY(-1px);
+  }
+
+  /* Section snap emphasis - subtle bottom border highlight */
+  .section-emphasis {
+    position: relative;
+  }
+  .section-emphasis::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(to right, transparent, #0d7377, #c7923e, transparent);
+    border-radius: 2px;
+  }
+
+  /* Animated underline for headings */
+  .heading-underline {
+    position: relative;
+    display: inline-block;
+  }
+  .heading-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 48px;
+    height: 3px;
+    background: linear-gradient(to right, #0d7377, #c7923e);
+    border-radius: 2px;
+  }
+
+  /* Float animation for floating action buttons */
+  @keyframes float-soft {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .float-soft {
+    animation: float-soft 3s ease-in-out infinite;
+  }
+
+  /* Skeleton shimmer for loading states */
+  @keyframes skeleton-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(229, 231, 235, 0.4) 25%,
+      rgba(229, 231, 235, 0.8) 50%,
+      rgba(229, 231, 235, 0.4) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.6s infinite;
+  }
+  .dark .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(55, 65, 81, 0.4) 25%,
+      rgba(55, 65, 81, 0.8) 50%,
+      rgba(55, 65, 81, 0.4) 75%
+    );
+    background-size: 200% 100%;
+  }
+
+  /* Glass morphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .dark .glass {
+    background: rgba(26, 35, 50, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Subtle hover scale for icon containers */
+  .icon-tilt {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .icon-tilt:hover {
+    transform: scale(1.08) rotate(-3deg);
+  }
+
+  /* Form input focus ring enhancement */
+  .input-focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13, 115, 119, 0.18);
+    border-color: #0d7377;
+  }
+
+  /* Reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ─── Print Stylesheet ─── */
+@media print {
+  /* Hide non-essential UI elements */
+  header,
+  footer,
+  nav,
+  button,
+  .no-print,
+  [aria-label="Back to top"],
+  [aria-label="Toggle navigation menu"],
+  .fixed {
+    display: none !important;
+  }
+
+  /* Use full width, white background */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  /* Ensure sections don't break across pages */
+  section {
+    page-break-inside: avoid;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0 !important;
+    background: white !important;
+    border: none !important;
+  }
+
+  /* Headings */
+  h1, h2, h3 {
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  /* Links: show URL after link text */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #555;
+  }
+
+  /* Card styling for print */
+  .card-gradient-top::before {
+    background: #000 !important;
+  }
+
+  /* Force images to be visible */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
 }

@@ -358,6 +358,12 @@ const galleryImages = [
   { src: '/images/professionals.png', title: 'World Hearing Day 2024', category: 'Events' },
   { src: '/images/about-illustration.png', title: 'Audiology Awareness Camp', category: 'Outreach' },
   { src: '/images/gallery-cover.png', title: 'SLP Training Session', category: 'Training' },
+  { src: '/images/hero-1.png', title: 'UP ISHACON Inaugural Ceremony', category: 'Conferences' },
+  { src: '/images/hero-2.png', title: 'School Screening Program', category: 'Outreach' },
+  { src: '/images/hero-3.png', title: 'Annual General Body Meeting', category: 'Meetings' },
+  { src: '/images/professionals.png', title: 'International Day of Persons with Disabilities', category: 'Events' },
+  { src: '/images/about-illustration.png', title: 'Hearing Aid Fitting Workshop', category: 'Workshops' },
+  { src: '/images/gallery-cover.png', title: 'Student Research Symposium', category: 'Training' },
 ]
 
 const faqItems = [
@@ -584,6 +590,9 @@ const eventsTimeline = [
       'Three-day flagship conference featuring keynote lectures, scientific paper presentations, panel discussions, and hands-on workshops on the latest advances in audiology and speech-language pathology.',
     type: 'Conference',
     icon: Trophy,
+    time: '9:00 AM - 5:00 PM',
+    speakers: ['Dr. Rajesh Sharma', 'Dr. Sunita Verma', 'Dr. Amit Mishra'],
+    registrationLink: '#join',
   },
   {
     date: '25 Mar 2025',
@@ -593,6 +602,9 @@ const eventsTimeline = [
       'Hands-on workshop covering ABR, OAE, and behavioral audiometry for infants and young children. Limited to 30 participants.',
     type: 'Workshop',
     icon: Microscope,
+    time: '10:00 AM - 4:00 PM',
+    speakers: ['Dr. Ananya Gupta', 'Dr. Meera Tiwari'],
+    registrationLink: '#join',
   },
   {
     date: '03 Mar 2025',
@@ -602,6 +614,9 @@ const eventsTimeline = [
       'Public awareness walk and free hearing screening camp in observance of WHO World Hearing Day 2025.',
     type: 'Outreach',
     icon: Megaphone,
+    time: '8:00 AM - 1:00 PM',
+    speakers: ['Dr. Vikram Pandey', 'Dr. Kavita Rathore'],
+    registrationLink: '#join',
   },
   {
     date: '15 Feb 2025',
@@ -611,6 +626,9 @@ const eventsTimeline = [
       'Expert-led session on assessment and management of voice disorders across the lifespan, including latest evidence-based practices.',
     type: 'Webinar',
     icon: PlayCircle,
+    time: '4:00 PM - 6:00 PM IST',
+    speakers: ['Dr. Neha Saxena', 'Dr. Arjun Yadav'],
+    registrationLink: '#join',
   },
   {
     date: '28 Jan 2025',
@@ -620,6 +638,9 @@ const eventsTimeline = [
       'Two-day workshop for early-career researchers on research design, statistical analysis, and scientific writing for ASLP professionals.',
     type: 'Workshop',
     icon: GraduationCap,
+    time: '9:30 AM - 4:30 PM',
+    speakers: ['Dr. Rakesh Pandey', 'Dr. Sanjay Gupta'],
+    registrationLink: '#join',
   },
 ]
 
@@ -721,7 +742,7 @@ function SectionHeading({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.1 }}
-        className={`text-3xl md:text-4xl font-bold mb-3 ${light ? 'text-white' : 'text-upisha-navy'}`}
+        className={`text-3xl md:text-4xl font-extrabold tracking-tight mb-3 ${light ? 'text-white' : 'text-upisha-navy dark:text-white'}`}
       >
         {title}
       </motion.h2>
@@ -732,7 +753,7 @@ function SectionHeading({
         <p
           className={`max-w-2xl ${
             align === 'center' ? 'mx-auto' : ''
-          } text-base ${light ? 'text-gray-300' : 'text-gray-600'}`}
+          } text-lg ${light ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400'}`}
         >
           {subtitle}
         </p>
@@ -744,7 +765,7 @@ function SectionHeading({
 /* ─── News Ticker ─── */
 function NewsTicker() {
   return (
-    <div className="bg-upisha-navy text-white py-2.5 overflow-hidden border-b border-upisha-teal/30">
+    <div className="bg-upisha-navy dark:bg-gray-950 text-white py-2.5 overflow-hidden border-b border-upisha-teal/30">
       <div className="max-w-7xl mx-auto px-4 flex items-center gap-4">
         <div className="flex items-center gap-2 shrink-0 bg-upisha-gold text-upisha-navy px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">
           <Megaphone className="h-3.5 w-3.5" />
@@ -772,7 +793,7 @@ function NewsTicker() {
 /* ─── Top Bar ─── */
 function TopBar() {
   return (
-    <div className="bg-upisha-navy text-white text-sm py-2 border-b border-white/5">
+    <div className="bg-upisha-navy dark:bg-gray-950 text-white text-sm py-2 border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="flex items-center gap-4 flex-wrap justify-center">
           <a
@@ -879,7 +900,7 @@ function Navbar({
                   }}
                   className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? 'text-upisha-teal bg-upisha-teal-light dark:bg-upisha-teal/20'
+                      ? 'text-upisha-teal font-bold bg-upisha-teal-light dark:bg-upisha-teal/20'
                       : 'text-gray-600 dark:text-gray-300 hover:text-upisha-teal hover:bg-upisha-teal-light/50 dark:hover:bg-upisha-teal/10'
                   }`}
                 >
@@ -887,7 +908,7 @@ function Navbar({
                   {isActive && (
                     <motion.span
                       layoutId="nav-active-indicator"
-                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 w-6 bg-upisha-gold rounded-full"
+                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-[3px] w-8 bg-upisha-teal rounded-full"
                     />
                   )}
                 </a>
@@ -978,6 +999,7 @@ function Navbar({
 /* ─── Hero Section ─── */
 function HeroSection() {
   const [current, setCurrent] = useState(0)
+  const { toast } = useToast()
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -992,6 +1014,15 @@ function HeroSection() {
 
   return (
     <section id="home" className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+      {/* Decorative geometric shapes */}
+      <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
+        <div className="absolute top-[15%] right-[10%] w-20 h-20 md:w-32 md:h-32 border-2 border-white/10 rounded-full" />
+        <div className="absolute bottom-[20%] left-[5%] w-16 h-16 md:w-24 md:h-24 border border-upisha-gold/20 rounded-full" />
+        <div className="absolute top-[40%] right-[25%] w-3 h-3 bg-upisha-gold/30 rounded-full" />
+        <div className="absolute top-[25%] left-[30%] w-2 h-2 bg-white/20 rounded-full" />
+        <div className="absolute bottom-[35%] right-[15%] w-4 h-4 border border-white/15 rotate-45" />
+        <div className="absolute top-[60%] left-[15%] w-6 h-6 border border-upisha-teal/20 rounded-full" />
+      </div>
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
@@ -1026,12 +1057,12 @@ function HeroSection() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="inline-flex items-center gap-2 bg-upisha-gold/90 text-white px-3 py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 backdrop-blur-sm"
+                className="inline-flex items-center gap-2 bg-upisha-gold/90 text-white px-3 py-1.5 rounded-full text-xs md:text-sm font-medium mb-4 backdrop-blur-sm badge-pulse"
               >
                 <Star className="h-3 w-3 fill-white" />
                 Serving Since 2005
               </motion.div>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight drop-shadow-lg">
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-4 leading-tight drop-shadow-lg">
                 {heroSlides[current].title}
               </h1>
               <div className="h-1 w-20 bg-upisha-gold rounded-full mb-6" />
@@ -1060,6 +1091,26 @@ function HeroSection() {
                   }
                 >
                   Learn More
+                </Button>
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  className="text-white/80 hover:text-white hover:bg-white/10"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: 'Uttar Pradesh Speech & Hearing Association',
+                        text: 'Learn about UP ISHA - dedicated to excellence in audiology & speech-language pathology.',
+                        url: window.location.href,
+                      }).catch(() => {})
+                    } else {
+                      navigator.clipboard.writeText(window.location.href)
+                      toast({ title: 'Link copied!', description: 'UP ISHA link has been copied to clipboard.' })
+                    }
+                  }}
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
                 </Button>
               </div>
             </motion.div>
@@ -1130,14 +1181,14 @@ function QuickLinks() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="bg-white rounded-xl shadow-lg hover:shadow-xl p-4 md:p-6 flex flex-col items-center gap-3 text-center transition-all duration-300 hover:-translate-y-1 group"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl p-4 md:p-6 flex flex-col items-center gap-3 text-center transition-all duration-300 hover:-translate-y-1 group border-t-[3px] border-t-transparent hover:border-t-upisha-teal card-gradient-top"
             >
               <div
                 className={`${link.color} w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}
               >
                 <link.icon className="h-6 w-6 md:h-7 md:w-7 text-white" />
               </div>
-              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-upisha-teal transition-colors">
+              <span className="text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-upisha-teal transition-colors">
                 {link.label}
               </span>
             </motion.a>
@@ -1151,14 +1202,14 @@ function QuickLinks() {
 /* ─── Announcement Section ─── */
 function AnnouncementSection() {
   return (
-    <section className="py-16 md:py-20 bg-white">
+    <section className="py-16 md:py-20 bg-white dark:bg-gray-900 border-t-2 border-t-upisha-teal/10">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Announcements */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1.5 h-8 bg-upisha-gold rounded-full" />
-              <h2 className="text-2xl md:text-3xl font-bold text-upisha-navy">Announcements</h2>
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-upisha-navy dark:text-white">Announcements</h2>
             </div>
             <div className="space-y-3">
               {announcements.map((item, i) => (
@@ -1168,10 +1219,10 @@ function AnnouncementSection() {
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
                   viewport={{ once: true }}
-                  className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors group cursor-pointer"
+                  className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group cursor-pointer"
                 >
                   <div className="shrink-0 w-16 text-center">
-                    <div className="bg-upisha-teal-light rounded-lg p-2">
+                    <div className="bg-upisha-teal-light dark:bg-upisha-teal/20 rounded-lg p-2">
                       <Calendar className="h-5 w-5 text-upisha-teal mx-auto" />
                       <div className="text-xs text-upisha-teal font-medium mt-1">
                         {item.date.split(' ').slice(0, 2).join(' ')}
@@ -1179,7 +1230,7 @@ function AnnouncementSection() {
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-800 group-hover:text-upisha-teal transition-colors text-sm md:text-base">
+                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 group-hover:text-upisha-teal transition-colors text-sm md:text-base">
                       {item.title}
                     </h4>
                   </div>
@@ -1205,36 +1256,36 @@ function AnnouncementSection() {
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1.5 h-8 bg-upisha-teal rounded-full" />
-              <h2 className="text-2xl md:text-3xl font-bold text-upisha-navy">News & Events</h2>
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-upisha-navy dark:text-white">News & Events</h2>
             </div>
-            <Card className="border-upisha-teal/20">
+            <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
               <CardContent className="p-5 space-y-4">
                 <div className="space-y-1">
-                  <h4 className="font-semibold text-upisha-navy">UP ISHACON 2025</h4>
-                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                  <h4 className="font-semibold text-upisha-navy dark:text-white">UP ISHACON 2025</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5" /> October 18-20, 2025
                   </p>
-                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" /> Lucknow, UP
                   </p>
                 </div>
-                <Separator />
+                <Separator className="dark:bg-gray-700" />
                 <div className="space-y-1">
-                  <h4 className="font-semibold text-upisha-navy">World Hearing Day 2025</h4>
-                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                  <h4 className="font-semibold text-upisha-navy dark:text-white">World Hearing Day 2025</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5" /> March 3, 2025
                   </p>
-                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" /> Across UP
                   </p>
                 </div>
-                <Separator />
+                <Separator className="dark:bg-gray-700" />
                 <div className="space-y-1">
-                  <h4 className="font-semibold text-upisha-navy">Pediatric SLP Workshop</h4>
-                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                  <h4 className="font-semibold text-upisha-navy dark:text-white">Pediatric SLP Workshop</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5" /> April 12, 2025
                   </p>
-                  <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" /> Varanasi, UP
                   </p>
                 </div>
@@ -1257,14 +1308,14 @@ function AnnouncementSection() {
 /* ─── Features Section ─── */
 function FeaturesSection() {
   return (
-    <section className="py-16 md:py-20 bg-upisha-teal-light">
+    <section className="py-16 md:py-20 bg-upisha-teal-light dark:bg-upisha-teal/10 border-t-2 border-t-upisha-gold/10">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">What We Offer</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white">
             UP ISHA Features
           </h2>
-          <p className="text-gray-500 mt-3 max-w-2xl mx-auto">
+          <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
             Discover the resources, services, and community that make UP ISHA the leading
             association for speech and hearing professionals in Uttar Pradesh.
           </p>
@@ -1278,13 +1329,13 @@ function FeaturesSection() {
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
+              <Card className="h-full border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
                 <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-upisha-teal/10 rounded-2xl flex items-center justify-center group-hover:bg-upisha-teal group-hover:text-white transition-all duration-300">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/20 rounded-2xl flex items-center justify-center group-hover:bg-upisha-teal group-hover:text-white transition-all duration-300">
                     <feature.icon className="h-8 w-8 text-upisha-teal group-hover:text-white transition-colors" />
                   </div>
-                  <h3 className="font-bold text-upisha-navy mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-500">{feature.description}</p>
+                  <h3 className="font-bold text-upisha-navy dark:text-white mb-2">{feature.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{feature.description}</p>
                   <Button
                     variant="link"
                     className="mt-3 text-upisha-teal p-0 h-auto font-semibold"
@@ -1304,7 +1355,7 @@ function FeaturesSection() {
 /* ─── About Section ─── */
 function AboutSection() {
   return (
-    <AnimatedSection id="about" className="py-16 md:py-20 bg-white">
+    <AnimatedSection id="about" className="py-16 md:py-20 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Image */}
@@ -1330,16 +1381,16 @@ function AboutSection() {
           {/* Content */}
           <div>
             <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">About Us</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy mb-6">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white mb-6">
               Uttar Pradesh Speech & Hearing Association
             </h2>
-            <p className="text-gray-600 leading-relaxed mb-4">
+            <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed mb-4">
               The Uttar Pradesh Speech & Hearing Association (UP ISHA) is the premier professional
               body representing audiologists and speech-language pathologists in Uttar Pradesh,
               India. Established in 2005, UP ISHA has been at the forefront of advancing the
               professions of audiology and speech-language pathology in the state.
             </p>
-            <p className="text-gray-600 leading-relaxed mb-6">
+            <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed mb-6">
               Our mission is to promote the highest standards of professional practice, foster
               research and education, advocate for persons with communication disorders, and serve
               as a unified voice for speech and hearing professionals across Uttar Pradesh.
@@ -1347,22 +1398,22 @@ function AboutSection() {
 
             {/* Mission & Vision */}
             <div className="grid sm:grid-cols-2 gap-4 mb-6">
-              <div className="bg-upisha-teal-light rounded-xl p-5">
+              <div className="bg-upisha-teal-light dark:bg-upisha-teal/20 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <Heart className="h-5 w-5 text-upisha-teal" />
-                  <h4 className="font-bold text-upisha-navy">Our Mission</h4>
+                  <h4 className="font-bold text-upisha-navy dark:text-white">Our Mission</h4>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   To advance the science and practice of audiology and speech-language pathology,
                   and to advocate for individuals with communication disorders.
                 </p>
               </div>
-              <div className="bg-upisha-gold-light rounded-xl p-5">
+              <div className="bg-upisha-gold-light dark:bg-upisha-gold/20 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <Eye className="h-5 w-5 text-upisha-gold" />
-                  <h4 className="font-bold text-upisha-navy">Our Vision</h4>
+                  <h4 className="font-bold text-upisha-navy dark:text-white">Our Vision</h4>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Every individual in Uttar Pradesh has access to quality speech and hearing
                   healthcare services provided by qualified professionals.
                 </p>
@@ -1377,20 +1428,20 @@ function AboutSection() {
 
         {/* President's Message */}
         <div className="mt-16 md:mt-20">
-          <Card className="border-upisha-teal/20 bg-gradient-to-r from-upisha-teal-light to-white">
+          <Card className="border-upisha-teal/20 bg-gradient-to-r from-upisha-teal-light to-white dark:from-upisha-teal/20 dark:to-gray-800 dark:bg-gray-800 card-gradient-top">
             <CardContent className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row gap-6 items-start">
                 <div className="shrink-0">
-                  <div className="w-24 h-24 rounded-full bg-upisha-teal/20 flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full bg-upisha-teal/20 dark:bg-upisha-teal/30 flex items-center justify-center">
                     <Users className="h-12 w-12 text-upisha-teal" />
                   </div>
                 </div>
                 <div>
                   <Badge className="bg-upisha-gold text-white mb-3">President&apos;s Message</Badge>
-                  <h3 className="text-xl font-bold text-upisha-navy mb-3">
+                  <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-3">
                     Dr. Rajesh Kumar Sharma
                   </h3>
-                  <p className="text-gray-600 leading-relaxed italic mb-4">
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed italic mb-4">
                     &ldquo;It is my privilege to serve as the President of UP ISHA. Our association
                     continues to grow and strengthen, uniting professionals across Uttar Pradesh in
                     our shared commitment to improving communication health. Together, we can ensure
@@ -1411,8 +1462,8 @@ function AboutSection() {
         <div className="mt-16 md:mt-20">
           <div className="text-center mb-10">
             <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">Leadership</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">Executive Council</h2>
-            <p className="text-gray-500 mt-3">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white">Executive Council</h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-3">
               Meet the dedicated professionals leading UP ISHA
             </p>
           </div>
@@ -1425,7 +1476,7 @@ function AboutSection() {
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="text-center hover:shadow-lg transition-all duration-300 group overflow-hidden">
+                <Card className="text-center hover:shadow-lg transition-all duration-300 group overflow-hidden dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
                   <CardContent className="pt-6 pb-6">
                     <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-upisha-teal/10 group-hover:border-upisha-teal transition-colors">
                       {member.image ? (
@@ -1457,16 +1508,18 @@ function AboutSection() {
 }
 
 /* ─── Documents Section ─── */
+const documentDownloads = [342, 567, 1289, 456, 891, 723]
+
 function DocumentsSection() {
   return (
-    <AnimatedSection id="documents" className="py-16 md:py-20 bg-gray-50">
+    <AnimatedSection id="documents" className="py-16 md:py-20 bg-gray-50 dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">Resources</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white">
             Documents & Resources
           </h2>
-          <p className="text-gray-500 mt-3 max-w-2xl mx-auto">
+          <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
             Access official documents, practice guidelines, regulatory mandates, and professional
             resources for speech and hearing practitioners.
           </p>
@@ -1481,10 +1534,10 @@ function DocumentsSection() {
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full hover:shadow-lg transition-all duration-300 group border-l-4 border-l-upisha-teal">
+              <Card className="h-full hover:shadow-lg transition-all duration-300 group border-l-4 border-l-upisha-teal dark:bg-gray-900 dark:border-gray-700 dark:border-l-upisha-teal card-gradient-top shadow-sm hover:shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 shrink-0 rounded-lg bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
+                    <div className="w-12 h-12 shrink-0 rounded-lg bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/20 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
                       <doc.icon className="h-6 w-6 text-upisha-teal group-hover:text-white transition-colors" />
                     </div>
                     <div>
@@ -1494,19 +1547,25 @@ function DocumentsSection() {
                       >
                         {doc.category}
                       </Badge>
-                      <h4 className="font-bold text-upisha-navy mb-1 group-hover:text-upisha-teal transition-colors">
+                      <h4 className="font-bold text-upisha-navy dark:text-white mb-1 group-hover:text-upisha-teal transition-colors">
                         {doc.title}
                       </h4>
-                      <p className="text-sm text-gray-500">{doc.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{doc.description}</p>
                     </div>
                   </div>
-                  <Button
-                    variant="link"
-                    className="mt-4 text-upisha-teal p-0 h-auto font-semibold"
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download PDF
-                  </Button>
+                  <div className="mt-4">
+                    <Button
+                      variant="link"
+                      className="text-upisha-teal p-0 h-auto font-semibold"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Download PDF
+                    </Button>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
+                      <Download className="h-3 w-3" />
+                      Downloaded {documentDownloads[i].toLocaleString()} times
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -1520,19 +1579,19 @@ function DocumentsSection() {
 /* ─── Publications Section ─── */
 function PublicationsSection() {
   return (
-    <AnimatedSection id="publications" className="py-16 md:py-20 bg-white">
+    <AnimatedSection id="publications" className="py-16 md:py-20 bg-white dark:bg-gray-900 border-t-2 border-t-upisha-teal/10">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <Badge className="bg-upisha-gold/10 text-upisha-gold mb-3">Research & Knowledge</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">Publications</h2>
-          <p className="text-gray-500 mt-3 max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white">Publications</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
             Explore our journal, monographs, and research contributions that advance the field of
             speech and hearing sciences.
           </p>
         </div>
 
         <Tabs defaultValue="journal" className="w-full">
-          <TabsList className="mx-auto flex w-fit bg-upisha-teal-light">
+          <TabsList className="mx-auto flex w-fit bg-upisha-teal-light dark:bg-gray-800">
             <TabsTrigger
               value="journal"
               className="data-[state=active]:bg-upisha-teal data-[state=active]:text-white"
@@ -1554,34 +1613,34 @@ function PublicationsSection() {
           </TabsList>
           <TabsContent value="journal" className="mt-8">
             <div className="grid md:grid-cols-2 gap-8">
-              <Card className="border-upisha-teal/20">
+              <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <BookOpen className="h-8 w-8 text-upisha-teal" />
                     <div>
-                      <h3 className="font-bold text-upisha-navy text-lg">
+                      <h3 className="font-bold text-upisha-navy dark:text-white text-lg">
                         UP Journal of Speech & Hearing
                       </h3>
-                      <p className="text-sm text-gray-500">Official Peer-Reviewed Journal</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Official Peer-Reviewed Journal</p>
                     </div>
                   </div>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
                     The UP Journal of Speech & Hearing is the official peer-reviewed publication of
                     UP ISHA, featuring original research, case studies, clinical reports, and review
                     articles in audiology and speech-language pathology.
                   </p>
                   <div className="space-y-2 mb-4">
-                    <h4 className="font-semibold text-upisha-navy text-sm">Current Issue Highlights:</h4>
+                    <h4 className="font-semibold text-upisha-navy dark:text-white text-sm">Current Issue Highlights:</h4>
                     <ul className="space-y-1.5">
-                      <li className="text-sm text-gray-600 flex items-start gap-2">
+                      <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
                         <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
                         Effectiveness of Tele-Audiology in Rural UP
                       </li>
-                      <li className="text-sm text-gray-600 flex items-start gap-2">
+                      <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
                         <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
                         Language Development in Hindi-Speaking Children
                       </li>
-                      <li className="text-sm text-gray-600 flex items-start gap-2">
+                      <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
                         <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
                         Cochlear Implant Outcomes: A 5-Year Review
                       </li>
@@ -1599,24 +1658,24 @@ function PublicationsSection() {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="border-upisha-gold/20 bg-upisha-gold-light/30">
+              <Card className="border-upisha-gold/20 bg-upisha-gold-light/30 dark:bg-gray-800 dark:border-gray-700">
                 <CardContent className="p-6">
-                  <h3 className="font-bold text-upisha-navy mb-4">Call for Papers</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="font-bold text-upisha-navy dark:text-white mb-4">Call for Papers</h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
                     We invite researchers, clinicians, and academicians to submit original research
                     articles, case studies, and reviews for publication in the UP Journal of Speech
                     & Hearing.
                   </p>
                   <div className="space-y-3 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                       <Clock className="h-4 w-4 text-upisha-gold" />
                       Submission Deadline: June 30, 2025
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                       <FileText className="h-4 w-4 text-upisha-gold" />
                       Follow APA 7th Edition formatting
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                       <Send className="h-4 w-4 text-upisha-gold" />
                       Submit to: editor@upisha.org
                     </div>
@@ -1630,16 +1689,16 @@ function PublicationsSection() {
             </div>
           </TabsContent>
           <TabsContent value="monograph" className="mt-8">
-            <Card className="border-upisha-teal/20">
+            <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <FileText className="h-8 w-8 text-upisha-teal" />
                   <div>
-                    <h3 className="font-bold text-upisha-navy text-lg">Clinical Monograph Series</h3>
-                    <p className="text-sm text-gray-500">Specialized Topic Publications</p>
+                    <h3 className="font-bold text-upisha-navy dark:text-white text-lg">Clinical Monograph Series</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Specialized Topic Publications</p>
                   </div>
                 </div>
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
                   Our monograph series provides in-depth coverage of specialized topics in audiology
                   and speech-language pathology, authored by leading experts in the field.
                 </p>
@@ -1651,9 +1710,9 @@ function PublicationsSection() {
                   ].map((title, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-upisha-teal-light/50 transition-colors"
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
                     >
-                      <span className="text-sm font-medium text-gray-700">{title}</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{title}</span>
                       <Button variant="ghost" size="sm" className="text-upisha-teal">
                         <ExternalLink className="h-4 w-4" />
                       </Button>
@@ -1664,18 +1723,18 @@ function PublicationsSection() {
             </Card>
           </TabsContent>
           <TabsContent value="research" className="mt-8">
-            <Card className="border-upisha-teal/20">
+            <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <GraduationCap className="h-8 w-8 text-upisha-teal" />
                   <div>
-                    <h3 className="font-bold text-upisha-navy text-lg">
+                    <h3 className="font-bold text-upisha-navy dark:text-white text-lg">
                       Research in Uttar Pradesh
                     </h3>
-                    <p className="text-sm text-gray-500">Ongoing & Completed Research</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Ongoing & Completed Research</p>
                   </div>
                 </div>
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
                   Browse the directory of research projects being conducted in the field of speech
                   and hearing across Uttar Pradesh. Submit your research for inclusion.
                 </p>
@@ -1687,9 +1746,9 @@ function PublicationsSection() {
                   ].map((title, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-upisha-teal-light/50 transition-colors"
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
                     >
-                      <span className="text-sm font-medium text-gray-700">{title}</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{title}</span>
                       <Button variant="ghost" size="sm" className="text-upisha-teal">
                         <ExternalLink className="h-4 w-4" />
                       </Button>
@@ -1707,6 +1766,7 @@ function PublicationsSection() {
 
 /* ─── Professionals Section ─── */
 function ProfessionalsSection() {
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState('')
   const [cityFilter, setCityFilter] = useState('All Cities')
   const [specialityFilter, setSpecialityFilter] = useState('All Specialities')
@@ -1752,7 +1812,7 @@ function ProfessionalsSection() {
   const visible = filtered.slice(0, visibleCount)
 
   return (
-    <AnimatedSection id="professionals" className="py-16 md:py-20 bg-upisha-navy relative overflow-hidden">
+    <AnimatedSection id="professionals" className="py-16 md:py-20 bg-upisha-navy dark:bg-gray-950 relative overflow-hidden">
       {/* Decorative pattern */}
       <div
         className="absolute inset-0 opacity-[0.03]"
@@ -1780,9 +1840,9 @@ function ProfessionalsSection() {
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all duration-300 group hover:-translate-y-1">
+              <Card className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all duration-300 group hover:-translate-y-1 card-gradient-top">
                 <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-upisha-teal/20 rounded-2xl flex items-center justify-center group-hover:bg-upisha-teal group-hover:rotate-6 transition-all">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-upisha-teal/20 to-upisha-gold/20 rounded-2xl flex items-center justify-center group-hover:bg-upisha-teal group-hover:rotate-6 transition-all">
                     <cat.icon className="h-8 w-8 text-upisha-teal group-hover:text-white transition-colors" />
                   </div>
                   <h3 className="font-bold text-white mb-1">{cat.title}</h3>
@@ -1796,7 +1856,7 @@ function ProfessionalsSection() {
         </div>
 
         {/* Search & Filter Bar */}
-        <Card className="bg-upisha-navy-light border-upisha-navy-light mb-8">
+        <Card className="bg-upisha-navy-light dark:bg-gray-900 border-upisha-navy-light dark:border-gray-800 mb-8">
           <CardContent className="p-6 md:p-8">
             <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
               <Search className="h-5 w-5 text-upisha-teal" />
@@ -1811,14 +1871,14 @@ function ProfessionalsSection() {
                     placeholder="e.g. Dr. Rajesh..."
                     value={searchQuery}
                     onChange={(e) => updateSearchQuery(e.target.value)}
-                    className="bg-upisha-navy border-upisha-navy-light text-white placeholder:text-gray-500 pl-10"
+                    className="bg-upisha-navy border-upisha-navy-light dark:bg-gray-800 dark:border-gray-700 text-white placeholder:text-gray-500 pl-10"
                   />
                 </div>
               </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1.5 block">City</label>
                 <Select value={cityFilter} onValueChange={updateCityFilter}>
-                  <SelectTrigger className="bg-upisha-navy border-upisha-navy-light text-white">
+                  <SelectTrigger className="bg-upisha-navy border-upisha-navy-light dark:bg-gray-800 dark:border-gray-700 text-white">
                     <SelectValue placeholder="Select city" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1833,7 +1893,7 @@ function ProfessionalsSection() {
               <div>
                 <label className="text-sm text-gray-400 mb-1.5 block">Speciality</label>
                 <Select value={specialityFilter} onValueChange={updateSpecialityFilter}>
-                  <SelectTrigger className="bg-upisha-navy border-upisha-navy-light text-white">
+                  <SelectTrigger className="bg-upisha-navy border-upisha-navy-light dark:bg-gray-800 dark:border-gray-700 text-white">
                     <SelectValue placeholder="Select speciality" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1883,7 +1943,7 @@ function ProfessionalsSection() {
                 transition={{ delay: i * 0.05 }}
               >
                 <Card
-                  className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all cursor-pointer group"
+                  className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all cursor-pointer group shadow-sm hover:shadow-md"
                   onClick={() => setSelectedProfessional(pro)}
                 >
                   <CardContent className="p-5">
@@ -1956,46 +2016,84 @@ function ProfessionalsSection() {
                   {selectedProfessional.name.split(' ').slice(-2, -1)[0]?.[0] || selectedProfessional.name[2]}
                   {selectedProfessional.name.split(' ').slice(-1)[0]?.[0]}
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-upisha-navy">{selectedProfessional.name}</h3>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-upisha-navy dark:text-white">{selectedProfessional.name}</h3>
                   <p className="text-sm text-upisha-teal">{selectedProfessional.speciality}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <MapPin className="h-3.5 w-3.5 text-upisha-gold" />
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{selectedProfessional.city}</span>
+                  </div>
                 </div>
               </div>
+              <div className="flex items-center gap-2 mb-4">
+                <Badge className="bg-upisha-teal/10 text-upisha-teal gap-1">
+                  <Shield className="h-3 w-3" />
+                  Verified RCI Registration
+                </Badge>
+              </div>
               <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <GraduationCap className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Qualification</p>
-                    <p className="text-sm font-medium text-gray-800">{selectedProfessional.qualification}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Qualification</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{selectedProfessional.qualification}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <MapPinned className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">City</p>
-                    <p className="text-sm font-medium text-gray-800">{selectedProfessional.city}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">City</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{selectedProfessional.city}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <Briefcase className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Experience & Setting</p>
-                    <p className="text-sm font-medium text-gray-800">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Experience & Setting</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                       {selectedProfessional.experience} • {selectedProfessional.setting}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <Shield className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">RCI Registration</p>
-                    <p className="text-sm font-medium text-gray-800">{selectedProfessional.rci}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">RCI Registration</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{selectedProfessional.rci}</p>
                   </div>
                 </div>
               </div>
-              <Button className="w-full mt-6 bg-upisha-teal hover:bg-upisha-teal-dark text-white">
-                <Mail className="h-4 w-4 mr-2" />
-                Contact via UP ISHA
+              <div className="flex gap-3 mt-6">
+                <Button className="flex-1 bg-upisha-teal hover:bg-upisha-teal-dark text-white">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Contact via UP ISHA
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-upisha-teal text-upisha-teal hover:bg-upisha-teal-light"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: selectedProfessional.name,
+                        text: `${selectedProfessional.name} - ${selectedProfessional.speciality}, ${selectedProfessional.city} | UP ISHA`,
+                        url: window.location.href,
+                      }).catch(() => {})
+                    } else {
+                      navigator.clipboard.writeText(window.location.href)
+                      toast({ title: 'Link copied!', description: 'Profile link has been copied to clipboard.' })
+                    }
+                  }}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button
+                variant="outline"
+                className="w-full mt-3 border-upisha-gold/30 text-upisha-gold hover:bg-upisha-gold/10"
+                onClick={() => toast({ title: 'Feature coming soon!', description: 'Appointment booking will be available shortly.' })}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Request Appointment
               </Button>
             </div>
           )}
@@ -2063,12 +2161,12 @@ function JoinSection() {
   }
 
   return (
-    <AnimatedSection id="join" className="py-16 md:py-20 bg-upisha-teal-light">
+    <AnimatedSection id="join" className="py-16 md:py-20 bg-upisha-teal-light dark:bg-upisha-teal/10 border-t-2 border-t-upisha-gold/10">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">Membership</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">Join UP ISHA</h2>
-          <p className="text-gray-500 mt-3 max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white">Join UP ISHA</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
             Become a member of the leading professional body for speech and hearing professionals in
             Uttar Pradesh.
           </p>
@@ -2085,10 +2183,10 @@ function JoinSection() {
               viewport={{ once: true }}
             >
               <Card
-                className={`h-full relative ${
+                className={`h-full relative card-gradient-top ${
                   plan.popular
-                    ? 'border-upisha-teal shadow-lg scale-[1.02]'
-                    : 'border-gray-200'
+                    ? 'border-upisha-teal shadow-lg scale-[1.02] dark:bg-gray-800'
+                    : 'border-gray-200 dark:bg-gray-800 dark:border-gray-700'
                 }`}
               >
                 {plan.popular && (
@@ -2097,14 +2195,14 @@ function JoinSection() {
                   </div>
                 )}
                 <CardContent className="p-6 text-center">
-                  <h3 className="font-bold text-upisha-navy text-lg">{plan.type}</h3>
+                  <h3 className="font-bold text-upisha-navy dark:text-white text-lg">{plan.type}</h3>
                   <div className="my-4">
                     <span className="text-3xl font-bold text-upisha-teal">{plan.price}</span>
                   </div>
-                  <p className="text-sm text-gray-500 mb-4">{plan.description}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{plan.description}</p>
                   <ul className="space-y-2 text-left mb-6">
                     {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
+                      <li key={f} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                         <CheckCircle2 className="h-4 w-4 text-upisha-teal shrink-0" />
                         {f}
                       </li>
@@ -2129,7 +2227,7 @@ function JoinSection() {
         {/* Membership Benefits */}
         <div className="grid lg:grid-cols-2 gap-8 mb-12">
           <div>
-            <h3 className="text-2xl font-bold text-upisha-navy mb-6">Membership Benefits</h3>
+            <h3 className="text-2xl font-bold text-upisha-navy dark:text-white mb-6">Membership Benefits</h3>
             <div className="space-y-3">
               {membershipBenefits.map((benefit, i) => (
                 <motion.div
@@ -2138,19 +2236,19 @@ function JoinSection() {
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
                   viewport={{ once: true }}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-white transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-colors"
                 >
                   <CheckCircle2 className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
-                  <span className="text-gray-700">{benefit}</span>
+                  <span className="text-gray-700 dark:text-gray-300">{benefit}</span>
                 </motion.div>
               ))}
             </div>
           </div>
 
           {/* Application Form */}
-          <Card className="border-upisha-teal/20">
+          <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
             <CardHeader>
-              <CardTitle className="text-upisha-navy flex items-center gap-2">
+              <CardTitle className="text-upisha-navy dark:text-white flex items-center gap-2">
                 <UserPlus className="h-5 w-5 text-upisha-teal" />
                 Membership Application
               </CardTitle>
@@ -2159,10 +2257,10 @@ function JoinSection() {
               {submitted ? (
                 <div className="text-center py-8">
                   <CheckCircle2 className="h-16 w-16 text-upisha-teal mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-upisha-navy mb-2">
+                  <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">
                     Application Submitted!
                   </h3>
-                  <p className="text-gray-500">
+                  <p className="text-gray-500 dark:text-gray-400">
                     Thank you for your interest in joining UP ISHA. We will review your application
                     and get back to you shortly.
                   </p>
@@ -2295,7 +2393,7 @@ function JoinSection() {
 
         {/* FAQ */}
         <div>
-          <h3 className="text-2xl font-bold text-upisha-navy mb-6 text-center">
+          <h3 className="text-2xl font-bold text-upisha-navy dark:text-white mb-6 text-center">
             Frequently Asked Questions
           </h3>
           <div className="max-w-3xl mx-auto">
@@ -2304,12 +2402,12 @@ function JoinSection() {
                 <AccordionItem
                   key={i}
                   value={`faq-${i}`}
-                  className="bg-white rounded-lg border px-4"
+                  className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 px-4"
                 >
-                  <AccordionTrigger className="text-left font-semibold text-upisha-navy hover:text-upisha-teal">
+                  <AccordionTrigger className="text-left font-semibold text-upisha-navy dark:text-white hover:text-upisha-teal">
                     {item.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-gray-600">{item.answer}</AccordionContent>
+                  <AccordionContent className="text-gray-600 dark:text-gray-300">{item.answer}</AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
@@ -2324,18 +2422,41 @@ function JoinSection() {
 function GallerySection() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [filter, setFilter] = useState('All')
+  const [visibleCount, setVisibleCount] = useState(6)
+  const { toast } = useToast()
 
-  const categories = ['All', 'Events', 'Workshops', 'Meetings', 'Outreach', 'Training']
+  const categories = ['All', 'Events', 'Workshops', 'Meetings', 'Outreach', 'Training', 'Conferences']
   const filteredImages =
     filter === 'All' ? galleryImages : galleryImages.filter((img) => img.category === filter)
+  const visibleImages = filteredImages.slice(0, visibleCount)
 
   return (
-    <AnimatedSection id="gallery" className="py-16 md:py-20 bg-white">
+    <AnimatedSection id="gallery" className="py-16 md:py-20 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
-          <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">Visual Stories</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">Gallery</h2>
-          <p className="text-gray-500 mt-3 max-w-2xl mx-auto">
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <Badge className="bg-upisha-teal/10 text-upisha-teal">Visual Stories</Badge>
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: 'UP ISHA Gallery',
+                    text: 'Browse photos from UP ISHA events, workshops, and activities.',
+                    url: window.location.href,
+                  }).catch(() => {})
+                } else {
+                  navigator.clipboard.writeText(window.location.href)
+                  toast({ title: 'Link copied!', description: 'Gallery link has been copied to clipboard.' })
+                }
+              }}
+              className="p-1.5 rounded-md hover:bg-upisha-teal/10 transition-colors"
+              aria-label="Share gallery"
+            >
+              <Share2 className="h-4 w-4 text-upisha-teal" />
+            </button>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white">Gallery</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
             Browse through our collection of photos from events, workshops, conferences, and
             community activities.
           </p>
@@ -2353,23 +2474,30 @@ function GallerySection() {
                   ? 'bg-upisha-teal text-white'
                   : 'border-upisha-teal/30 text-upisha-teal hover:bg-upisha-teal-light'
               }
-              onClick={() => setFilter(cat)}
+              onClick={() => { setFilter(cat); setVisibleCount(6) }}
             >
               {cat}
             </Button>
           ))}
         </div>
 
+        {/* Image count */}
+        {visibleImages.length < filteredImages.length && (
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Showing {visibleImages.length} of {filteredImages.length} images
+          </p>
+        )}
+
         {/* Gallery Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {filteredImages.map((img, i) => (
+          {visibleImages.map((img, i) => (
             <motion.div
-              key={img.title}
+              key={`${img.title}-${i}`}
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
-              className="group cursor-pointer relative overflow-hidden rounded-xl"
+              className="group cursor-pointer relative overflow-hidden rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300"
               onClick={() => setSelectedImage(img.src)}
             >
               <div className="aspect-[4/3] overflow-hidden">
@@ -2379,7 +2507,7 @@ function GallerySection() {
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 backdrop-blur-[2px]">
                 <div>
                   <h4 className="text-white font-semibold text-sm">{img.title}</h4>
                   <Badge className="bg-white/20 text-white text-xs mt-1">{img.category}</Badge>
@@ -2387,6 +2515,29 @@ function GallerySection() {
               </div>
             </motion.div>
           ))}
+        </div>
+
+        {/* Load More / View Full Gallery */}
+        <div className="text-center mt-8 space-y-3">
+          {visibleCount < filteredImages.length && (
+            <Button
+              variant="outline"
+              onClick={() => setVisibleCount((prev) => prev + 6)}
+              className="border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
+            >
+              Load More ({filteredImages.length - visibleCount} remaining)
+            </Button>
+          )}
+          {filteredImages.length > 0 && (
+            <div>
+              <Button
+                className="bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                View Full Gallery
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Lightbox */}
@@ -2455,12 +2606,12 @@ function ContactSection() {
   }
 
   return (
-    <AnimatedSection id="contact" className="py-16 md:py-20 bg-gray-50">
+    <AnimatedSection id="contact" className="py-16 md:py-20 bg-gray-50 dark:bg-gray-800 border-t-2 border-t-upisha-teal/10">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">Get in Touch</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy">Contact Us</h2>
-          <p className="text-gray-500 mt-3 max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white">Contact Us</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
             Have questions or need assistance? We&apos;re here to help. Reach out to us through any
             of the channels below.
           </p>
@@ -2469,17 +2620,17 @@ function ContactSection() {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Contact Info */}
           <div className="space-y-6">
-            <Card className="border-upisha-teal/20">
+            <Card className="border-upisha-teal/20 dark:bg-gray-900 dark:border-gray-700 card-gradient-top">
               <CardContent className="p-6">
-                <h3 className="font-bold text-upisha-navy text-lg mb-6">Contact Information</h3>
+                <h3 className="font-bold text-upisha-navy dark:text-white text-lg mb-6">Contact Information</h3>
                 <div className="space-y-5">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 bg-upisha-teal/10 rounded-lg flex items-center justify-center shrink-0">
                       <MapPin className="h-5 w-5 text-upisha-teal" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-800">Office Address</h4>
-                      <p className="text-sm text-gray-500">
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200">Office Address</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Department of Audiology & Speech-Language Pathology
                         <br />
                         King George&apos;s Medical University
@@ -2494,9 +2645,9 @@ function ContactSection() {
                       <Phone className="h-5 w-5 text-upisha-teal" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-800">Phone</h4>
-                      <p className="text-sm text-gray-500">+91-522-456-7890</p>
-                      <p className="text-sm text-gray-500">+91-522-456-7891</p>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200">Phone</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">+91-522-456-7890</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">+91-522-456-7891</p>
                     </div>
                   </div>
                   <Separator />
@@ -2505,9 +2656,9 @@ function ContactSection() {
                       <Mail className="h-5 w-5 text-upisha-teal" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-800">Email</h4>
-                      <p className="text-sm text-gray-500">info@upisha.org</p>
-                      <p className="text-sm text-gray-500">secretary@upisha.org</p>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200">Email</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">info@upisha.org</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">secretary@upisha.org</p>
                     </div>
                   </div>
                   <Separator />
@@ -2516,8 +2667,8 @@ function ContactSection() {
                       <Clock className="h-5 w-5 text-upisha-teal" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-800">Office Hours</h4>
-                      <p className="text-sm text-gray-500">
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200">Office Hours</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Monday - Friday: 9:00 AM - 5:00 PM
                       </p>
                       <p className="text-sm text-gray-500">Saturday: 9:00 AM - 1:00 PM</p>
@@ -2528,9 +2679,9 @@ function ContactSection() {
             </Card>
 
             {/* Social Links */}
-            <Card className="border-upisha-teal/20">
+            <Card className="border-upisha-teal/20 dark:bg-gray-900 dark:border-gray-700">
               <CardContent className="p-6">
-                <h3 className="font-bold text-upisha-navy text-lg mb-4">Follow Us</h3>
+                <h3 className="font-bold text-upisha-navy dark:text-white text-lg mb-4">Follow Us</h3>
                 <div className="flex gap-3">
                   {[
                     { icon: Facebook, label: 'Facebook' },
@@ -2554,9 +2705,9 @@ function ContactSection() {
           </div>
 
           {/* Contact Form */}
-          <Card className="border-upisha-teal/20">
+          <Card className="border-upisha-teal/20 dark:bg-gray-900 dark:border-gray-700 card-gradient-top">
             <CardHeader>
-              <CardTitle className="text-upisha-navy flex items-center gap-2">
+              <CardTitle className="text-upisha-navy dark:text-white flex items-center gap-2">
                 <Send className="h-5 w-5 text-upisha-teal" />
                 Send us a Message
               </CardTitle>
@@ -2565,8 +2716,8 @@ function ContactSection() {
               {submitted ? (
                 <div className="text-center py-8">
                   <CheckCircle2 className="h-16 w-16 text-upisha-teal mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-upisha-navy mb-2">Message Sent!</h3>
-                  <p className="text-gray-500">
+                  <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">Message Sent!</h3>
+                  <p className="text-gray-500 dark:text-gray-400">
                     Thank you for reaching out. We will get back to you shortly.
                   </p>
                 </div>
@@ -2645,7 +2796,7 @@ function ContactSection() {
 /* ─── Footer ─── */
 function Footer() {
   return (
-    <footer className="bg-upisha-navy text-white">
+    <footer className="bg-upisha-navy dark:bg-gray-950 text-white border-t-2 border-t-upisha-gold/30">
       <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Logo & About */}
@@ -2667,7 +2818,7 @@ function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-upisha-gold mb-4">Quick Links</h4>
+            <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Quick Links</h4>
             <ul className="space-y-2">
               {['About Us', 'Documents', 'Publications', 'Professionals'].map((link) => (
                 <li key={link}>
@@ -2684,7 +2835,7 @@ function Footer() {
 
           {/* Membership */}
           <div>
-            <h4 className="font-semibold text-upisha-gold mb-4">Membership</h4>
+            <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Membership</h4>
             <ul className="space-y-2">
               {['Join UP ISHA', 'Member Benefits', 'Life Membership', 'Student Membership'].map(
                 (link) => (
@@ -2703,7 +2854,7 @@ function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="font-semibold text-upisha-gold mb-4">Contact</h4>
+            <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Contact</h4>
             <div className="space-y-2 text-sm text-gray-400">
               <p className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
@@ -2985,7 +3136,7 @@ function CountdownTimer() {
   ]
 
   return (
-    <section className="py-12 md:py-16 bg-gradient-to-r from-upisha-teal to-upisha-teal-dark relative overflow-hidden">
+    <section className="py-12 md:py-16 bg-gradient-to-r from-upisha-teal to-upisha-teal-dark dark:from-gray-800 dark:to-gray-900 relative overflow-hidden border-t-2 border-t-upisha-gold/20">
       {/* Decorative elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-4 left-[10%] w-20 h-20 rounded-full border-2 border-white" />
@@ -3154,8 +3305,8 @@ function CookieConsent() {
   useEffect(() => {
     const consent = localStorage.getItem('upisha-cookie-consent')
     if (!consent) {
-      const timer = setTimeout(() => setIsVisible(true), 1500)
-      return () => clearTimeout(timer)
+      const showTimer = setTimeout(() => setIsVisible(true), 1200)
+      return () => clearTimeout(showTimer)
     }
   }, [])
 
@@ -3173,43 +3324,42 @@ function CookieConsent() {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ y: 120, opacity: 0 }}
+          initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 120, opacity: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="fixed bottom-4 left-4 right-4 md:left-6 md:right-6 z-[70]"
+          exit={{ y: 24, opacity: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[40] w-[calc(100%-1.5rem)] max-w-[440px]"
+          role="dialog"
+          aria-label="Cookie consent"
         >
-          <div className="max-w-4xl mx-auto bg-white dark:bg-upisha-navy rounded-2xl shadow-2xl border-l-4 border-l-upisha-teal border border-gray-200 dark:border-gray-700 p-5 md:p-6 flex flex-col md:flex-row items-center gap-4">
-            <div className="w-12 h-12 shrink-0 rounded-full bg-upisha-teal/10 flex items-center justify-center">
-              <Shield className="h-6 w-6 text-upisha-teal" />
+          <div className="glass rounded-full shadow-lg border border-white/30 dark:border-white/10 px-3 py-2 flex items-center gap-2.5">
+            <div className="w-7 h-7 shrink-0 rounded-full bg-upisha-teal/15 flex items-center justify-center">
+              <Shield className="h-3.5 w-3.5 text-upisha-teal" />
             </div>
-            <div className="flex-1 text-center md:text-left">
-              <h4 className="font-bold text-upisha-navy dark:text-white text-base mb-1">
-                We value your privacy
-              </h4>
-              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                We use cookies to enhance your browsing experience, analyze site traffic, and
-                personalize content. By clicking &quot;Accept All&quot;, you consent to our use of
-                cookies.
-              </p>
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={decline}
-                className="text-sm border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-upisha-navy-light"
-              >
-                Decline
-              </Button>
-              <Button
-                size="sm"
-                onClick={accept}
-                className="bg-upisha-teal hover:bg-upisha-teal-dark text-white text-sm shadow-md"
-              >
-                Accept All
-              </Button>
-            </div>
+            <p className="flex-1 text-[11px] md:text-xs text-gray-700 dark:text-gray-200 leading-tight">
+              We use cookies to enhance your experience.
+            </p>
+            <button
+              onClick={decline}
+              className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-white/10 transition-colors"
+              aria-label="Decline cookies"
+            >
+              Decline
+            </button>
+            <button
+              onClick={accept}
+              className="shrink-0 px-3 py-1 rounded-full text-[11px] font-semibold bg-upisha-teal hover:bg-upisha-teal-dark text-white transition-colors shadow-sm"
+              aria-label="Accept cookies"
+            >
+              Accept
+            </button>
+            <button
+              onClick={decline}
+              className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-white/10 transition-colors"
+              aria-label="Dismiss"
+            >
+              <X className="h-3 w-3" />
+            </button>
           </div>
         </motion.div>
       )}
@@ -3302,7 +3452,7 @@ function AnimatedCounter({
 /* ─── Stats Section ─── */
 function StatsSection() {
   return (
-    <section className="py-12 md:py-16 bg-upisha-navy relative overflow-hidden">
+    <section className="py-12 md:py-16 bg-upisha-navy dark:bg-gray-950 relative overflow-hidden border-t-2 border-t-upisha-gold/20">
       {/* Decorative pattern */}
       <div
         className="absolute inset-0 opacity-5"
@@ -3341,7 +3491,7 @@ function StatsSection() {
 /* ─── Webinars Section ─── */
 function WebinarsSection() {
   return (
-    <section className="py-16 md:py-20 bg-gradient-to-br from-upisha-teal-light via-white to-upisha-gold-light">
+    <section className="py-16 md:py-20 bg-gradient-to-br from-upisha-teal-light via-white to-upisha-gold-light dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 border-t-2 border-t-upisha-teal/10">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-1">
@@ -3349,23 +3499,23 @@ function WebinarsSection() {
               <PlayCircle className="h-3 w-3 mr-1" />
               Upcoming Webinars
             </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white mb-4">
               Learn from Experts
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Join our live webinar series featuring leading experts in audiology and
               speech-language pathology. All webinars are free for UP ISHA members.
             </p>
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                 <CheckCircle2 className="h-4 w-4 text-upisha-teal" />
                 Free for UP ISHA members
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                 <CheckCircle2 className="h-4 w-4 text-upisha-teal" />
                 Certificate of attendance
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                 <CheckCircle2 className="h-4 w-4 text-upisha-teal" />
                 Recorded sessions available
               </div>
@@ -3384,17 +3534,17 @@ function WebinarsSection() {
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="hover:shadow-lg transition-all duration-300 group border-l-4 border-l-upisha-teal">
+                <Card className="hover:shadow-lg transition-all duration-300 group border-l-4 border-l-upisha-teal dark:bg-gray-800 dark:border-gray-700 dark:border-l-upisha-teal shadow-sm hover:shadow-md">
                   <CardContent className="p-5">
                     <div className="flex items-start gap-4">
-                      <div className="shrink-0 w-14 h-14 bg-upisha-teal/10 rounded-xl flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
+                      <div className="shrink-0 w-14 h-14 bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/20 rounded-xl flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
                         <PlayCircle className="h-7 w-7 text-upisha-teal group-hover:text-white transition-colors" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-upisha-navy mb-1 group-hover:text-upisha-teal transition-colors">
+                        <h4 className="font-bold text-upisha-navy dark:text-white mb-1 group-hover:text-upisha-teal transition-colors">
                           {webinar.title}
                         </h4>
-                        <p className="text-sm text-gray-500 mb-2">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                           Speaker: <span className="font-medium">{webinar.speaker}</span>
                         </p>
                         <div className="flex flex-wrap gap-3 text-xs text-gray-500">
@@ -3443,7 +3593,7 @@ function TestimonialsSection() {
   }, [])
 
   return (
-    <section className="py-16 md:py-20 bg-upisha-navy relative overflow-hidden">
+    <section className="py-16 md:py-20 bg-upisha-navy dark:bg-gray-950 relative overflow-hidden border-t-2 border-t-upisha-gold/20">
       {/* Decorative quote marks */}
       <Quote className="absolute top-10 left-10 h-32 w-32 text-upisha-teal/10" />
       <Quote className="absolute bottom-10 right-10 h-32 w-32 text-upisha-teal/10 rotate-180" />
@@ -3510,6 +3660,8 @@ function TestimonialsSection() {
 
 /* ─── Events Timeline Section ─── */
 function EventsTimelineSection() {
+  const [selectedEvent, setSelectedEvent] = useState<typeof eventsTimeline[0] | null>(null)
+  const { toast } = useToast()
   const typeColors: Record<string, string> = {
     Conference: 'bg-upisha-gold/20 text-upisha-gold border-upisha-gold/30',
     Workshop: 'bg-upisha-teal/10 text-upisha-teal border-upisha-teal/30',
@@ -3517,8 +3669,21 @@ function EventsTimelineSection() {
     Webinar: 'bg-blue-100 text-blue-700 border-blue-200',
   }
 
+  const handleShareEvent = (event: typeof eventsTimeline[0]) => {
+    if (navigator.share) {
+      navigator.share({
+        title: event.title,
+        text: `Check out this event: ${event.title} on ${event.date} at ${event.location}`,
+        url: window.location.href,
+      }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(window.location.href)
+      toast({ title: 'Link copied!', description: 'Event link has been copied to clipboard.' })
+    }
+  }
+
   return (
-    <AnimatedSection className="py-16 md:py-20 bg-white relative">
+    <AnimatedSection className="py-16 md:py-20 bg-white dark:bg-gray-900 relative border-t-2 border-t-upisha-gold/10">
       <div className="max-w-6xl mx-auto px-4">
         <SectionHeading
           badge="What's Coming Up"
@@ -3550,11 +3715,11 @@ function EventsTimelineSection() {
 
                 {/* Content card */}
                 <div className={`flex-1 ml-12 md:ml-0 ${i % 2 === 0 ? 'md:pr-12' : 'md:pl-12'}`}>
-                  <Card className="hover:shadow-lg transition-all duration-300 group hover:border-upisha-teal/40">
+                  <Card className="hover:shadow-lg transition-all duration-300 group hover:border-upisha-teal/40 dark:bg-gray-800 dark:border-gray-700 shadow-sm hover:shadow-md cursor-pointer" onClick={() => setSelectedEvent(event)}>
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors shrink-0">
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/20 flex items-center justify-center group-hover:bg-upisha-teal transition-colors shrink-0">
                             <event.icon className="h-5 w-5 text-upisha-teal group-hover:text-white transition-colors" />
                           </div>
                           <div>
@@ -3570,16 +3735,28 @@ function EventsTimelineSection() {
                             </p>
                           </div>
                         </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleShareEvent(event) }}
+                          className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          aria-label="Share event"
+                        >
+                          <Share2 className="h-4 w-4 text-gray-400 hover:text-upisha-teal" />
+                        </button>
                       </div>
-                      <h4 className="font-bold text-upisha-navy text-lg mb-2 group-hover:text-upisha-teal transition-colors">
+                      <h4 className="font-bold text-upisha-navy dark:text-white text-lg mb-2 group-hover:text-upisha-teal transition-colors">
                         {event.title}
                       </h4>
-                      <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-3">
                         {event.description}
                       </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <MapPinned className="h-3.5 w-3.5 text-upisha-gold" />
-                        <span>{event.location}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <MapPinned className="h-3.5 w-3.5 text-upisha-gold" />
+                          <span>{event.location}</span>
+                        </div>
+                        <span className="text-xs text-upisha-teal font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          View Details <ArrowRight className="h-3 w-3" />
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -3599,6 +3776,94 @@ function EventsTimelineSection() {
           </Button>
         </div>
       </div>
+
+      {/* Event Detail Dialog */}
+      <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="sr-only">Event details</DialogTitle>
+          </DialogHeader>
+          {selectedEvent && (
+            <div>
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 flex items-center justify-center shrink-0">
+                  <selectedEvent.icon className="h-6 w-6 text-upisha-teal" />
+                </div>
+                <div>
+                  <Badge variant="outline" className={`text-[10px] mb-1.5 ${typeColors[selectedEvent.type] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                    {selectedEvent.type}
+                  </Badge>
+                  <h3 className="text-xl font-bold text-upisha-navy dark:text-white">{selectedEvent.title}</h3>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-5">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Calendar className="h-5 w-5 text-upisha-teal shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Date</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{selectedEvent.date}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Clock className="h-5 w-5 text-upisha-teal shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Time</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{selectedEvent.time}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <MapPin className="h-5 w-5 text-upisha-teal shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Location</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{selectedEvent.location}</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-5">
+                {selectedEvent.description}
+              </p>
+
+              {selectedEvent.speakers && selectedEvent.speakers.length > 0 && (
+                <div className="mb-5 p-4 bg-upisha-teal-light/50 dark:bg-upisha-teal/10 rounded-lg">
+                  <p className="text-xs font-semibold text-upisha-teal uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5" />
+                    Speakers / Facilitators
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedEvent.speakers.map((speaker) => (
+                      <Badge key={speaker} variant="outline" className="border-upisha-teal/30 text-upisha-teal text-xs">
+                        {speaker}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  className="flex-1 bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+                  onClick={() => {
+                    document.getElementById(selectedEvent.registrationLink.slice(1))?.scrollIntoView({ behavior: 'smooth' })
+                    setSelectedEvent(null)
+                  }}
+                >
+                  Register Now
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-upisha-teal text-upisha-teal hover:bg-upisha-teal-light"
+                  onClick={() => handleShareEvent(selectedEvent)}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AnimatedSection>
   )
 }
@@ -3606,7 +3871,7 @@ function EventsTimelineSection() {
 /* ─── Member Spotlight Section ─── */
 function MemberSpotlightSection() {
   return (
-    <AnimatedSection className="py-16 md:py-20 bg-gradient-to-br from-upisha-teal-light via-white to-upisha-gold-light relative overflow-hidden">
+    <AnimatedSection className="py-16 md:py-20 bg-gradient-to-br from-upisha-teal-light via-white to-upisha-gold-light dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute top-0 right-0 w-72 h-72 bg-upisha-gold/5 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-72 h-72 bg-upisha-teal/5 rounded-full blur-3xl" />
@@ -3628,7 +3893,7 @@ function MemberSpotlightSection() {
               transition={{ delay: i * 0.15 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full relative overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <Card className="h-full relative overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 dark:bg-gray-800 dark:border-gray-700">
                 {/* Top gradient bar */}
                 <div className="h-2 bg-gradient-to-r from-upisha-teal via-upisha-gold to-upisha-teal" />
 
@@ -3644,7 +3909,7 @@ function MemberSpotlightSection() {
                       {member.name.split(' ').slice(-1)[0]?.[0]}
                     </div>
                     <div>
-                      <h4 className="font-bold text-upisha-navy">{member.name}</h4>
+                      <h4 className="font-bold text-upisha-navy dark:text-white">{member.name}</h4>
                       <p className="text-xs text-upisha-teal font-medium">{member.role}</p>
                     </div>
                   </div>
@@ -3665,7 +3930,7 @@ function MemberSpotlightSection() {
 
                   <div className="relative">
                     <Quote className="absolute -top-1 -left-1 h-5 w-5 text-upisha-gold/30" />
-                    <p className="text-sm text-gray-600 italic leading-relaxed pl-5">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 italic leading-relaxed pl-5">
                       {member.achievement}
                     </p>
                   </div>
@@ -3682,10 +3947,10 @@ function MemberSpotlightSection() {
 /* ─── Partners Section ─── */
 function PartnersSection() {
   return (
-    <section className="py-12 md:py-16 bg-white border-y border-gray-100">
+    <section className="py-12 md:py-16 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-8">
-          <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+          <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             Affiliated & Collaborating Organizations
           </p>
         </div>
@@ -3697,12 +3962,12 @@ function PartnersSection() {
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.08 }}
               viewport={{ once: true }}
-              className="flex flex-col items-center gap-2 text-center group cursor-pointer p-4 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex flex-col items-center gap-2 text-center group cursor-pointer p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <div className="w-12 h-12 rounded-full bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
                 <partner.icon className="h-6 w-6 text-upisha-teal group-hover:text-white transition-colors" />
               </div>
-              <span className="text-xs text-gray-600 font-medium leading-tight">
+              <span className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-tight">
                 {partner.name}
               </span>
             </motion.div>
@@ -3710,6 +3975,56 @@ function PartnersSection() {
         </div>
       </div>
     </section>
+  )
+}
+
+/* ─── Section Navigation Indicator ─── */
+function SectionNavigationIndicator({ activeSection }: { activeSection: string }) {
+  const sections = [
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About' },
+    { id: 'documents', label: 'Documents' },
+    { id: 'publications', label: 'Publications' },
+    { id: 'professionals', label: 'Professionals' },
+    { id: 'join', label: 'Join' },
+    { id: 'gallery', label: 'Gallery' },
+    { id: 'contact', label: 'Contact' },
+  ]
+
+  const handleClick = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  return (
+    <div className="fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-center gap-3">
+      {sections.map((section) => {
+        const isActive = activeSection === section.id
+        return (
+          <button
+            key={section.id}
+            onClick={() => handleClick(section.id)}
+            className="group relative flex items-center justify-center"
+            aria-label={`Navigate to ${section.label}`}
+          >
+            {/* Tooltip */}
+            <span className="absolute right-6 whitespace-nowrap bg-upisha-navy dark:bg-gray-800 text-white text-xs font-medium px-2.5 py-1.5 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+              {section.label}
+              <span className="absolute right-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-upisha-navy dark:bg-gray-800 rotate-45" />
+            </span>
+            {/* Dot */}
+            <motion.div
+              animate={{
+                width: isActive ? 12 : 8,
+                height: isActive ? 12 : 8,
+                backgroundColor: isActive ? '#0d9488' : '#9ca3af',
+              }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              className="rounded-full cursor-pointer hover:bg-upisha-teal transition-colors"
+            />
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -3787,6 +4102,7 @@ export default function Home() {
       <Footer />
       <BackToTop />
       <CookieConsent />
+      <SectionNavigationIndicator activeSection={activeSection} />
       <CommandPalette
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
