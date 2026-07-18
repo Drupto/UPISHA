@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence, useInView, useScroll, useSpring } from 'framer-motion'
 import {
   Menu,
@@ -11,6 +11,7 @@ import {
   ChevronRight,
   ChevronLeft,
   ChevronUp,
+  ChevronDown,
   Users,
   BookOpen,
   FileText,
@@ -52,7 +53,20 @@ import {
   Bell,
   Timer,
   Sparkles,
+  Search,
+  AlertCircle,
+  Megaphone,
+  Lightbulb,
+  Trophy,
+  MapPinned,
+  Command,
+  Share2,
+  Printer,
+  PhoneCall,
+  Building,
+  Mailbox,
 } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -445,6 +459,207 @@ const upcomingWebinars = [
   },
 ]
 
+/* Sample professional directory data */
+const sampleProfessionals = [
+  {
+    name: 'Dr. Rajesh Kumar Sharma',
+    speciality: 'Audiology',
+    city: 'Lucknow',
+    qualification: 'Ph.D. (Audiology), AIISH Mysuru',
+    experience: '22 years',
+    setting: 'Hospital',
+    rci: 'A-12345',
+  },
+  {
+    name: 'Dr. Sunita Verma',
+    speciality: 'Speech-Language Pathology',
+    city: 'Lucknow',
+    qualification: 'Ph.D. (SLP), KGMU',
+    experience: '18 years',
+    setting: 'Hospital',
+    rci: 'B-23456',
+  },
+  {
+    name: 'Dr. Amit Mishra',
+    speciality: 'Audiology',
+    city: 'Varanasi',
+    qualification: 'M.Sc. (Audiology), AIISH',
+    experience: '15 years',
+    setting: 'Clinic',
+    rci: 'A-34567',
+  },
+  {
+    name: 'Dr. Priya Singh',
+    speciality: 'Speech-Language Pathology',
+    city: 'Kanpur',
+    qualification: 'M.Sc. (SLP), AIISH',
+    experience: '12 years',
+    setting: 'Clinic',
+    rci: 'B-45678',
+  },
+  {
+    name: 'Dr. Vikram Pandey',
+    speciality: 'Neuro-Audiology',
+    city: 'Agra',
+    qualification: 'Ph.D. (Neuro-Audiology), AIIMS',
+    experience: '20 years',
+    setting: 'Hospital',
+    rci: 'A-56789',
+  },
+  {
+    name: 'Dr. Ananya Gupta',
+    speciality: 'Pediatric Audiology',
+    city: 'Lucknow',
+    qualification: 'M.Sc. (Audiology), KGMU',
+    experience: '10 years',
+    setting: 'Clinic',
+    rci: 'A-67890',
+  },
+  {
+    name: 'Dr. Meera Tiwari',
+    speciality: 'Audiology',
+    city: 'Lucknow',
+    qualification: 'Ph.D. (Audiology), AIISH',
+    experience: '25 years',
+    setting: 'Hospital',
+    rci: 'A-78901',
+  },
+  {
+    name: 'Dr. Sanjay Gupta',
+    speciality: 'Speech-Language Pathology',
+    city: 'Varanasi',
+    qualification: 'M.Sc. (SLP), AIISH',
+    experience: '14 years',
+    setting: 'Academic',
+    rci: 'B-89012',
+  },
+  {
+    name: 'Dr. Kavita Rathore',
+    speciality: 'Speech-Language Pathology',
+    city: 'Kanpur',
+    qualification: 'M.Sc. (SLP), KGMU',
+    experience: '11 years',
+    setting: 'Clinic',
+    rci: 'B-90123',
+  },
+  {
+    name: 'Dr. Rakesh Pandey',
+    speciality: 'Audiology',
+    city: 'Agra',
+    qualification: 'Ph.D. (Audiology), AIIMS',
+    experience: '19 years',
+    setting: 'Academic',
+    rci: 'A-01234',
+  },
+  {
+    name: 'Dr. Neha Saxena',
+    speciality: 'Speech-Language Pathology',
+    city: 'Gorakhpur',
+    qualification: 'M.Sc. (SLP), AIISH',
+    experience: '8 years',
+    setting: 'Clinic',
+    rci: 'B-11223',
+  },
+  {
+    name: 'Dr. Arjun Yadav',
+    speciality: 'Audiology',
+    city: 'Allahabad',
+    qualification: 'M.Sc. (Audiology), AIISH',
+    experience: '13 years',
+    setting: 'Hospital',
+    rci: 'A-22334',
+  },
+]
+
+const upCities = ['All Cities', 'Lucknow', 'Varanasi', 'Kanpur', 'Agra', 'Gorakhpur', 'Allahabad']
+const specialities = ['All Specialities', 'Audiology', 'Speech-Language Pathology', 'Neuro-Audiology', 'Pediatric Audiology']
+
+/* Events Timeline data */
+const eventsTimeline = [
+  {
+    date: '18-20 Oct 2025',
+    title: 'UP ISHACON 2025 - Annual State Conference',
+    location: 'KGMU, Lucknow',
+    description:
+      'Three-day flagship conference featuring keynote lectures, scientific paper presentations, panel discussions, and hands-on workshops on the latest advances in audiology and speech-language pathology.',
+    type: 'Conference',
+    icon: Trophy,
+  },
+  {
+    date: '25 Mar 2025',
+    title: 'Workshop on Pediatric Audiology',
+    location: 'Lucknow Chapter',
+    description:
+      'Hands-on workshop covering ABR, OAE, and behavioral audiometry for infants and young children. Limited to 30 participants.',
+    type: 'Workshop',
+    icon: Microscope,
+  },
+  {
+    date: '03 Mar 2025',
+    title: 'World Hearing Day Awareness Walk',
+    location: 'Hazratganj, Lucknow',
+    description:
+      'Public awareness walk and free hearing screening camp in observance of WHO World Hearing Day 2025.',
+    type: 'Outreach',
+    icon: Megaphone,
+  },
+  {
+    date: '15 Feb 2025',
+    title: 'Continuing Education - Voice Disorders',
+    location: 'Webinar (Online)',
+    description:
+      'Expert-led session on assessment and management of voice disorders across the lifespan, including latest evidence-based practices.',
+    type: 'Webinar',
+    icon: PlayCircle,
+  },
+  {
+    date: '28 Jan 2025',
+    title: 'Research Methodology Workshop',
+    location: 'KGMU, Lucknow',
+    description:
+      'Two-day workshop for early-career researchers on research design, statistical analysis, and scientific writing for ASLP professionals.',
+    type: 'Workshop',
+    icon: GraduationCap,
+  },
+]
+
+/* Member Spotlight data */
+const memberSpotlights = [
+  {
+    name: 'Dr. Meera Tiwari',
+    role: 'Senior Audiologist',
+    location: 'Lucknow',
+    achievement: 'Recognized for pioneering community-based newborn hearing screening program across 12 districts of UP.',
+    years: '25 years',
+    specialty: 'Audiology',
+  },
+  {
+    name: 'Dr. Vikram Pandey',
+    role: 'Neuro-Audiologist',
+    location: 'Agra',
+    achievement: 'Published 35+ peer-reviewed papers on central auditory processing disorders and traumatic brain injury.',
+    years: '20 years',
+    specialty: 'Neuro-Audiology',
+  },
+  {
+    name: 'Dr. Kavita Rathore',
+    role: 'Pediatric SLP',
+    location: 'Kanpur',
+    achievement: 'Established first free pediatric speech therapy clinic in Kanpur serving 500+ children annually.',
+    years: '11 years',
+    specialty: 'Speech-Language Pathology',
+  },
+]
+
+/* News ticker items */
+const newsTickerItems = [
+  'UP ISHACON 2025 Registration Now Open — Early Bird Discount Until September 15',
+  'Call for Papers: UP Journal of Speech & Hearing Vol. 12 — Submit by August 30',
+  'New RCI Continuing Education Credits Now Available for UP ISHA Webinars',
+  'Free Hearing Screening Camp on World Hearing Day — March 3, 2025',
+  'Student Scholarship Program 2025 — Applications Open for ASLP Researchers',
+]
+
 /* ─── Animated Section Wrapper ─── */
 function AnimatedSection({
   children,
@@ -472,43 +687,127 @@ function AnimatedSection({
   )
 }
 
+/* ─── Reusable Section Heading ─── */
+function SectionHeading({
+  badge,
+  badgeIcon: BadgeIcon,
+  title,
+  subtitle,
+  light = false,
+  align = 'center',
+}: {
+  badge: string
+  badgeIcon?: React.ElementType
+  title: string
+  subtitle?: string
+  light?: boolean
+  align?: 'center' | 'left'
+}) {
+  return (
+    <div className={`mb-12 ${align === 'center' ? 'text-center' : 'text-left'}`}>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className={`inline-flex items-center gap-1.5 ${
+          light ? 'bg-white/10 text-white' : 'bg-upisha-teal/10 text-upisha-teal'
+        } px-3 py-1.5 rounded-full text-xs font-semibold mb-3`}
+      >
+        {BadgeIcon && <BadgeIcon className="h-3.5 w-3.5" />}
+        {badge}
+      </motion.div>
+      <motion.h2
+        initial={{ opacity: 0, y: 15 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.1 }}
+        className={`text-3xl md:text-4xl font-bold mb-3 ${light ? 'text-white' : 'text-upisha-navy'}`}
+      >
+        {title}
+      </motion.h2>
+      <div
+        className={`h-1 w-16 bg-upisha-gold rounded-full mb-4 ${align === 'center' ? 'mx-auto' : ''}`}
+      />
+      {subtitle && (
+        <p
+          className={`max-w-2xl ${
+            align === 'center' ? 'mx-auto' : ''
+          } text-base ${light ? 'text-gray-300' : 'text-gray-600'}`}
+        >
+          {subtitle}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/* ─── News Ticker ─── */
+function NewsTicker() {
+  return (
+    <div className="bg-upisha-navy text-white py-2.5 overflow-hidden border-b border-upisha-teal/30">
+      <div className="max-w-7xl mx-auto px-4 flex items-center gap-4">
+        <div className="flex items-center gap-2 shrink-0 bg-upisha-gold text-upisha-navy px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">
+          <Megaphone className="h-3.5 w-3.5" />
+          Latest
+        </div>
+        <div className="flex-1 overflow-hidden relative">
+          <motion.div
+            className="flex gap-12 whitespace-nowrap"
+            animate={{ x: ['0%', '-50%'] }}
+            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+          >
+            {[...newsTickerItems, ...newsTickerItems].map((item, i) => (
+              <span key={i} className="text-sm text-gray-200 flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-upisha-gold" />
+                {item}
+              </span>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ─── Top Bar ─── */
 function TopBar() {
   return (
-    <div className="bg-upisha-navy text-white text-sm py-2">
+    <div className="bg-upisha-navy text-white text-sm py-2 border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="flex items-center gap-4 flex-wrap justify-center">
           <a
             href="tel:+915224567890"
-            className="flex items-center gap-1.5 hover:text-upisha-gold transition-colors"
+            className="flex items-center gap-1.5 hover:text-upisha-gold transition-colors group"
           >
-            <Phone className="h-3.5 w-3.5" />
+            <PhoneCall className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
             +91-522-456-7890
           </a>
           <a
             href="mailto:info@upisha.org"
-            className="flex items-center gap-1.5 hover:text-upisha-gold transition-colors"
+            className="flex items-center gap-1.5 hover:text-upisha-gold transition-colors group"
           >
-            <Mail className="h-3.5 w-3.5" />
+            <Mailbox className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
             info@upisha.org
           </a>
         </div>
-        <div className="flex items-center gap-3">
-          <a href="#" className="hover:text-upisha-gold transition-colors" aria-label="Facebook">
-            <Facebook className="h-4 w-4" />
-          </a>
-          <a href="#" className="hover:text-upisha-gold transition-colors" aria-label="Twitter">
-            <Twitter className="h-4 w-4" />
-          </a>
-          <a href="#" className="hover:text-upisha-gold transition-colors" aria-label="Instagram">
-            <Instagram className="h-4 w-4" />
-          </a>
-          <a href="#" className="hover:text-upisha-gold transition-colors" aria-label="LinkedIn">
-            <Linkedin className="h-4 w-4" />
-          </a>
-          <a href="#" className="hover:text-upisha-gold transition-colors" aria-label="YouTube">
-            <Youtube className="h-4 w-4" />
-          </a>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 mr-1 hidden sm:inline">Follow us:</span>
+          {[
+            { icon: Facebook, label: 'Facebook' },
+            { icon: Twitter, label: 'Twitter' },
+            { icon: Instagram, label: 'Instagram' },
+            { icon: Linkedin, label: 'LinkedIn' },
+            { icon: Youtube, label: 'YouTube' },
+          ].map((social) => (
+            <a
+              key={social.label}
+              href="#"
+              className="w-7 h-7 rounded-full bg-white/5 hover:bg-upisha-gold flex items-center justify-center transition-all duration-200 hover:scale-110 hover:text-upisha-navy"
+              aria-label={social.label}
+            >
+              <social.icon className="h-3.5 w-3.5" />
+            </a>
+          ))}
         </div>
       </div>
     </div>
@@ -519,9 +818,11 @@ function TopBar() {
 function Navbar({
   activeSection,
   onNavClick,
+  onOpenSearch,
 }: {
   activeSection: string
   onNavClick: (href: string) => void
+  onOpenSearch: () => void
 }) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -536,8 +837,8 @@ function Navbar({
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100'
-          : 'bg-white shadow-sm'
+          ? 'bg-white/95 dark:bg-upisha-navy/95 backdrop-blur-md shadow-lg border-b border-gray-100 dark:border-gray-800'
+          : 'bg-white dark:bg-upisha-navy shadow-sm'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4">
@@ -549,13 +850,13 @@ function Navbar({
               e.preventDefault()
               onNavClick('#home')
             }}
-            className="flex items-center gap-3 shrink-0"
+            className="flex items-center gap-3 shrink-0 group"
           >
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-upisha-teal rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-upisha-teal to-upisha-teal-dark rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
               <Ear className="h-6 w-6 md:h-7 md:w-7 text-white" />
             </div>
             <div className="hidden sm:block">
-              <div className="font-bold text-upisha-navy text-sm md:text-base leading-tight">
+              <div className="font-bold text-upisha-navy dark:text-white text-sm md:text-base leading-tight">
                 UP ISHA
               </div>
               <div className="text-[10px] md:text-xs text-upisha-teal font-medium leading-tight">
@@ -566,30 +867,50 @@ function Navbar({
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={(e) => {
-                  e.preventDefault()
-                  onNavClick(link.href)
-                }}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  activeSection === link.href.slice(1)
-                    ? 'text-upisha-teal bg-upisha-teal-light'
-                    : 'text-gray-600 hover:text-upisha-teal hover:bg-upisha-teal-light/50'
-                }`}
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = activeSection === link.href.slice(1)
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onNavClick(link.href)
+                  }}
+                  className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'text-upisha-teal bg-upisha-teal-light dark:bg-upisha-teal/20'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-upisha-teal hover:bg-upisha-teal-light/50 dark:hover:bg-upisha-teal/10'
+                  }`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-active-indicator"
+                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 w-6 bg-upisha-gold rounded-full"
+                    />
+                  )}
+                </a>
+              )
+            })}
           </nav>
 
-          {/* CTA + Theme Toggle + Mobile Toggle */}
-          <div className="flex items-center gap-2 md:gap-3">
+          {/* CTA + Search + Theme Toggle + Mobile Toggle */}
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <button
+              onClick={onOpenSearch}
+              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-upisha-navy-light dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs transition-colors"
+              aria-label="Open search (Ctrl+K)"
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span className="hidden xl:inline">Search</span>
+              <kbd className="hidden xl:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white border border-gray-200 text-[10px] font-mono">
+                <Command className="h-2.5 w-2.5" />K
+              </kbd>
+            </button>
             <ThemeToggle />
             <Button
-              className="hidden md:inline-flex bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+              className="hidden md:inline-flex bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md"
               onClick={() => onNavClick('#join')}
             >
               <UserPlus className="h-4 w-4 mr-2" />
@@ -614,7 +935,7 @@ function Navbar({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="lg:hidden overflow-hidden bg-white border-t"
+            className="lg:hidden overflow-hidden bg-white dark:bg-upisha-navy border-t border-gray-100 dark:border-gray-800"
           >
             <nav className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1">
               {navLinks.map((link) => (
@@ -626,12 +947,13 @@ function Navbar({
                     onNavClick(link.href)
                     setIsMobileOpen(false)
                   }}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     activeSection === link.href.slice(1)
-                      ? 'text-upisha-teal bg-upisha-teal-light'
-                      : 'text-gray-600 hover:text-upisha-teal hover:bg-gray-50'
+                      ? 'text-upisha-teal bg-upisha-teal-light dark:bg-upisha-teal/20'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-upisha-teal hover:bg-gray-50 dark:hover:bg-upisha-navy-light'
                   }`}
                 >
+                  <ChevronRight className="h-4 w-4 opacity-50" />
                   {link.label}
                 </a>
               ))}
@@ -1385,19 +1707,71 @@ function PublicationsSection() {
 
 /* ─── Professionals Section ─── */
 function ProfessionalsSection() {
-  return (
-    <AnimatedSection id="professionals" className="py-16 md:py-20 bg-upisha-navy">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-12">
-          <Badge className="bg-upisha-teal/20 text-upisha-teal mb-3">Find Experts</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-white">Professionals Directory</h2>
-          <p className="text-gray-300 mt-3 max-w-2xl mx-auto">
-            Locate qualified audiologists, speech-language pathologists, and accredited clinics
-            across Uttar Pradesh.
-          </p>
-        </div>
+  const [searchQuery, setSearchQuery] = useState('')
+  const [cityFilter, setCityFilter] = useState('All Cities')
+  const [specialityFilter, setSpecialityFilter] = useState('All Specialities')
+  const [visibleCount, setVisibleCount] = useState(6)
+  const [selectedProfessional, setSelectedProfessional] = useState<typeof sampleProfessionals[0] | null>(null)
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+  const filtered = useMemo(() => {
+    return sampleProfessionals.filter((p) => {
+      const matchesQuery =
+        !searchQuery ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.qualification.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.speciality.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesCity = cityFilter === 'All Cities' || p.city === cityFilter
+      const matchesSpeciality =
+        specialityFilter === 'All Specialities' || p.speciality === specialityFilter
+      return matchesQuery && matchesCity && matchesSpeciality
+    })
+  }, [searchQuery, cityFilter, specialityFilter])
+
+  const resetFilters = () => {
+    setSearchQuery('')
+    setCityFilter('All Cities')
+    setSpecialityFilter('All Specialities')
+    setVisibleCount(6)
+  }
+
+  const updateSearchQuery = (value: string) => {
+    setSearchQuery(value)
+    setVisibleCount(6)
+  }
+
+  const updateCityFilter = (value: string) => {
+    setCityFilter(value)
+    setVisibleCount(6)
+  }
+
+  const updateSpecialityFilter = (value: string) => {
+    setSpecialityFilter(value)
+    setVisibleCount(6)
+  }
+
+  const visible = filtered.slice(0, visibleCount)
+
+  return (
+    <AnimatedSection id="professionals" className="py-16 md:py-20 bg-upisha-navy relative overflow-hidden">
+      {/* Decorative pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+          backgroundSize: '32px 32px',
+        }}
+      />
+      <div className="max-w-7xl mx-auto px-4 relative">
+        <SectionHeading
+          badge="Find Experts"
+          badgeIcon={Users}
+          title="Professionals Directory"
+          subtitle="Locate qualified audiologists, speech-language pathologists, and accredited clinics across Uttar Pradesh. Search by name, city, or speciality."
+          light
+        />
+
+        {/* Category Cards */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {professionalCategories.map((cat, i) => (
             <motion.div
               key={cat.title}
@@ -1406,84 +1780,234 @@ function ProfessionalsSection() {
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all duration-300 group">
+              <Card className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all duration-300 group hover:-translate-y-1">
                 <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-upisha-teal/20 rounded-2xl flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-upisha-teal/20 rounded-2xl flex items-center justify-center group-hover:bg-upisha-teal group-hover:rotate-6 transition-all">
                     <cat.icon className="h-8 w-8 text-upisha-teal group-hover:text-white transition-colors" />
                   </div>
                   <h3 className="font-bold text-white mb-1">{cat.title}</h3>
                   <p className="text-sm text-gray-400 mb-3">{cat.description}</p>
                   <div className="text-3xl font-bold text-upisha-teal">{cat.count}</div>
                   <p className="text-xs text-gray-500">Professionals Listed</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4 border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
-                  >
-                    Search <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                  </Button>
                 </CardContent>
               </Card>
             </motion.div>
           ))}
         </div>
 
-        {/* Locate Professional Search */}
-        <Card className="mt-12 bg-upisha-navy-light border-upisha-navy-light">
+        {/* Search & Filter Bar */}
+        <Card className="bg-upisha-navy-light border-upisha-navy-light mb-8">
           <CardContent className="p-6 md:p-8">
             <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <Users className="h-5 w-5 text-upisha-teal" />
+              <Search className="h-5 w-5 text-upisha-teal" />
               Locate a Professional
             </h3>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1.5 block">Search by name or qualification</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="e.g. Dr. Rajesh..."
+                    value={searchQuery}
+                    onChange={(e) => updateSearchQuery(e.target.value)}
+                    className="bg-upisha-navy border-upisha-navy-light text-white placeholder:text-gray-500 pl-10"
+                  />
+                </div>
+              </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1.5 block">City</label>
-                <Input
-                  placeholder="Enter city name..."
-                  className="bg-upisha-navy border-upisha-navy-light text-white placeholder:text-gray-500"
-                />
+                <Select value={cityFilter} onValueChange={updateCityFilter}>
+                  <SelectTrigger className="bg-upisha-navy border-upisha-navy-light text-white">
+                    <SelectValue placeholder="Select city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {upCities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1.5 block">Speciality</label>
-                <Input
-                  placeholder="Audiology / SLP"
-                  className="bg-upisha-navy border-upisha-navy-light text-white placeholder:text-gray-500"
-                />
+                <Select value={specialityFilter} onValueChange={updateSpecialityFilter}>
+                  <SelectTrigger className="bg-upisha-navy border-upisha-navy-light text-white">
+                    <SelectValue placeholder="Select speciality" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {specialities.map((spec) => (
+                      <SelectItem key={spec} value={spec}>
+                        {spec}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex items-end">
-                <Button className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white">
-                  <Search className="h-4 w-4 mr-2" />
-                  Search
+            </div>
+            <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-upisha-navy-light">
+              <p className="text-sm text-gray-400">
+                Showing <span className="text-white font-semibold">{visible.length}</span> of{' '}
+                <span className="text-white font-semibold">{filtered.length}</span> professionals
+              </p>
+              {(searchQuery || cityFilter !== 'All Cities' || specialityFilter !== 'All Specialities') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-upisha-navy-light text-gray-300 hover:bg-upisha-navy-light hover:text-white"
+                  onClick={resetFilters}
+                >
+                  <X className="h-3.5 w-3.5 mr-1" />
+                  Clear filters
                 </Button>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
-      </div>
-    </AnimatedSection>
-  )
-}
 
-function Search({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.3-4.3" />
-    </svg>
+        {/* Results */}
+        {visible.length === 0 ? (
+          <div className="text-center py-16 bg-upisha-navy-light rounded-2xl">
+            <Users className="h-12 w-12 text-gray-600 mx-auto mb-3" />
+            <h4 className="text-lg font-semibold text-white mb-1">No professionals found</h4>
+            <p className="text-sm text-gray-400">Try adjusting your search or filters.</p>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visible.map((pro, i) => (
+              <motion.div
+                key={`${pro.name}-${pro.rci}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <Card
+                  className="h-full bg-upisha-navy-light border-upisha-navy-light hover:border-upisha-teal transition-all cursor-pointer group"
+                  onClick={() => setSelectedProfessional(pro)}
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-upisha-teal to-upisha-teal-dark flex items-center justify-center text-white font-bold">
+                        {pro.name.split(' ').slice(-2, -1)[0]?.[0] || pro.name[2]}
+                        {pro.name.split(' ').slice(-1)[0]?.[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-white truncate group-hover:text-upisha-teal transition-colors">
+                          {pro.name}
+                        </h4>
+                        <p className="text-xs text-upisha-teal mb-2">{pro.speciality}</p>
+                        <div className="flex flex-wrap gap-2 text-xs text-gray-400">
+                          <span className="flex items-center gap-1">
+                            <MapPinned className="h-3 w-3 text-upisha-gold" />
+                            {pro.city}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Briefcase className="h-3 w-3 text-upisha-gold" />
+                            {pro.experience}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Building className="h-3 w-3 text-upisha-gold" />
+                            {pro.setting}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-upisha-navy-light flex items-center justify-between">
+                      <Badge className="bg-upisha-teal/20 text-upisha-teal text-[10px]">
+                        RCI: {pro.rci}
+                      </Badge>
+                      <span className="text-xs text-gray-400 group-hover:text-upisha-teal flex items-center gap-1 transition-colors">
+                        View
+                        <ArrowRight className="h-3 w-3" />
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Load more */}
+        {visibleCount < filtered.length && (
+          <div className="text-center mt-8">
+            <Button
+              variant="outline"
+              onClick={() => setVisibleCount((prev) => prev + 6)}
+              className="border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
+            >
+              Load More ({filtered.length - visibleCount} remaining)
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Professional Detail Dialog */}
+      <Dialog open={!!selectedProfessional} onOpenChange={(open) => !open && setSelectedProfessional(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="sr-only">Professional details</DialogTitle>
+          </DialogHeader>
+          {selectedProfessional && (
+            <div>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-upisha-teal to-upisha-teal-dark flex items-center justify-center text-white font-bold text-xl">
+                  {selectedProfessional.name.split(' ').slice(-2, -1)[0]?.[0] || selectedProfessional.name[2]}
+                  {selectedProfessional.name.split(' ').slice(-1)[0]?.[0]}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-upisha-navy">{selectedProfessional.name}</h3>
+                  <p className="text-sm text-upisha-teal">{selectedProfessional.speciality}</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <GraduationCap className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Qualification</p>
+                    <p className="text-sm font-medium text-gray-800">{selectedProfessional.qualification}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <MapPinned className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">City</p>
+                    <p className="text-sm font-medium text-gray-800">{selectedProfessional.city}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Briefcase className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Experience & Setting</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {selectedProfessional.experience} • {selectedProfessional.setting}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Shield className="h-5 w-5 text-upisha-teal shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">RCI Registration</p>
+                    <p className="text-sm font-medium text-gray-800">{selectedProfessional.rci}</p>
+                  </div>
+                </div>
+              </div>
+              <Button className="w-full mt-6 bg-upisha-teal hover:bg-upisha-teal-dark text-white">
+                <Mail className="h-4 w-4 mr-2" />
+                Contact via UP ISHA
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </AnimatedSection>
   )
 }
 
 /* ─── Join UP ISHA Section ─── */
 function JoinSection() {
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -1500,7 +2024,11 @@ function JoinSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.membershipType) {
-      alert('Please select a membership type')
+      toast({
+        title: 'Membership type required',
+        description: 'Please select a membership type before submitting.',
+        variant: 'destructive',
+      })
       return
     }
     setIsSubmitting(true)
@@ -1512,9 +2040,23 @@ function JoinSection() {
       })
       if (res.ok) {
         setSubmitted(true)
+        toast({
+          title: 'Application submitted!',
+          description: 'We will review your application and contact you soon.',
+        })
+      } else {
+        toast({
+          title: 'Submission failed',
+          description: 'Please try again or contact us directly.',
+          variant: 'destructive',
+        })
       }
     } catch {
-      // handle error
+      toast({
+        title: 'Network error',
+        description: 'Please check your connection and try again.',
+        variant: 'destructive',
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -1869,6 +2411,7 @@ function GallerySection() {
 
 /* ─── Contact Section ─── */
 function ContactSection() {
+  const { toast } = useToast()
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
@@ -1889,9 +2432,23 @@ function ContactSection() {
       })
       if (res.ok) {
         setSubmitted(true)
+        toast({
+          title: 'Message sent!',
+          description: 'Thank you for reaching out. We will get back to you shortly.',
+        })
+      } else {
+        toast({
+          title: 'Failed to send',
+          description: 'Please try again or email us directly.',
+          variant: 'destructive',
+        })
       }
     } catch {
-      // handle error
+      toast({
+        title: 'Network error',
+        description: 'Please check your connection and try again.',
+        variant: 'destructive',
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -2204,8 +2761,200 @@ function ThemeToggle() {
       className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300"
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      <AnimatePresence mode="wait" initial={false}>
+        {isDark ? (
+          <motion.div
+            key="sun"
+            initial={{ rotate: -90, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            exit={{ rotate: 90, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Sun className="h-5 w-5" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="moon"
+            initial={{ rotate: 90, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            exit={{ rotate: -90, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Moon className="h-5 w-5" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </button>
+  )
+}
+
+/* ─── Command Palette / Search Modal ─── */
+function CommandPalette({
+  open,
+  onClose,
+  onNavigate,
+}: {
+  open: boolean
+  onClose: () => void
+  onNavigate: (href: string) => void
+}) {
+  const [query, setQuery] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const allItems = useMemo(() => {
+    return [
+      ...navLinks.map((l) => ({ label: l.label, href: l.href, group: 'Pages', icon: ChevronRight })),
+      { label: 'Join UP ISHA - Membership', href: '#join', group: 'Actions', icon: UserPlus },
+      { label: 'Contact the Association', href: '#contact', group: 'Actions', icon: Mail },
+      { label: 'Find an Audiologist', href: '#professionals', group: 'Directory', icon: Ear },
+      { label: 'Find a Speech-Language Pathologist', href: '#professionals', group: 'Directory', icon: MessageSquare },
+      { label: 'Browse Documents', href: '#documents', group: 'Resources', icon: FileText },
+      { label: 'View Publications', href: '#publications', group: 'Resources', icon: BookOpen },
+      { label: 'View Gallery', href: '#gallery', group: 'Resources', icon: Camera },
+      { label: 'UP ISHACON 2025 Countdown', href: '#home', group: 'Events', icon: Timer },
+      { label: 'Upcoming Webinars', href: '#about', group: 'Events', icon: PlayCircle },
+    ]
+  }, [])
+
+  const filtered = useMemo(() => {
+    if (!query) return allItems
+    const q = query.toLowerCase()
+    return allItems.filter(
+      (item) =>
+        item.label.toLowerCase().includes(q) ||
+        item.group.toLowerCase().includes(q)
+    )
+  }, [query, allItems])
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 50)
+      setQuery('')
+      setActiveIndex(0)
+    }
+  }, [open])
+
+  useEffect(() => {
+    setActiveIndex(0)
+  }, [query])
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveIndex((prev) => Math.min(prev + 1, filtered.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveIndex((prev) => Math.max(prev - 1, 0))
+    } else if (e.key === 'Enter' && filtered[activeIndex]) {
+      e.preventDefault()
+      onNavigate(filtered[activeIndex].href)
+      onClose()
+    } else if (e.key === 'Escape') {
+      onClose()
+    }
+  }
+
+  const grouped = useMemo(() => {
+    const groups: Record<string, typeof filtered> = {}
+    filtered.forEach((item) => {
+      if (!groups[item.group]) groups[item.group] = []
+      groups[item.group].push(item)
+    })
+    return groups
+  }, [filtered])
+
+  let runningIndex = -1
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4"
+          onClick={onClose}
+        >
+          <div className="absolute inset-0 bg-upisha-navy/60 backdrop-blur-sm" />
+          <motion.div
+            initial={{ scale: 0.96, opacity: 0, y: -10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.96, opacity: 0, y: -10 }}
+            transition={{ duration: 0.18 }}
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden"
+          >
+            <div className="flex items-center gap-3 px-4 border-b border-gray-100">
+              <Search className="h-5 w-5 text-gray-400" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Search pages, actions, resources..."
+                className="flex-1 py-4 bg-transparent outline-none text-sm text-gray-800 placeholder:text-gray-400"
+              />
+              <kbd className="px-2 py-1 rounded bg-gray-100 border border-gray-200 text-[10px] font-mono text-gray-500">
+                ESC
+              </kbd>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto p-2">
+              {filtered.length === 0 ? (
+                <div className="py-12 text-center text-gray-400 text-sm">
+                  No results for &ldquo;{query}&rdquo;
+                </div>
+              ) : (
+                Object.entries(grouped).map(([group, items]) => (
+                  <div key={group} className="mb-2">
+                    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                      {group}
+                    </div>
+                    {items.map((item) => {
+                      runningIndex++
+                      const idx = runningIndex
+                      const isActive = idx === activeIndex
+                      return (
+                        <button
+                          key={`${group}-${item.label}`}
+                          onMouseEnter={() => setActiveIndex(idx)}
+                          onClick={() => {
+                            onNavigate(item.href)
+                            onClose()
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${
+                            isActive
+                              ? 'bg-upisha-teal-light text-upisha-teal'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          <span className="flex-1">{item.label}</span>
+                          {isActive && <ChevronRight className="h-4 w-4 opacity-50" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-[11px] text-gray-500">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white border border-gray-200 font-mono">↑↓</kbd>
+                  Navigate
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white border border-gray-200 font-mono">↵</kbd>
+                  Select
+                </span>
+              </div>
+              <span className="text-upisha-teal font-medium">UP ISHA</span>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -2278,6 +3027,7 @@ function CountdownTimer() {
 
 /* ─── Newsletter Section ─── */
 function NewsletterSection() {
+  const { toast } = useToast()
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
@@ -2287,37 +3037,61 @@ function NewsletterSection() {
     if (!email) return
     setIsSubmitting(true)
     try {
-      await fetch('/api/newsletter', {
+      const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
-      setSubscribed(true)
+      if (res.ok) {
+        setSubscribed(true)
+        toast({
+          title: 'Subscribed successfully!',
+          description: 'Welcome aboard! You will receive our next newsletter soon.',
+        })
+      } else {
+        toast({
+          title: 'Subscription failed',
+          description: 'This email may already be subscribed. Please try another.',
+          variant: 'destructive',
+        })
+      }
     } catch {
-      // handle error
+      toast({
+        title: 'Network error',
+        description: 'Please check your connection and try again.',
+        variant: 'destructive',
+      })
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <section className="py-16 md:py-20 bg-upisha-gold-light dark:bg-upisha-navy relative overflow-hidden">
+    <section className="py-16 md:py-20 bg-gradient-to-br from-upisha-gold-light via-white to-upisha-teal-light dark:from-upisha-navy dark:to-upisha-navy-light relative overflow-hidden">
       {/* Decorative wave pattern */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 opacity-[0.07]">
         <svg className="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
           <path d="M0,200 C300,100 600,300 1200,200 L1200,400 L0,400 Z" fill="currentColor" className="text-upisha-gold" />
+          <path d="M0,250 C300,150 600,350 1200,250 L1200,400 L0,400 Z" fill="currentColor" className="text-upisha-teal" />
         </svg>
       </div>
       <div className="max-w-4xl mx-auto px-4 relative">
         <div className="text-center">
-          <Badge className="bg-upisha-gold/20 text-upisha-gold mb-3">
-            <Bell className="h-3 w-3 mr-1" />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 bg-upisha-gold/20 text-upisha-gold-dark border border-upisha-gold/30 px-4 py-1.5 rounded-full text-xs font-bold mb-4 uppercase tracking-wider"
+            style={{ color: '#9a6f1f' }}
+          >
+            <Bell className="h-3.5 w-3.5" />
             Stay Updated
-          </Badge>
+          </motion.div>
           <h2 className="text-3xl md:text-4xl font-bold text-upisha-navy dark:text-white mb-3">
             Subscribe to Our Newsletter
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 max-w-xl mx-auto mb-8">
+          <div className="h-1 w-16 bg-upisha-gold rounded-full mx-auto mb-4" />
+          <p className="text-upisha-navy/80 dark:text-gray-200 max-w-xl mx-auto mb-8 text-base font-medium">
             Get the latest updates on conferences, workshops, research publications, and
             professional opportunities delivered directly to your inbox.
           </p>
@@ -2325,20 +3099,22 @@ function NewsletterSection() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-upisha-navy-light rounded-2xl p-8 shadow-lg max-w-md mx-auto"
+              className="bg-white dark:bg-upisha-navy-light rounded-2xl p-8 shadow-xl max-w-md mx-auto border border-upisha-teal/20"
             >
-              <CheckCircle2 className="h-12 w-12 text-upisha-teal mx-auto mb-3" />
+              <div className="w-16 h-16 bg-upisha-teal/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="h-10 w-10 text-upisha-teal" />
+              </div>
               <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">
                 Successfully Subscribed!
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
                 Welcome aboard! You&apos;ll receive our next newsletter soon.
               </p>
             </motion.div>
           ) : (
             <form
               onSubmit={handleSubmit}
-              className="bg-white dark:bg-upisha-navy-light rounded-2xl p-6 md:p-8 shadow-lg max-w-lg mx-auto flex flex-col sm:flex-row gap-3"
+              className="bg-white dark:bg-upisha-navy-light rounded-2xl p-6 md:p-8 shadow-xl max-w-lg mx-auto flex flex-col sm:flex-row gap-3 border border-upisha-teal/10"
             >
               <div className="flex-1 relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -2354,7 +3130,7 @@ function NewsletterSection() {
               <Button
                 type="submit"
                 size="lg"
-                className="bg-upisha-gold hover:bg-upisha-gold/90 text-white h-12 px-6"
+                className="bg-upisha-gold hover:bg-upisha-gold-dark text-white h-12 px-6 shadow-md hover:shadow-lg transition-all"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Subscribing...' : 'Subscribe'}
@@ -2362,8 +3138,8 @@ function NewsletterSection() {
               </Button>
             </form>
           )}
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
-            No spam. Unsubscribe at any time. We respect your privacy.
+          <p className="text-xs text-upisha-navy/60 dark:text-gray-400 mt-4 font-medium">
+            🔒 No spam. Unsubscribe at any time. We respect your privacy.
           </p>
         </div>
       </div>
@@ -2378,7 +3154,7 @@ function CookieConsent() {
   useEffect(() => {
     const consent = localStorage.getItem('upisha-cookie-consent')
     if (!consent) {
-      const timer = setTimeout(() => setIsVisible(true), 2000)
+      const timer = setTimeout(() => setIsVisible(true), 1500)
       return () => clearTimeout(timer)
     }
   }, [])
@@ -2397,20 +3173,24 @@ function CookieConsent() {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ y: 100, opacity: 0 }}
+          initial={{ y: 120, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="fixed bottom-0 left-0 right-0 z-50 p-4"
+          exit={{ y: 120, opacity: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="fixed bottom-4 left-4 right-4 md:left-6 md:right-6 z-[70]"
         >
-          <div className="max-w-4xl mx-auto bg-white dark:bg-upisha-navy rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 md:p-6 flex flex-col md:flex-row items-center gap-4">
+          <div className="max-w-4xl mx-auto bg-white dark:bg-upisha-navy rounded-2xl shadow-2xl border-l-4 border-l-upisha-teal border border-gray-200 dark:border-gray-700 p-5 md:p-6 flex flex-col md:flex-row items-center gap-4">
+            <div className="w-12 h-12 shrink-0 rounded-full bg-upisha-teal/10 flex items-center justify-center">
+              <Shield className="h-6 w-6 text-upisha-teal" />
+            </div>
             <div className="flex-1 text-center md:text-left">
-              <h4 className="font-semibold text-upisha-navy dark:text-white text-sm mb-1">
-                🍪 We use cookies
+              <h4 className="font-bold text-upisha-navy dark:text-white text-base mb-1">
+                We value your privacy
               </h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                This website uses cookies to enhance your experience. By continuing to visit this
-                site you agree to our use of cookies.
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                We use cookies to enhance your browsing experience, analyze site traffic, and
+                personalize content. By clicking &quot;Accept All&quot;, you consent to our use of
+                cookies.
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
@@ -2418,14 +3198,14 @@ function CookieConsent() {
                 size="sm"
                 variant="outline"
                 onClick={decline}
-                className="text-xs border-gray-300 dark:border-gray-600"
+                className="text-sm border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-upisha-navy-light"
               >
                 Decline
               </Button>
               <Button
                 size="sm"
                 onClick={accept}
-                className="bg-upisha-teal hover:bg-upisha-teal-dark text-white text-xs"
+                className="bg-upisha-teal hover:bg-upisha-teal-dark text-white text-sm shadow-md"
               >
                 Accept All
               </Button>
@@ -2728,6 +3508,177 @@ function TestimonialsSection() {
   )
 }
 
+/* ─── Events Timeline Section ─── */
+function EventsTimelineSection() {
+  const typeColors: Record<string, string> = {
+    Conference: 'bg-upisha-gold/20 text-upisha-gold border-upisha-gold/30',
+    Workshop: 'bg-upisha-teal/10 text-upisha-teal border-upisha-teal/30',
+    Outreach: 'bg-purple-100 text-purple-700 border-purple-200',
+    Webinar: 'bg-blue-100 text-blue-700 border-blue-200',
+  }
+
+  return (
+    <AnimatedSection className="py-16 md:py-20 bg-white relative">
+      <div className="max-w-6xl mx-auto px-4">
+        <SectionHeading
+          badge="What's Coming Up"
+          badgeIcon={Calendar}
+          title="Events & Activities Timeline"
+          subtitle="Stay informed about our upcoming conferences, workshops, webinars, and community outreach programs across Uttar Pradesh."
+        />
+
+        <div className="relative">
+          {/* Vertical line */}
+          <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-upisha-teal via-upisha-gold to-upisha-teal opacity-30 md:-translate-x-1/2" />
+
+          <div className="space-y-8">
+            {eventsTimeline.map((event, i) => (
+              <motion.div
+                key={event.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
+                viewport={{ once: true }}
+                className={`relative flex items-start gap-6 ${
+                  i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+                }`}
+              >
+                {/* Dot marker */}
+                <div className="absolute left-4 md:left-1/2 -translate-x-1/2 z-10 mt-6">
+                  <div className="w-4 h-4 rounded-full bg-white border-4 border-upisha-teal shadow-md" />
+                </div>
+
+                {/* Content card */}
+                <div className={`flex-1 ml-12 md:ml-0 ${i % 2 === 0 ? 'md:pr-12' : 'md:pl-12'}`}>
+                  <Card className="hover:shadow-lg transition-all duration-300 group hover:border-upisha-teal/40">
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors shrink-0">
+                            <event.icon className="h-5 w-5 text-upisha-teal group-hover:text-white transition-colors" />
+                          </div>
+                          <div>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] mb-1 ${typeColors[event.type] || 'bg-gray-100 text-gray-700 border-gray-200'}`}
+                            >
+                              {event.type}
+                            </Badge>
+                            <p className="text-xs text-upisha-gold font-semibold flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {event.date}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-upisha-navy text-lg mb-2 group-hover:text-upisha-teal transition-colors">
+                        {event.title}
+                      </h4>
+                      <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                        {event.description}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <MapPinned className="h-3.5 w-3.5 text-upisha-gold" />
+                        <span>{event.location}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Spacer for alternating layout on desktop */}
+                <div className="hidden md:block flex-1" />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <div className="text-center mt-12">
+          <Button className="bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md">
+            <Calendar className="h-4 w-4 mr-2" />
+            View Full Calendar
+          </Button>
+        </div>
+      </div>
+    </AnimatedSection>
+  )
+}
+
+/* ─── Member Spotlight Section ─── */
+function MemberSpotlightSection() {
+  return (
+    <AnimatedSection className="py-16 md:py-20 bg-gradient-to-br from-upisha-teal-light via-white to-upisha-gold-light relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-0 right-0 w-72 h-72 bg-upisha-gold/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 bg-upisha-teal/5 rounded-full blur-3xl" />
+
+      <div className="max-w-7xl mx-auto px-4 relative">
+        <SectionHeading
+          badge="Member Spotlight"
+          badgeIcon={Trophy}
+          title="Celebrating Our Members"
+          subtitle="Recognizing the outstanding contributions and achievements of UP ISHA members who are advancing the field of speech and hearing in Uttar Pradesh."
+        />
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {memberSpotlights.map((member, i) => (
+            <motion.div
+              key={member.name}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.15 }}
+              viewport={{ once: true }}
+            >
+              <Card className="h-full relative overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                {/* Top gradient bar */}
+                <div className="h-2 bg-gradient-to-r from-upisha-teal via-upisha-gold to-upisha-teal" />
+
+                {/* Trophy badge */}
+                <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-upisha-gold/10 flex items-center justify-center group-hover:bg-upisha-gold transition-colors">
+                  <Trophy className="h-5 w-5 text-upisha-gold group-hover:text-white transition-colors" />
+                </div>
+
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-upisha-teal to-upisha-teal-dark flex items-center justify-center text-white font-bold text-lg shrink-0">
+                      {member.name.split(' ').slice(-2, -1)[0]?.[0] || member.name[0]}
+                      {member.name.split(' ').slice(-1)[0]?.[0]}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-upisha-navy">{member.name}</h4>
+                      <p className="text-xs text-upisha-teal font-medium">{member.role}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-4 text-xs">
+                    <Badge className="bg-upisha-teal/10 text-upisha-teal">
+                      <MapPinned className="h-3 w-3 mr-1" />
+                      {member.location}
+                    </Badge>
+                    <Badge className="bg-upisha-gold/10 text-upisha-gold">
+                      <Briefcase className="h-3 w-3 mr-1" />
+                      {member.years}
+                    </Badge>
+                    <Badge className="bg-gray-100 text-gray-700" variant="secondary">
+                      {member.specialty}
+                    </Badge>
+                  </div>
+
+                  <div className="relative">
+                    <Quote className="absolute -top-1 -left-1 h-5 w-5 text-upisha-gold/30" />
+                    <p className="text-sm text-gray-600 italic leading-relaxed pl-5">
+                      {member.achievement}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </AnimatedSection>
+  )
+}
+
 /* ─── Partners Section ─── */
 function PartnersSection() {
   return (
@@ -2765,6 +3716,7 @@ function PartnersSection() {
 /* ─── Main Page ─── */
 export default function Home() {
   const [activeSection, setActiveSection] = useState('home')
+  const [searchOpen, setSearchOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -2784,16 +3736,33 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const handleNavClick = (href: string) => {
+  // Ctrl/Cmd + K to open search
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [])
+
+  const handleNavClick = useCallback((href: string) => {
     const id = href.slice(1)
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-  }
+  }, [])
 
   return (
     <div className="min-h-screen flex flex-col">
       <ScrollProgress />
       <TopBar />
-      <Navbar activeSection={activeSection} onNavClick={handleNavClick} />
+      <Navbar
+        activeSection={activeSection}
+        onNavClick={handleNavClick}
+        onOpenSearch={() => setSearchOpen(true)}
+      />
+      <NewsTicker />
       <main className="flex-1">
         <HeroSection />
         <QuickLinks />
@@ -2802,10 +3771,12 @@ export default function Home() {
         <FeaturesSection />
         <AboutSection />
         <StatsSection />
+        <EventsTimelineSection />
         <DocumentsSection />
         <PublicationsSection />
         <WebinarsSection />
         <ProfessionalsSection />
+        <MemberSpotlightSection />
         <JoinSection />
         <TestimonialsSection />
         <GallerySection />
@@ -2816,6 +3787,11 @@ export default function Home() {
       <Footer />
       <BackToTop />
       <CookieConsent />
+      <CommandPalette
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onNavigate={handleNavClick}
+      />
     </div>
   )
 }
