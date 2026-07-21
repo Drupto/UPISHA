@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { createContactMessage, getContactMessages } from '@/lib/firestore'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,13 +13,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const contactMessage = await db.contactMessage.create({
-      data: {
-        name,
-        email,
-        subject,
-        message,
-      },
+    const contactMessage = await createContactMessage({
+      name,
+      email,
+      subject,
+      message,
     })
 
     return NextResponse.json({ success: true, id: contactMessage.id }, { status: 201 })
@@ -40,9 +38,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const messages = await db.contactMessage.findMany({
-      orderBy: { createdAt: 'desc' },
-    })
+    const messages = await getContactMessages()
     return NextResponse.json({ messages })
   } catch (error) {
     console.error('Error fetching messages:', error)

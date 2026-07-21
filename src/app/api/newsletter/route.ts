@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { upsertNewsletterSubscriber, getNewsletterSubscribers } from '@/lib/firestore'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,12 +13,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Upsert to avoid duplicate email errors
-    const subscriber = await db.newsletterSubscriber.upsert({
-      where: { email },
-      update: { isActive: true },
-      create: { email },
-    })
+    const subscriber = await upsertNewsletterSubscriber(email)
 
     return NextResponse.json({ success: true, id: subscriber.id }, { status: 201 })
   } catch (error) {
@@ -38,17 +33,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const [subscribers, countResult] = await Promise.all([
-      db.newsletterSubscriber.findMany({
-        where: { isActive: true },
-        orderBy: { createdAt: 'desc' },
-      }),
-      db.newsletterSubscriber.aggregate({
-        _count: { _all: true },
-        where: { isActive: true },
-      }),
-    ])
-    return NextResponse.json({ subscribers, count: countResult._count._all })
+    const { subscribers, count } = await getNewsletterSubscribers()
+    return NextResponse.json({ subscribers, count })
   } catch (error) {
     console.error('Error fetching subscribers:', error)
     return NextResponse.json(

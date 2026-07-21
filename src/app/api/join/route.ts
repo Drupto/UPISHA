@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { createMember, getMembers } from '@/lib/firestore'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,17 +13,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const member = await db.member.create({
-      data: {
-        fullName,
-        email,
-        phone,
-        qualification,
-        rciNumber: rciNumber || null,
-        membershipType,
-        city,
-        message: message || null,
-      },
+    const member = await createMember({
+      fullName,
+      email,
+      phone,
+      qualification,
+      rciNumber: rciNumber || null,
+      membershipType,
+      city,
+      message: message || null,
     })
 
     return NextResponse.json({ success: true, id: member.id }, { status: 201 })
@@ -44,9 +42,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const members = await db.member.findMany({
-      orderBy: { createdAt: 'desc' },
-    })
+    const members = await getMembers()
     return NextResponse.json({ members })
   } catch (error) {
     console.error('Error fetching members:', error)
