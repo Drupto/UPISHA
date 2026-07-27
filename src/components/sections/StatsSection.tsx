@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { stats } from '@/lib/static-data'
 
 /* ─── Stats Section ─── */
-function StatsSection() {
+export function StatsSection() {
   return (
     <section className="py-12 md:py-16 bg-upisha-navy dark:bg-gray-950 relative overflow-hidden border-t-2 border-t-upisha-gold/20">
       <div

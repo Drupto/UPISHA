@@ -5,7 +5,7 @@ import {
   Trophy, Microscope, Megaphone, PlayCircle, Camera, UserPlus, Star,
   MapPinned, Building, Mailbox, PhoneCall, Timer, Sparkles, Bell,
   Search, ChevronRight, Mail, MapPin, Phone, Clock, Eye, Quote,
-  TrendingUp, HandHeart, Newspaper, Lightbulb, Zap, type LucideIcon
+  TrendingUp, HandHeart, Newspaper, Lightbulb, Zap
 } from 'lucide-react'
 import type {
   NavLink, HeroSlide, Announcement, Feature, ExecutiveMember, Document,
@@ -57,10 +57,10 @@ export const announcements: Announcement[] = [
 ]
 
 export const features: Feature[] = [
-  { icon: 'BookOpen', title: 'UP ISHA Newsletter', description: 'Stay updated with activities, events, and developments from the Uttar Pradesh Speech & Hearing Association.' },
-  { icon: 'Users', title: 'Executive Council', description: 'Meet the dedicated team of professionals governing UP ISHA and guiding its mission forward.' },
-  { icon: 'GraduationCap', title: 'Webinars & Workshops', description: 'Access recordings and schedules of professional development webinars and hands-on workshops.' },
-  { icon: 'Globe', title: 'Regional Chapters', description: 'UP ISHA has chapters across Lucknow, Varanasi, Agra, Kanpur, and other major cities in Uttar Pradesh.' },
+  { icon: BookOpen, title: 'UP ISHA Newsletter', description: 'Stay updated with activities, events, and developments from the Uttar Pradesh Speech & Hearing Association.' },
+  { icon: Users, title: 'Executive Council', description: 'Meet the dedicated team of professionals governing UP ISHA and guiding its mission forward.' },
+  { icon: GraduationCap, title: 'Webinars & Workshops', description: 'Access recordings and schedules of professional development webinars and hands-on workshops.' },
+  { icon: Globe, title: 'Regional Chapters', description: 'UP ISHA has chapters across Lucknow, Varanasi, Agra, Kanpur, and other major cities in Uttar Pradesh.' },
 ]
 
 export const executiveCouncil: ExecutiveMember[] = [
@@ -74,25 +74,25 @@ export const executiveCouncil: ExecutiveMember[] = [
 ]
 
 export const documents: Document[] = [
-  { title: 'UP ISHA Constitution & Bye-Laws', description: 'Official constitution and bye-laws governing the association', category: 'Governance', icon: 'Shield' },
-  { title: 'Scope of Practice - Audiology', description: 'Defined scope of practice for audiologists in Uttar Pradesh', category: 'Practice', icon: 'Stethoscope' },
-  { title: 'Scope of Practice - Speech-Language Pathology', description: 'Defined scope of practice for SLPs in Uttar Pradesh', category: 'Practice', icon: 'MessageSquare' },
-  { title: 'Code of Ethics', description: 'Professional code of ethics for all UP ISHA members', category: 'Governance', icon: 'Award' },
-  { title: 'RCI Guidelines & Notifications', description: 'Rehabilitation Council of India regulatory mandates', category: 'Regulatory', icon: 'FileText' },
-  { title: 'Clinical Practice Guidelines', description: 'Evidence-based guidelines for clinical practice', category: 'Practice', icon: 'BookOpen' },
+  { title: 'UP ISHA Constitution & Bye-Laws', description: 'Official constitution and bye-laws governing the association', category: 'Governance', icon: Shield },
+  { title: 'Scope of Practice - Audiology', description: 'Defined scope of practice for audiologists in Uttar Pradesh', category: 'Practice', icon: Stethoscope },
+  { title: 'Scope of Practice - Speech-Language Pathology', description: 'Defined scope of practice for SLPs in Uttar Pradesh', category: 'Practice', icon: MessageSquare },
+  { title: 'Code of Ethics', description: 'Professional code of ethics for all UP ISHA members', category: 'Governance', icon: Award },
+  { title: 'RCI Guidelines & Notifications', description: 'Rehabilitation Council of India regulatory mandates', category: 'Regulatory', icon: FileText },
+  { title: 'Clinical Practice Guidelines', description: 'Evidence-based guidelines for clinical practice', category: 'Practice', icon: BookOpen },
 ]
 
 export const publications: Publication[] = [
-  { title: 'UP Journal of Speech & Hearing', description: 'The official peer-reviewed journal of UP ISHA featuring research articles, case studies, and reviews.', type: 'Journal', icon: 'BookOpen' },
-  { title: 'Clinical Monograph Series', description: 'Focused monographs on specialized topics in audiology and speech-language pathology.', type: 'Monograph', icon: 'FileText' },
-  { title: 'Research in Uttar Pradesh', description: 'Directory of ongoing and completed research projects in speech and hearing across UP.', type: 'Research', icon: 'GraduationCap' },
+  { title: 'UP Journal of Speech & Hearing', description: 'The official peer-reviewed journal of UP ISHA featuring research articles, case studies, and reviews.', type: 'Journal', icon: BookOpen },
+  { title: 'Clinical Monograph Series', description: 'Focused monographs on specialized topics in audiology and speech-language pathology.', type: 'Monograph', icon: FileText },
+  { title: 'Research in Uttar Pradesh', description: 'Directory of ongoing and completed research projects in speech and hearing across UP.', type: 'Research', icon: GraduationCap },
 ]
 
 export const professionalCategories: ProfessionalCategory[] = [
-  { title: 'Audiology', description: 'Find qualified audiologists across Uttar Pradesh', icon: 'Ear', count: '250+' },
-  { title: 'Speech-Language Pathology', description: 'Connect with certified speech-language pathologists', icon: 'MessageSquare', count: '300+' },
-  { title: 'Clinic Accreditation', description: 'Locate accredited speech and hearing clinics', icon: 'Briefcase', count: '100+' },
-  { title: 'Academic Programs', description: 'Universities offering ASLP programs in UP', icon: 'GraduationCap', count: '15+' },
+  { title: 'Audiology', description: 'Find qualified audiologists across Uttar Pradesh', icon: Ear, count: '250+' },
+  { title: 'Speech-Language Pathology', description: 'Connect with certified speech-language pathologists', icon: MessageSquare, count: '300+' },
+  { title: 'Clinic Accreditation', description: 'Locate accredited speech and hearing clinics', icon: Briefcase, count: '100+' },
+  { title: 'Academic Programs', description: 'Universities offering ASLP programs in UP', icon: GraduationCap, count: '15+' },
 ]
 
 export const membershipBenefits: string[] = [
@@ -136,10 +136,10 @@ export const faqItems: FAQ[] = [
 ]
 
 export const stats: Stat[] = [
-  { value: 550, suffix: '+', label: 'Active Members', icon: 'Users' },
-  { value: 2, suffix: '+', label: 'Years of Service', icon: 'Activity' },
-  { value: 15, suffix: '+', label: 'Regional Chapters', icon: 'Globe' },
-  { value: 50, suffix: '+', label: 'Annual Events', icon: 'Calendar' },
+  { value: 550, suffix: '+', label: 'Active Members', icon: Users },
+  { value: 2, suffix: '+', label: 'Years of Service', icon: Activity },
+  { value: 15, suffix: '+', label: 'Regional Chapters', icon: Globe },
+  { value: 50, suffix: '+', label: 'Annual Events', icon: Calendar },
 ]
 
 export const testimonials: Testimonial[] = [
@@ -150,12 +150,12 @@ export const testimonials: Testimonial[] = [
 ]
 
 export const partners: Partner[] = [
-  { name: 'Rehabilitation Council of India', icon: 'Shield' },
-  { name: 'All India Institute of Speech & Hearing', icon: 'Ear' },
-  { name: "King George's Medical University", icon: 'Building2' },
-  { name: 'AIIMS Delhi', icon: 'Stethoscope' },
-  { name: 'Indian Speech-Language & Hearing Association', icon: 'Globe' },
-  { name: 'WHO India', icon: 'Heart' },
+  { name: 'Rehabilitation Council of India', icon: Shield },
+  { name: 'All India Institute of Speech & Hearing', icon: Ear },
+  { name: "King George's Medical University", icon: Building2 },
+  { name: 'AIIMS Delhi', icon: Stethoscope },
+  { name: 'Indian Speech-Language & Hearing Association', icon: Globe },
+  { name: 'WHO India', icon: Heart },
 ]
 
 export const upcomingWebinars: Webinar[] = [
@@ -183,11 +183,11 @@ export const upCities: string[] = ['All Cities', 'Lucknow', 'Varanasi', 'Kanpur'
 export const specialities: string[] = ['All Specialities', 'Audiology', 'Speech-Language Pathology', 'Neuro-Audiology', 'Pediatric Audiology']
 
 export const eventsTimeline: TimelineEvent[] = [
-  { date: '18-20 Oct 2026', title: 'UP ISHACON 2026 - Annual State Conference', location: 'KGMU, Lucknow', description: 'Three-day flagship conference featuring keynote lectures, scientific paper presentations, panel discussions, and hands-on workshops on the latest advances in audiology and speech-language pathology.', type: 'Conference', icon: 'Trophy', time: '9:00 AM - 5:00 PM', speakers: ['Dr. Rajesh Sharma', 'Dr. Sunita Verma', 'Dr. Amit Mishra'], registrationLink: '#join' },
-  { date: '25 Mar 2026', title: 'Workshop on Pediatric Audiology', location: 'Lucknow Chapter', description: 'Hands-on workshop covering ABR, OAE, and behavioral audiometry for infants and young children. Limited to 30 participants.', type: 'Workshop', icon: 'Microscope', time: '10:00 AM - 4:00 PM', speakers: ['Dr. Ananya Gupta', 'Dr. Meera Tiwari'], registrationLink: '#join' },
-  { date: '03 Mar 2026', title: 'World Hearing Day Awareness Walk', location: 'Hazratganj, Lucknow', description: 'Public awareness walk and free hearing screening camp in observance of WHO World Hearing Day 2026.', type: 'Outreach', icon: 'Megaphone', time: '8:00 AM - 1:00 PM', speakers: ['Dr. Vikram Pandey', 'Dr. Kavita Rathore'], registrationLink: '#join' },
-  { date: '15 Feb 2026', title: 'Continuing Education - Voice Disorders', location: 'Webinar (Online)', description: 'Expert-led session on assessment and management of voice disorders across the lifespan, including latest evidence-based practices.', type: 'Webinar', icon: 'PlayCircle', time: '4:00 PM - 6:00 PM IST', speakers: ['Dr. Neha Saxena', 'Dr. Arjun Yadav'], registrationLink: '#join' },
-  { date: '28 Jan 2026', title: 'Research Methodology Workshop', location: 'KGMU, Lucknow', description: 'Two-day workshop for early-career researchers on research design, statistical analysis, and scientific writing for ASLP professionals.', type: 'Workshop', icon: 'GraduationCap', time: '9:30 AM - 4:30 PM', speakers: ['Dr. Rakesh Pandey', 'Dr. Sanjay Gupta'], registrationLink: '#join' },
+  { date: '18-20 Oct 2026', title: 'UP ISHACON 2026 - Annual State Conference', location: 'KGMU, Lucknow', description: 'Three-day flagship conference featuring keynote lectures, scientific paper presentations, panel discussions, and hands-on workshops on the latest advances in audiology and speech-language pathology.', type: 'Conference', icon: Trophy, time: '9:00 AM - 5:00 PM', speakers: ['Dr. Rajesh Sharma', 'Dr. Sunita Verma', 'Dr. Amit Mishra'], registrationLink: '#join' },
+  { date: '25 Mar 2026', title: 'Workshop on Pediatric Audiology', location: 'Lucknow Chapter', description: 'Hands-on workshop covering ABR, OAE, and behavioral audiometry for infants and young children. Limited to 30 participants.', type: 'Workshop', icon: Microscope, time: '10:00 AM - 4:00 PM', speakers: ['Dr. Ananya Gupta', 'Dr. Meera Tiwari'], registrationLink: '#join' },
+  { date: '03 Mar 2026', title: 'World Hearing Day Awareness Walk', location: 'Hazratganj, Lucknow', description: 'Public awareness walk and free hearing screening camp in observance of WHO World Hearing Day 2026.', type: 'Outreach', icon: Megaphone, time: '8:00 AM - 1:00 PM', speakers: ['Dr. Vikram Pandey', 'Dr. Kavita Rathore'], registrationLink: '#join' },
+  { date: '15 Feb 2026', title: 'Continuing Education - Voice Disorders', location: 'Webinar (Online)', description: 'Expert-led session on assessment and management of voice disorders across the lifespan, including latest evidence-based practices.', type: 'Webinar', icon: PlayCircle, time: '4:00 PM - 6:00 PM IST', speakers: ['Dr. Neha Saxena', 'Dr. Arjun Yadav'], registrationLink: '#join' },
+  { date: '28 Jan 2026', title: 'Research Methodology Workshop', location: 'KGMU, Lucknow', description: 'Two-day workshop for early-career researchers on research design, statistical analysis, and scientific writing for ASLP professionals.', type: 'Workshop', icon: GraduationCap, time: '9:30 AM - 4:30 PM', speakers: ['Dr. Rakesh Pandey', 'Dr. Sanjay Gupta'], registrationLink: '#join' },
 ]
 
 export const memberSpotlights: MemberSpotlight[] = [
@@ -205,13 +205,3 @@ export const newsTickerItems: string[] = [
 ]
 
 export const documentDownloads: number[] = [342, 567, 1289, 456, 891, 723]
-
-// Icon mapping for string-based icon references
-export const iconMap: Record<string, LucideIcon> = {
-  BookOpen, Users, GraduationCap, Globe, Shield, Stethoscope, MessageSquare,
-  Award, FileText, Ear, Briefcase, Activity, Calendar, Heart, Building2,
-  Trophy, Microscope, Megaphone, PlayCircle, Camera, UserPlus, Star,
-  MapPinned, Building, Mailbox, PhoneCall, Timer, Sparkles, Bell,
-  Search, ChevronRight, Mail, MapPin, Phone, Clock, Eye, Quote,
-  TrendingUp, HandHeart, Newspaper, Lightbulb, Zap,
-}

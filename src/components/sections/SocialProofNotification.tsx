@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 /* ─── Social Proof Notification ─── */
-function SocialProofNotification() {
+export function SocialProofNotification() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
   const [dismissed, setDismissed] = useState(false)
@@ -85,3 +85,4 @@ function SocialProofNotification() {
     </AnimatePresence>
   )
 }
+

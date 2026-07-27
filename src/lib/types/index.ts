@@ -1,4 +1,4 @@
-// Shared types for UP ISHA application
+import type { LucideIcon } from 'lucide-react'
 
 export interface NavLink {
   label: string
@@ -23,7 +23,7 @@ export interface Announcement {
 }
 
 export interface Feature {
-  icon: string
+  icon: LucideIcon
   title: string
   description: string
 }
@@ -39,7 +39,7 @@ export interface Document {
   title: string
   description: string
   category: string
-  icon: string
+  icon: LucideIcon
   downloadCount?: number
 }
 
@@ -47,13 +47,13 @@ export interface Publication {
   title: string
   description: string
   type: string
-  icon: string
+  icon: LucideIcon
 }
 
 export interface ProfessionalCategory {
   title: string
   description: string
-  icon: string
+  icon: LucideIcon
   count: string
 }
 
@@ -90,7 +90,7 @@ export interface Stat {
   value: number
   suffix: string
   label: string
-  icon: string
+  icon: LucideIcon
 }
 
 export interface Testimonial {
@@ -102,7 +102,7 @@ export interface Testimonial {
 
 export interface Partner {
   name: string
-  icon: string
+  icon: LucideIcon
 }
 
 export interface Webinar {
@@ -120,7 +120,7 @@ export interface TimelineEvent {
   location: string
   description: string
   type: string
-  icon: string
+  icon: LucideIcon
   time: string
   speakers: string[]
   registrationLink: string

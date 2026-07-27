@@ -16,7 +16,7 @@ import {
 import { documents } from '@/lib/static-data'
 
 /* ─── Quick Links ─── */
-function QuickLinks() {
+export function QuickLinks() {
   const links = [
     { icon: Ear, label: 'Audiology', href: '#professionals', color: 'bg-teal-500' },
     {
@@ -62,3 +62,4 @@ function QuickLinks() {
     </div>
   )
 }
+

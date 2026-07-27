@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 /* ─── Top Bar ─── */
-function TopBar() {
+export function TopBar() {
   return (
     <div className="bg-upisha-navy dark:bg-gray-950 text-white text-sm py-2 border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
@@ -58,3 +58,4 @@ function TopBar() {
     </div>
   )
 }
+

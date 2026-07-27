@@ -19,7 +19,7 @@ import { Separator } from '@/components/ui/separator'
 import { eventsTimeline } from '@/lib/static-data'
 
 /* ─── Event Calendar Mini-View ─── */
-function parseEventDates(dateStr: string): { year: number; month: number; days: number[] }[] {
+export function parseEventDates(dateStr: string): { year: number; month: number; days: number[] }[] {
   // Parse formats like '18-20 Oct 2026', '25 Mar 2026', '03 Mar 2026'
   const results: { year: number; month: number; days: number[] }[] = []
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -53,7 +53,7 @@ function parseEventDates(dateStr: string): { year: number; month: number; days: 
   return results
 }
 
-function EventCalendar({ onEventClick }: { onEventClick: (event: typeof eventsTimeline[0]) => void }) {
+export function EventCalendar({ onEventClick }: { onEventClick: (event: typeof eventsTimeline[0]) => void }) {
   const [currentDate, setCurrentDate] = useState(() => new Date())
   const [hoveredDay, setHoveredDay] = useState<number | null>(null)
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null)
@@ -234,3 +234,4 @@ function EventCalendar({ onEventClick }: { onEventClick: (event: typeof eventsTi
     </Card>
   )
 }
+

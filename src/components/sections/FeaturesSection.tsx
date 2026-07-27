@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { features } from '@/lib/static-data'
 
 /* ─── Features Section ─── */
-function FeaturesSection() {
+export function FeaturesSection() {
   return (
     <section className="py-16 md:py-20 bg-upisha-teal-light dark:bg-upisha-teal/10 border-t-2 border-t-upisha-gold/10 section-pattern">
       <div className="max-w-7xl mx-auto px-4">
@@ -65,3 +65,4 @@ function FeaturesSection() {
     </section>
   )
 }
+

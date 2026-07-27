@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
 /* ─── Event Countdown Timer ─── */
-function CountdownTimer() {
+export function CountdownTimer() {
   const targetDate = new Date('2026-10-18T09:00:00+05:30').getTime()
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 
@@ -83,3 +83,4 @@ function CountdownTimer() {
     </section>
   )
 }
+

@@ -16,7 +16,7 @@ import {
 import { partners } from '@/lib/static-data'
 
 /* ─── Partners Section ─── */
-function PartnersSection() {
+export function PartnersSection() {
   return (
     <section className="py-12 md:py-16 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4">
@@ -59,3 +59,4 @@ function PartnersSection() {
     </section>
   )
 }
+

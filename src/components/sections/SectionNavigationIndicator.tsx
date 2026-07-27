@@ -16,7 +16,7 @@ import {
 import { documents, publications } from '@/lib/static-data'
 
 /* ─── Section Navigation Indicator ─── */
-function SectionNavigationIndicator({ activeSection }: { activeSection: string }) {
+export function SectionNavigationIndicator({ activeSection }: { activeSection: string }) {
   const [scrollPercent, setScrollPercent] = useState(0)
   const sections = [
     { id: 'home', label: 'Home' },
@@ -87,3 +87,4 @@ function SectionNavigationIndicator({ activeSection }: { activeSection: string }
     </div>
   )
 }
+

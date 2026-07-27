@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { heroSlides } from '@/lib/static-data'
 
 /* ─── Hero Section ─── */
-function HeroSection() {
+export function HeroSection() {
   const [current, setCurrent] = useState(0)
   const { toast } = useToast()
   const heroRef = useRef<HTMLElement>(null)
@@ -213,3 +213,4 @@ function HeroSection() {
     </section>
   )
 }
+

@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 /* ─── Keyboard Shortcuts Help Dialog ─── */
-function KeyboardShortcutsHelp({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function KeyboardShortcutsHelp({ open, onClose }: { open: boolean; onClose: () => void }) {
   const shortcuts = [
     { keys: ['Ctrl', 'K'], desc: 'Open command palette / search' },
     { keys: ['?'], desc: 'Toggle this shortcuts help' },
@@ -67,3 +67,4 @@ function KeyboardShortcutsHelp({ open, onClose }: { open: boolean; onClose: () =
     </Dialog>
   )
 }
+

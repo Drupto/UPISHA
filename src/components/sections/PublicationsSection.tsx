@@ -22,7 +22,7 @@ import { publications } from '@/lib/static-data'
 import { AnimatedSection } from '@/components/sections'
 
 /* ─── Publications Section ─── */
-function PublicationsSection() {
+export function PublicationsSection() {
   return (
     <AnimatedSection id="publications" className="py-16 md:py-20 bg-white dark:bg-gray-900 border-t-2 border-t-upisha-teal/10">
       <div className="max-w-7xl mx-auto px-4">
@@ -208,3 +208,4 @@ function PublicationsSection() {
     </AnimatedSection>
   )
 }
+

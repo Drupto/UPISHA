@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 
 /* ─── Reusable Section Heading ─── */
-function SectionHeading({
+export function SectionHeading({
   badge,
   badgeIcon: BadgeIcon,
   title,
@@ -87,3 +87,4 @@ function SectionHeading({
     </div>
   )
 }
+

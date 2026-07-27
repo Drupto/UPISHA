@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 /* ─── Scroll Progress Indicator ─── */
-function ScrollProgress() {
+export function ScrollProgress() {
   const { scrollYProgress } = useScroll()
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -61,3 +61,4 @@ function ScrollProgress() {
     </>
   )
 }
+

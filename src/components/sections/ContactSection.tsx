@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge'
 import { AnimatedSection } from '@/components/sections'
 
 /* ─── Contact Section ─── */
-function ContactSection() {
+export function ContactSection() {
   const { toast } = useToast()
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -424,3 +424,4 @@ function ContactSection() {
     </AnimatedSection>
   )
 }
+

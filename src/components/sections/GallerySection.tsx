@@ -22,7 +22,7 @@ import { galleryImages } from '@/lib/static-data'
 import { AnimatedSection } from '@/components/sections'
 
 /* ─── Gallery Section ─── */
-function GallerySection() {
+export function GallerySection() {
   const [selectedImage, setSelectedImage] = useState<{ src: string; index: number } | null>(null)
   const [filter, setFilter] = useState('All')
   const [visibleCount, setVisibleCount] = useState(6)
@@ -252,3 +252,4 @@ function GallerySection() {
     </AnimatedSection>
   )
 }
+

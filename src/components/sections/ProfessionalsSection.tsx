@@ -24,7 +24,7 @@ import { professionalCategories, sampleProfessionals, upCities, specialities } f
 import { AnimatedSection, SectionHeading } from '@/components/sections'
 
 /* ─── Professionals Section ─── */
-function ProfessionalsSection() {
+export function ProfessionalsSection() {
   const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState('')
   const [cityFilter, setCityFilter] = useState('All Cities')
@@ -361,3 +361,4 @@ function ProfessionalsSection() {
     </AnimatedSection>
   )
 }
+

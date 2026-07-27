@@ -25,7 +25,7 @@ import { features, membershipBenefits, membershipTypes, faqItems } from '@/lib/s
 import { AnimatedSection } from '@/components/sections'
 
 /* ─── Join UP ISHA Section ─── */
-function JoinSection() {
+export function JoinSection() {
   const { toast } = useToast()
   const [formData, setFormData] = useState({
     fullName: '',
@@ -502,3 +502,4 @@ function JoinSection() {
     </AnimatedSection>
   )
 }
+

@@ -16,7 +16,7 @@ import {
 import { navLinks } from '@/lib/static-data'
 
 /* ─── Breadcrumb Indicator (shows current section in navbar) ─── */
-function BreadcrumbIndicator({ activeSection }: { activeSection: string }) {
+export function BreadcrumbIndicator({ activeSection }: { activeSection: string }) {
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
@@ -49,3 +49,4 @@ function BreadcrumbIndicator({ activeSection }: { activeSection: string }) {
     </AnimatePresence>
   )
 }
+

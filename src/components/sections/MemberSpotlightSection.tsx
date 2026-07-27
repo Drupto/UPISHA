@@ -20,7 +20,7 @@ import { memberSpotlights } from '@/lib/static-data'
 import { AnimatedSection, SectionHeading } from '@/components/sections'
 
 /* ─── Member Spotlight Section ─── */
-function MemberSpotlightSection() {
+export function MemberSpotlightSection() {
   return (
     <AnimatedSection className="py-16 md:py-20 bg-gradient-to-br from-upisha-teal-light via-white to-upisha-gold-light dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden">
       {/* Decorative elements */}
@@ -94,3 +94,4 @@ function MemberSpotlightSection() {
     </AnimatedSection>
   )
 }
+

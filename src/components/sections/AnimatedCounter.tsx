@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 /* ─── Animated Counter ─── */
-function AnimatedCounter({
+export function AnimatedCounter({
   value,
   suffix = '',
   duration = 2,
@@ -48,3 +48,4 @@ function AnimatedCounter({
     </span>
   )
 }
+

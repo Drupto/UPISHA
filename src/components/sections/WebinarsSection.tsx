@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { upcomingWebinars } from '@/lib/static-data'
 
 /* ─── Webinars Section ─── */
-function WebinarsSection() {
+export function WebinarsSection() {
   return (
     <section className="py-16 md:py-20 bg-gradient-to-br from-upisha-teal-light via-white to-upisha-gold-light dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 border-t-2 border-t-upisha-teal/10">
       <div className="max-w-7xl mx-auto px-4">
@@ -111,3 +111,4 @@ function WebinarsSection() {
     </section>
   )
 }
+

@@ -21,7 +21,7 @@ import { Separator } from '@/components/ui/separator'
 import { announcements } from '@/lib/static-data'
 
 /* ─── Announcement Section ─── */
-function AnnouncementSection() {
+export function AnnouncementSection() {
   return (
     <section className="py-16 md:py-20 bg-white dark:bg-gray-900 border-t-2 border-t-upisha-teal/10 section-pattern">
       <div className="max-w-7xl mx-auto px-4">
@@ -125,3 +125,4 @@ function AnnouncementSection() {
     </section>
   )
 }
+

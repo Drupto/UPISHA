@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
 /* ─── Documents Section ─── */
-function DocumentsSection() {
+export function DocumentsSection() {
   return (
     <AnimatedSection id="documents" className="py-16 md:py-20 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4">

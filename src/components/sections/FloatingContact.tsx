@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 
 /* ─── Floating Contact Button (mobile quick contact) ─── */
-function FloatingContact() {
+export function FloatingContact() {
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
@@ -43,3 +43,4 @@ function FloatingContact() {
     </AnimatePresence>
   )
 }
+

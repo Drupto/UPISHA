@@ -14,7 +14,7 @@ import {
   PhoneCall, Building, Mailbox, Zap,
 } from 'lucide-react'
 
-function AnimatedSection({
+export function AnimatedSection({
   children,
   className = '',
   id = '',
@@ -39,3 +39,4 @@ function AnimatedSection({
     </motion.section>
   )
 }
+

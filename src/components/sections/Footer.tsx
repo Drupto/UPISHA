@@ -20,7 +20,7 @@ import { Separator } from '@/components/ui/separator'
 import { publications } from '@/lib/static-data'
 
 /* ─── Footer ─── */
-function Footer() {
+export function Footer() {
   const [footerEmail, setFooterEmail] = useState('')
   const { toast } = useToast()
 
@@ -199,3 +199,4 @@ function Footer() {
     </footer>
   )
 }
+

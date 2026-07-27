@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 /* ─── Theme Toggle ─── */
-function ThemeToggle() {
+export function ThemeToggle() {
   const [isDark, setIsDark] = useState(
     typeof window !== 'undefined' ? document.documentElement.classList.contains('dark') : false
   )
@@ -59,3 +59,4 @@ function ThemeToggle() {
     </button>
   )
 }
+

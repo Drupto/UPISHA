@@ -23,7 +23,7 @@ import { eventsTimeline } from '@/lib/static-data'
 import { AnimatedSection, SectionHeading, EventCalendar } from '@/components/sections'
 
 /* ─── Events Timeline Section ─── */
-function EventsTimelineSection() {
+export function EventsTimelineSection() {
   const [selectedEvent, setSelectedEvent] = useState<typeof eventsTimeline[0] | null>(null)
   const { toast } = useToast()
   const typeColors: Record<string, string> = {
@@ -294,3 +294,4 @@ function EventsTimelineSection() {
     </AnimatedSection>
   )
 }
+

@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge'
 import { executiveCouncil } from '@/lib/static-data'
 
 /* ─── About Section ─── */
-function AboutSection() {
+export function AboutSection() {
   return (
     <AnimatedSection id="about" className="py-16 md:py-20 bg-white dark:bg-gray-900 section-pattern">
       <div className="max-w-7xl mx-auto px-4">
@@ -190,3 +190,4 @@ function AboutSection() {
     </AnimatedSection>
   )
 }
+

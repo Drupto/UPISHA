@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 /* ─── Cookie Consent Banner ─── */
-function CookieConsent() {
+export function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
@@ -90,3 +90,4 @@ function CookieConsent() {
     </AnimatePresence>
   )
 }
+

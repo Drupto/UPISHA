@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { navLinks, documents, publications } from '@/lib/static-data'
 
 /* ─── Command Palette / Search Modal ─── */
-function CommandPalette({
+export function CommandPalette({
   open,
   onClose,
   onNavigate,
@@ -187,3 +187,4 @@ function CommandPalette({
     </AnimatePresence>
   )
 }
+

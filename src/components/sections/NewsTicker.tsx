@@ -16,7 +16,7 @@ import {
 import { newsTickerItems } from '@/lib/static-data'
 
 /* ─── News Ticker ─── */
-function NewsTicker() {
+export function NewsTicker() {
   return (
     <div className="bg-upisha-navy dark:bg-gray-950 text-white py-2.5 overflow-hidden border-b border-upisha-teal/30">
       <div className="max-w-7xl mx-auto px-4 flex items-center gap-4">
@@ -42,3 +42,4 @@ function NewsTicker() {
     </div>
   )
 }
+

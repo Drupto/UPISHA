@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 
 /* ─── Back to Top Button ─── */
-function BackToTop() {
+export function BackToTop() {
   const [isVisible, setIsVisible] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
 
@@ -102,3 +102,4 @@ function BackToTop() {
     </div>
   )
 }
+

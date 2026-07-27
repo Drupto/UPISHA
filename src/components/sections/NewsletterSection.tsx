@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input'
 import { publications } from '@/lib/static-data'
 
 /* ─── Newsletter Section ─── */
-function NewsletterSection() {
+export function NewsletterSection() {
   const { toast } = useToast()
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -149,3 +149,4 @@ function NewsletterSection() {
     </section>
   )
 }
+

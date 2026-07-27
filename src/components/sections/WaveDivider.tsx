@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 /* ─── Wave Divider ─── */
-function WaveDivider({ color, flip = false }: { color: string; flip?: boolean }) {
+export function WaveDivider({ color, flip = false }: { color: string; flip?: boolean }) {
   return (
     <div className="wave-divider" style={{ transform: flip ? 'scaleY(-1)' : undefined }}>
       <svg viewBox="0 0 1200 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -27,3 +27,4 @@ function WaveDivider({ color, flip = false }: { color: string; flip?: boolean })
     </div>
   )
 }
+

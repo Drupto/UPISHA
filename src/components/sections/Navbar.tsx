@@ -19,7 +19,7 @@ import { ThemeToggle } from '@/components/sections'
 import { navLinks } from '@/lib/static-data'
 
 /* ─── Navbar ─── */
-function Navbar({
+export function Navbar({
   activeSection,
   onNavClick,
   onOpenSearch,
@@ -182,3 +182,4 @@ function Navbar({
     </header>
   )
 }
+

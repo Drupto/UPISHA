@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { testimonials } from '@/lib/static-data'
 
 /* ─── Testimonials Section ─── */
-function TestimonialsSection() {
+export function TestimonialsSection() {
   const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
 
@@ -123,3 +123,4 @@ function TestimonialsSection() {
     </section>
   )
 }
+
