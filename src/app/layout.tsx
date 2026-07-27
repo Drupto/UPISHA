@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/lib/hooks/useAuth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,7 +57,44 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "name": "Uttar Pradesh Speech & Hearing Association",
+                "alternateName": "UP ISHA",
+                "url": "https://upisha.org",
+                "logo": "https://upisha.org/images/mainlogo.jpeg",
+                "description": "Dedicated to advancing the professions of audiology and speech-language pathology in Uttar Pradesh, India.",
+                "address": {
+                  "@type": "PostalAddress",
+                  "streetAddress": "110 Raghu Raj Nagar Patel Nagar",
+                  "addressLocality": "Lucknow",
+                  "addressRegion": "Uttar Pradesh",
+                  "postalCode": "226016",
+                  "addressCountry": "IN"
+                },
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "telephone": "+91-522-456-7890",
+                  "contactType": "customer service",
+                  "email": "info@upisha.org"
+                },
+                "sameAs": [
+                  "https://facebook.com/upisha",
+                  "https://twitter.com/upisha",
+                  "https://instagram.com/upisha",
+                  "https://linkedin.com/company/upisha",
+                  "https://youtube.com/@upisha"
+                ]
+              })
+            }}
+          />
+          <AuthProvider>
+            {children}
+          </AuthProvider>
           <Toaster />
         </ThemeProvider>
       </body>

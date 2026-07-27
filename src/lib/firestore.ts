@@ -1,5 +1,5 @@
 import { getDb } from './firebase-admin'
-import { Firestore } from 'firebase-admin/firestore'
+import { Firestore, FieldValue } from 'firebase-admin/firestore'
 
 const db = () => getDb()
 
@@ -14,8 +14,8 @@ export interface MemberDoc {
   city: string
   message?: string | null
   status?: string
-  createdAt?: Firestore.FieldValue | Date
-  updatedAt?: Firestore.FieldValue | Date
+  createdAt?: FieldValue | Date
+  updatedAt?: FieldValue | Date
 }
 
 export interface ContactMessageDoc {
@@ -25,8 +25,8 @@ export interface ContactMessageDoc {
   subject: string
   message: string
   isRead?: boolean
-  createdAt?: Firestore.FieldValue | Date
-  updatedAt?: Firestore.FieldValue | Date
+  createdAt?: FieldValue | Date
+  updatedAt?: FieldValue | Date
 }
 
 export interface AnnouncementDoc {
@@ -36,8 +36,8 @@ export interface AnnouncementDoc {
   type: string
   content?: string | null
   isActive?: boolean
-  createdAt?: Firestore.FieldValue | Date
-  updatedAt?: Firestore.FieldValue | Date
+  createdAt?: FieldValue | Date
+  updatedAt?: FieldValue | Date
 }
 
 export interface EventDoc {
@@ -47,16 +47,16 @@ export interface EventDoc {
   location: string
   description?: string | null
   isActive?: boolean
-  createdAt?: Firestore.FieldValue | Date
-  updatedAt?: Firestore.FieldValue | Date
+  createdAt?: FieldValue | Date
+  updatedAt?: FieldValue | Date
 }
 
 export interface NewsletterSubscriberDoc {
   id?: string
   email: string
   isActive?: boolean
-  createdAt?: Firestore.FieldValue | Date
-  updatedAt?: Firestore.FieldValue | Date
+  createdAt?: FieldValue | Date
+  updatedAt?: FieldValue | Date
 }
 
 export async function createMember(data: MemberDoc) {
