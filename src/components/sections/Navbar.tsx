@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
 import {
   Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
@@ -30,6 +31,7 @@ export function Navbar({
 }) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 40)
@@ -119,10 +121,10 @@ export function Navbar({
             <ThemeToggle />
             <Button
               className="hidden md:inline-flex bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md"
-              onClick={() => onNavClick('#join')}
+              onClick={() => router.push('/register')}
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Join Now
+              Sign Up / Sign In
             </Button>
             <button
               className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -168,12 +170,12 @@ export function Navbar({
               <Button
                 className="mt-2 bg-upisha-teal hover:bg-upisha-teal-dark text-white"
                 onClick={() => {
-                  onNavClick('#join')
+                  router.push('/register')
                   setIsMobileOpen(false)
                 }}
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                Join Now
+                Sign Up / Sign In
               </Button>
             </nav>
           </motion.div>
