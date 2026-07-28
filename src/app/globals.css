@@ -157,7 +157,6 @@
   /* Card gradient top bar */
   .card-gradient-top {
     position: relative;
-    overflow: hidden;
   }
   .card-gradient-top::before {
     content: '';

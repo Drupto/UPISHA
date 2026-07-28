@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       rciNumber: validated.rciNumber || null,
       membershipType: sanitizeHtml(validated.membershipType),
       city: sanitizeHtml(validated.city),
+      transactionNumber: sanitizeHtml(validated.transactionNumber),
       message: validated.message ? sanitizeHtml(validated.message) : null,
     })
 

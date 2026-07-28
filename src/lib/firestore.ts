@@ -12,6 +12,7 @@ export interface MemberDoc {
   rciNumber?: string | null
   membershipType: string
   city: string
+  transactionNumber?: string | null
   message?: string | null
   status?: string
   createdAt?: FieldValue | Date
@@ -66,6 +67,7 @@ export async function createMember(data: MemberDoc) {
     createdAt: data.createdAt ?? new Date(),
     updatedAt: data.updatedAt ?? new Date(),
     rciNumber: data.rciNumber ?? null,
+    transactionNumber: data.transactionNumber ?? null,
     message: data.message ?? null,
   })
   return { id: ref.id }
