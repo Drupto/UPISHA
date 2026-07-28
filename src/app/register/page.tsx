@@ -24,7 +24,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
     if (password !== confirmPassword) { setError('Passwords do not match'); return }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return }
     setLoading(true)
     try {
       const { token } = await register(email, password, name)
@@ -69,7 +69,8 @@ export default function RegisterPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="Min. 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                <Input id="password" type="password" placeholder="Min. 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+                <p className="text-xs text-gray-500">Password must be at least 8 characters long</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>

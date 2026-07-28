@@ -68,7 +68,8 @@ export default function LoginPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+                <p className="text-xs text-gray-500">Password must be at least 8 characters long</p>
               </div>
               <Button type="submit" className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white" disabled={loading}>
                 {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Signing in...</> : 'Sign In'}

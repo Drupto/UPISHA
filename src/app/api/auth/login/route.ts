@@ -1,15 +1,31 @@
 import { NextResponse } from 'next/server'
 import { loginUser } from '@/lib/auth'
+import { loginSchema } from '@/lib/validations'
+import { withSecurityHeaders, rateLimit } from '@/lib/security'
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json()
-    if (!email || !password) return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
+    const body = await request.json()
+    const validated = loginSchema.parse(body)
+    
+    // Rate limiting
+    const clientId = validated.email
+    if (!rateLimit(`login:${clientId}`, 5, 15 * 60 * 1000)) {
+      return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
+    }
 
-    const { user, token } = await loginUser(email, password)
-    return NextResponse.json({ user: { uid: user.uid, email: user.email, displayName: user.displayName }, token })
+    const { user, token } = await loginUser(validated.email, validated.password)
+    const response = withSecurityHeaders(NextResponse.json({ 
+      user: { uid: user.uid, email: user.email, displayName: user.displayName }, 
+      token 
+    }))
+    return response
   } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'ZodError') {
+      return withSecurityHeaders(NextResponse.json({ error: 'Invalid input data' }, { status: 400 }))
+    }
     const error = err as { code?: string; message?: string }
-    return NextResponse.json({ error: error.message || 'Login failed' }, { status: 401 })
+    const status = error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' ? 401 : 500
+    return withSecurityHeaders(NextResponse.json({ error: 'Invalid email or password' }, { status }))
   }
 }
