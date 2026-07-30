@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuth } from '@/lib/firebase-admin'
+import { verifyToken } from '@/lib/firebase-admin'
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const { token } = body
     if (!token) return NextResponse.json({ authenticated: false }, { status: 401 })
 
-    const decodedToken = await getAuth().verifyIdToken(token)
+    const decodedToken = await verifyToken(token)
     
     // Reduced session lifetime and secure cookie settings
     const response = NextResponse.json({ authenticated: true, uid: decodedToken.uid, email: decodedToken.email, name: decodedToken.name })

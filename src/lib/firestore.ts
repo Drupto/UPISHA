@@ -1,5 +1,5 @@
 import { getDb } from './firebase-admin'
-import { Firestore, FieldValue } from 'firebase-admin/firestore'
+import { FieldValue } from 'firebase/firestore'
 
 const db = () => getDb()
 
@@ -60,8 +60,19 @@ export interface NewsletterSubscriberDoc {
   updatedAt?: FieldValue | Date
 }
 
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  setDoc,
+  query,
+  orderBy,
+  where,
+} from 'firebase/firestore'
+
 export async function createMember(data: MemberDoc) {
-  const ref = await db().collection('members').add({
+  const ref = await addDoc(collection(db(), 'members'), {
     ...data,
     status: data.status ?? 'pending',
     createdAt: data.createdAt ?? new Date(),
@@ -74,12 +85,12 @@ export async function createMember(data: MemberDoc) {
 }
 
 export async function getMembers() {
-  const snapshot = await db().collection('members').orderBy('createdAt', 'desc').get()
+  const snapshot = await getDocs(query(collection(db(), 'members'), orderBy('createdAt', 'desc')))
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
 }
 
 export async function createContactMessage(data: ContactMessageDoc) {
-  const ref = await db().collection('contactMessages').add({
+  const ref = await addDoc(collection(db(), 'contactMessages'), {
     ...data,
     isRead: data.isRead ?? false,
     createdAt: data.createdAt ?? new Date(),
@@ -89,12 +100,12 @@ export async function createContactMessage(data: ContactMessageDoc) {
 }
 
 export async function getContactMessages() {
-  const snapshot = await db().collection('contactMessages').orderBy('createdAt', 'desc').get()
+  const snapshot = await getDocs(query(collection(db(), 'contactMessages'), orderBy('createdAt', 'desc')))
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
 }
 
 export async function createAnnouncement(data: AnnouncementDoc) {
-  const ref = await db().collection('announcements').add({
+  const ref = await addDoc(collection(db(), 'announcements'), {
     ...data,
     isActive: data.isActive ?? true,
     createdAt: data.createdAt ?? new Date(),
@@ -105,12 +116,12 @@ export async function createAnnouncement(data: AnnouncementDoc) {
 }
 
 export async function getAnnouncements() {
-  const snapshot = await db().collection('announcements').orderBy('createdAt', 'desc').get()
+  const snapshot = await getDocs(query(collection(db(), 'announcements'), orderBy('createdAt', 'desc')))
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
 }
 
 export async function createEvent(data: EventDoc) {
-  const ref = await db().collection('events').add({
+  const ref = await addDoc(collection(db(), 'events'), {
     ...data,
     isActive: data.isActive ?? true,
     createdAt: data.createdAt ?? new Date(),
@@ -121,13 +132,14 @@ export async function createEvent(data: EventDoc) {
 }
 
 export async function getEvents() {
-  const snapshot = await db().collection('events').orderBy('createdAt', 'desc').get()
+  const snapshot = await getDocs(query(collection(db(), 'events'), orderBy('createdAt', 'desc')))
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
 }
 
 export async function upsertNewsletterSubscriber(email: string) {
-  const docRef = db().collection('newsletterSubscribers').doc(email.toLowerCase())
-  await docRef.set(
+  const docRef = doc(db(), 'newsletterSubscribers', email.toLowerCase())
+  await setDoc(
+    docRef,
     {
       email: email.toLowerCase(),
       isActive: true,
@@ -139,7 +151,9 @@ export async function upsertNewsletterSubscriber(email: string) {
 }
 
 export async function getNewsletterSubscribers() {
-  const snapshot = await db().collection('newsletterSubscribers').where('isActive', '==', true).orderBy('createdAt', 'desc').get()
+  const snapshot = await getDocs(
+    query(collection(db(), 'newsletterSubscribers'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
+  )
   const subscribers = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
   return { subscribers, count: subscribers.length }
 }

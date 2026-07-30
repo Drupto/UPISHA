@@ -1,9 +1,9 @@
 import { announcements as staticAnnouncements, eventsTimeline as staticEvents, sampleProfessionals as staticProfessionals } from '@/lib/static-data'
 import type { Announcement, TimelineEvent, Professional, MemberDoc, ContactMessageDoc, NewsletterSubscriberDoc } from '@/lib/types'
 
-// Check if Firebase is configured
+// Check if Firebase is configured (using NEXT_PUBLIC_* env vars)
 function isFirebaseConfigured(): boolean {
-  return !!(process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY)
+  return !!(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID && process.env.NEXT_PUBLIC_FIREBASE_API_KEY)
 }
 
 export async function getAnnouncements(): Promise<Announcement[]> {

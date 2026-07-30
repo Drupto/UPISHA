@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { NextRequest } from 'next/server'
-import { getAuth } from './firebase-admin'
+import { verifyToken } from './firebase-admin'
 
 export async function requireAuth(request: NextRequest) {
   const sessionToken = request.headers.get('authorization')?.replace('Bearer ', '') || 
@@ -11,7 +11,7 @@ export async function requireAuth(request: NextRequest) {
   }
 
   try {
-    const decodedToken = await getAuth().verifyIdToken(sessionToken)
+    const decodedToken = await verifyToken(sessionToken)
     return decodedToken
   } catch {
     return NextResponse.json({ authenticated: false, error: 'Invalid token' }, { status: 401 })
