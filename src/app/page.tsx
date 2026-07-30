@@ -17,7 +17,7 @@ import {
   DocumentsSection,
   PublicationsSection,
   WebinarsSection,
-  ProfessionalsSection,
+  // ProfessionalsSection, // Commented out - can be re-enabled when professional directory is ready
   MemberSpotlightSection,
   JoinSection,
   TestimonialsSection,
@@ -170,7 +170,7 @@ export default function Home() {
         <DocumentsSection />
         <PublicationsSection />
         <WebinarsSection />
-        <ProfessionalsSection />
+        {/* <ProfessionalsSection />  Commented out - can be re-enabled when professional directory is ready */}
         <MemberSpotlightSection />
         <JoinSection />
         <TestimonialsSection />
