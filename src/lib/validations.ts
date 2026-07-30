@@ -28,6 +28,13 @@ export const joinSchema = z.object({
   city: z.string().min(2, 'City is required').max(100),
   transactionNumber: z.string().min(2, 'Transaction number is required').max(100),
   message: z.string().max(5000).optional().nullable(),
+  address: z.string().min(5, 'Address must be at least 5 characters').max(500),
+  photoUrl: z.string().optional().nullable(),
+  rciCertificateUrl: z.string().optional().nullable(),
+  registrationDate: z.string().optional().nullable(),
+  declaration: z.boolean().refine((val) => val === true, {
+    message: 'You must accept the declaration to submit',
+  }),
 })
 
 export const newsletterSchema = z.object({

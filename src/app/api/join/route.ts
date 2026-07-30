@@ -23,6 +23,11 @@ export async function POST(request: NextRequest) {
       city: sanitizeHtml(validated.city),
       transactionNumber: sanitizeHtml(validated.transactionNumber),
       message: validated.message ? sanitizeHtml(validated.message) : null,
+      address: sanitizeHtml(validated.address),
+      photoUrl: validated.photoUrl || null,
+      rciCertificateUrl: validated.rciCertificateUrl || null,
+      registrationDate: validated.registrationDate || null,
+      declaration: validated.declaration,
     })
 
     return withSecurityHeaders(NextResponse.json({ success: true, id: member.id }, { status: 201 }))

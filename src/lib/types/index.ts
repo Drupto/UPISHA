@@ -145,6 +145,9 @@ export interface MemberFormData {
   membershipType: string
   city: string
   message: string
+  address: string
+  registrationDate: string
+  declaration: boolean
 }
 
 export interface ContactFormData {
@@ -169,6 +172,12 @@ export interface MemberDoc {
   membershipType: string
   city: string
   message?: string | null
+  transactionNumber?: string | null
+  address?: string | null
+  photoUrl?: string | null
+  rciCertificateUrl?: string | null
+  registrationDate?: string | null
+  declaration?: boolean | null
   status?: string
   createdAt?: Date
   updatedAt?: Date

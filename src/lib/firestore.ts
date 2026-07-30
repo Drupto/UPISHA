@@ -14,6 +14,11 @@ export interface MemberDoc {
   city: string
   transactionNumber?: string | null
   message?: string | null
+  address?: string | null
+  photoUrl?: string | null
+  rciCertificateUrl?: string | null
+  registrationDate?: string | null
+  declaration?: boolean | null
   status?: string
   createdAt?: FieldValue | Date
   updatedAt?: FieldValue | Date
@@ -80,6 +85,11 @@ export async function createMember(data: MemberDoc) {
     rciNumber: data.rciNumber ?? null,
     transactionNumber: data.transactionNumber ?? null,
     message: data.message ?? null,
+    address: data.address ?? null,
+    photoUrl: data.photoUrl ?? null,
+    rciCertificateUrl: data.rciCertificateUrl ?? null,
+    registrationDate: data.registrationDate ?? null,
+    declaration: data.declaration ?? null,
   })
   return { id: ref.id }
 }
