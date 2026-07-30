@@ -106,11 +106,15 @@ export interface Partner {
 }
 
 export interface Webinar {
+  id?: string
   title: string
   date: string
   time: string
   speaker: string
   duration: string
+  description?: string | null
+  registrationLink?: string
+  isActive?: boolean
 }
 
 export interface TimelineEvent {
@@ -234,6 +238,50 @@ export interface ProfessionalDoc {
   setting: string
   rci: string
   isActive?: boolean
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+// Webinar-related types
+export interface WebinarDoc {
+  id?: string
+  title: string
+  date: string
+  time: string
+  speaker: string
+  duration: string
+  description?: string | null
+  registrationLink?: string
+  isActive?: boolean
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface WebinarRegistrationFormData {
+  fullName: string
+  email: string
+  phone: string
+  qualification: string
+  city: string
+  webinarId: string
+  webinarTitle: string
+  transactionNumber: string
+  message: string
+  declaration: boolean
+}
+
+export interface WebinarRegistrationDoc {
+  id?: string
+  fullName: string
+  email: string
+  phone: string
+  qualification?: string | null
+  city: string
+  webinarId: string
+  webinarTitle: string
+  transactionNumber?: string | null
+  message?: string | null
+  declaration: boolean
   createdAt?: Date
   updatedAt?: Date
 }

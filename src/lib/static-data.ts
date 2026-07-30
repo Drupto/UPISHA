@@ -19,6 +19,7 @@ export const navLinks: NavLink[] = [
   { label: 'Documents', href: '#documents' },
   { label: 'Publications', href: '#publications' },
   // { label: 'Professionals', href: '#professionals' }, // Commented out - can be re-enabled when professional directory is ready
+  { label: 'Webinars', href: '/webinars' },
   { label: 'Join UP ISHA', href: '#join' },
   { label: 'Gallery', href: '#gallery' },
   { label: 'Contact Us', href: '#contact' },

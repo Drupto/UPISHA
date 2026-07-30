@@ -1,5 +1,5 @@
-import { announcements as staticAnnouncements, eventsTimeline as staticEvents, sampleProfessionals as staticProfessionals } from '@/lib/static-data'
-import type { Announcement, TimelineEvent, Professional, MemberDoc, ContactMessageDoc, NewsletterSubscriberDoc } from '@/lib/types'
+import { announcements as staticAnnouncements, eventsTimeline as staticEvents, sampleProfessionals as staticProfessionals, upcomingWebinars as staticWebinars } from '@/lib/static-data'
+import type { Announcement, TimelineEvent, Professional, MemberDoc, ContactMessageDoc, NewsletterSubscriberDoc, Webinar, WebinarRegistrationDoc } from '@/lib/types'
 
 // Check if Firebase is configured (using NEXT_PUBLIC_* env vars)
 function isFirebaseConfigured(): boolean {
@@ -61,5 +61,27 @@ export async function getNewsletterSubscribers(): Promise<{ subscribers: Newslet
     return await fbGetSubs() as { subscribers: NewsletterSubscriberDoc[]; count: number }
   } catch {
     return { subscribers: [], count: 0 }
+  }
+}
+
+export async function getWebinars(): Promise<Webinar[]> {
+  if (!isFirebaseConfigured()) return staticWebinars
+  try {
+    const { getWebinars: fbGetWebinars } = await import('@/lib/firestore')
+    const docs = await fbGetWebinars()
+    if (docs && docs.length > 0) return docs as Webinar[]
+    return staticWebinars
+  } catch {
+    return staticWebinars
+  }
+}
+
+export async function getWebinarRegistrations(): Promise<WebinarRegistrationDoc[]> {
+  if (!isFirebaseConfigured()) return []
+  try {
+    const { getWebinarRegistrations: fbGetRegistrations } = await import('@/lib/firestore')
+    return await fbGetRegistrations() as WebinarRegistrationDoc[]
+  } catch {
+    return []
   }
 }

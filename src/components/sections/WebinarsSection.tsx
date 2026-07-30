@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { upcomingWebinars } from '@/lib/static-data'
+import Link from 'next/link'
 
 /* ─── Webinars Section ─── */
 export function WebinarsSection() {
@@ -51,10 +52,12 @@ export function WebinarsSection() {
                 Recorded sessions available
               </div>
             </div>
-            <Button className="mt-6 bg-upisha-teal hover:bg-upisha-teal-dark text-white">
-              View All Webinars
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
+            <Link href="/webinars">
+              <Button className="mt-6 bg-upisha-teal hover:bg-upisha-teal-dark text-white">
+                View All Webinars
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </Link>
           </div>
           <div className="lg:col-span-2 space-y-4">
             {upcomingWebinars.map((webinar, i) => (
@@ -93,13 +96,17 @@ export function WebinarsSection() {
                           </span>
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0 border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
+                      <Link
+                        href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}
                       >
-                        Register
-                      </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0 border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
+                        >
+                          Register
+                        </Button>
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>

@@ -42,8 +42,35 @@ export const newsletterSchema = z.object({
   email: z.string().email('Invalid email address'),
 })
 
+export const webinarRegistrationSchema = z.object({
+  fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/, 'Invalid phone number'),
+  qualification: z.string().max(200).optional().nullable(),
+  city: z.string().min(2, 'City is required').max(100),
+  webinarId: z.string().min(1, 'Webinar selection is required'),
+  webinarTitle: z.string().min(1, 'Webinar title is required'),
+  transactionNumber: z.string().min(2, 'Transaction number is required').max(100),
+  message: z.string().max(5000).optional().nullable(),
+  declaration: z.boolean().refine((val) => val === true, {
+    message: 'You must accept the declaration to submit',
+  }),
+})
+
+export const webinarSchema = z.object({
+  title: z.string().min(2, 'Title must be at least 2 characters').max(200),
+  date: z.string().min(1, 'Date is required'),
+  time: z.string().min(1, 'Time is required'),
+  speaker: z.string().min(2, 'Speaker name must be at least 2 characters').max(100),
+  duration: z.string().min(1, 'Duration is required'),
+  description: z.string().max(2000).optional().nullable(),
+  isActive: z.boolean().optional().default(true),
+})
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type ContactInput = z.infer<typeof contactSchema>
 export type JoinInput = z.infer<typeof joinSchema>
 export type NewsletterInput = z.infer<typeof newsletterSchema>
+export type WebinarRegistrationInput = z.infer<typeof webinarRegistrationSchema>
+export type WebinarInput = z.infer<typeof webinarSchema>

@@ -137,8 +137,14 @@ export default function Home() {
   }, [])
 
   const handleNavClick = useCallback((href: string) => {
-    const id = href.slice(1)
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    if (href.startsWith('/')) {
+      // Page navigation (e.g., /webinars)
+      window.location.href = href
+    } else {
+      // Anchor link (e.g., #home, #about)
+      const id = href.slice(1)
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [])
 
   return (
