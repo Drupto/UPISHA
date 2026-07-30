@@ -107,9 +107,9 @@ export const membershipBenefits: string[] = [
 ]
 
 export const membershipTypes: MembershipPlan[] = [
-  { type: 'Life Member', price: '₹5,000', description: 'One-time payment for lifetime membership', features: ['All standard benefits', 'Voting rights', 'Conference discounts', 'Journal access'], popular: true },
-  { type: 'Annual Member', price: '₹500/year', description: 'Annual renewable membership', features: ['Standard benefits', 'Journal access', 'Webinar access', 'Networking'], popular: false },
-  { type: 'Student Member', price: '₹200/year', description: 'For current ASLP students in UP', features: ['Student benefits', 'Mentorship program', 'Workshop access', 'Career guidance'], popular: false },
+  { type: 'Life Member', price: '₹3,500', description: 'One-time payment for lifetime membership', features: ['All standard benefits', 'Voting rights', 'Conference discounts', 'Journal access', 'Professional Support'], popular: true },
+  { type: 'Annual Member', price: '₹1,000/year', description: 'Annual renewable membership', features: ['Standard benefits', 'Journal access', 'Webinar access', 'Networking', 'Professional Support'], popular: false },
+  { type: 'Student Member', price: '₹500/year', description: 'For current ASLP students in UP', features: ['Student benefits', 'Mentorship program', 'Workshop access', 'Career guidance', 'Professional Support'], popular: false },
 ]
 
 export const galleryImages: GalleryImage[] = [

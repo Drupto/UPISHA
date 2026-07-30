@@ -21,6 +21,7 @@ export default function ApplyPage() {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    password: '',
     phone: '',
     qualification: '',
     rciNumber: '',
@@ -46,6 +47,7 @@ export default function ApplyPage() {
   const joinErrors: Record<string, string> = {}
   if (joinTouched.fullName && formData.fullName.trim().length < 2) joinErrors.fullName = 'Name must be at least 2 characters'
   if (joinTouched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) joinErrors.email = 'Please enter a valid email address'
+  if (joinTouched.password && formData.password.length < 8) joinErrors.password = 'Password must be at least 8 characters'
   if (joinTouched.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) joinErrors.phone = 'Please enter a valid 10-digit phone number'
   if (joinTouched.city && formData.city.trim().length === 0) joinErrors.city = 'City is required'
   if (joinTouched.transactionNumber && formData.transactionNumber.trim().length < 2) joinErrors.transactionNumber = 'Transaction number is required'
@@ -56,6 +58,7 @@ export default function ApplyPage() {
   const joinValid: Record<string, boolean> = {
     fullName: formData.fullName.trim().length >= 2,
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email),
+    password: formData.password.length >= 8,
     phone: /^\d{10}$/.test(formData.phone.replace(/\D/g, '')),
     city: formData.city.trim().length > 0,
     transactionNumber: formData.transactionNumber.trim().length >= 2,
@@ -172,9 +175,10 @@ export default function ApplyPage() {
       if (res.ok) {
         setSubmitted(true)
         localStorage.removeItem('upisha-join-form')
+        const data = await res.json().catch(() => ({}))
         toast({
           title: 'Application submitted!',
-          description: 'We will review your application and contact you soon.',
+          description: data.message || 'Account created! Please check your email to verify your account.',
         })
       } else {
         const errData = await res.json().catch(() => ({}))
@@ -197,7 +201,7 @@ export default function ApplyPage() {
 
   const handleClearForm = () => {
     setFormData({
-      fullName: '', email: '', phone: '', qualification: '',
+      fullName: '', email: '', password: '', phone: '', qualification: '',
       rciNumber: '', membershipType: '', city: '', transactionNumber: '', message: '',
       address: '', photoUrl: '', rciCertificateUrl: '', registrationDate: '', declaration: false,
     })
@@ -342,9 +346,9 @@ export default function ApplyPage() {
                       <SelectValue placeholder="Choose a plan" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="life">Life Member - ₹5,000</SelectItem>
-                      <SelectItem value="annual">Annual Member - ₹500/year</SelectItem>
-                      <SelectItem value="student">Student Member - ₹200/year</SelectItem>
+                      <SelectItem value="life">Life Member - ₹3,500</SelectItem>
+                      <SelectItem value="annual">Annual Member - ₹1,000/year</SelectItem>
+                      <SelectItem value="student">Student Member - ₹500/year</SelectItem>
                     </SelectContent>
                   </Select>
                   {joinTouched.membershipType && joinErrors.membershipType && <p className="text-xs text-red-500 mt-1">{joinErrors.membershipType}</p>}
@@ -391,6 +395,30 @@ export default function ApplyPage() {
                     </div>
                     {joinTouched.email && joinErrors.email && <p className="text-xs text-red-500 mt-1">{joinErrors.email}</p>}
                   </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                    Create Password *
+                  </label>
+                  <div className="relative">
+                    <Input
+                      required
+                      type="password"
+                      placeholder="At least 8 characters"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      onBlur={() => setJoinTouched((prev) => ({ ...prev, password: true }))}
+                      className={joinFieldClass('password')}
+                    />
+                    {joinTouched.password && joinValid.password && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
+                    {joinTouched.password && joinErrors.password && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                  </div>
+                  {joinTouched.password && joinErrors.password && <p className="text-xs text-red-500 mt-1">{joinErrors.password}</p>}
+                  <p className="text-[10px] text-gray-400 mt-1">This password will be used to log into your account. A verification email will be sent.</p>
                 </div>
 
                 {/* Phone & City */}
