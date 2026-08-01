@@ -232,19 +232,22 @@ export default function ApplyPage() {
               <div>
                 <h4 className="text-sm font-semibold text-upisha-navy dark:text-white mb-2">Bank Transfer</h4>
                 <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <p><span className="font-medium">Account Name:</span> UP ISHA</p>
-                  <p><span className="font-medium">Bank:</span> ___________</p>
-                  <p><span className="font-medium">Account No:</span> ___________</p>
-                  <p><span className="font-medium">IFSC:</span> ___________</p>
+                  <p><span className="font-medium">Account Name:</span> Uttar Pradesh Indian Speech and Hearing Association</p>
+                  <p><span className="font-medium">Account No:</span> 126401003059</p>
+                  <p><span className="font-medium">IFSC:</span> ICICI0001264</p>
+                  <p><span className="font-medium">Bank:</span> ICICI BANK</p>
                 </div>
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-upisha-navy dark:text-white mb-2">UPI Payment</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  <span className="font-medium">UPI ID:</span> upisha@upi
-                </p>
-                <div className="mt-3 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 h-40 flex items-center justify-center text-xs text-gray-400">
-                  [QR Image Placeholder]
+                <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 flex items-center justify-center bg-white dark:bg-gray-900">
+                  <img
+                    src="/images/UPISHA_QR.png"
+                    alt="UPI Payment QR Code"
+                    className="w-full max-w-[220px] h-auto object-contain"
+                    width={603}
+                    height={972}
+                  />
                 </div>
               </div>
             </div>
