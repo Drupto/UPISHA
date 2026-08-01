@@ -67,6 +67,22 @@ export const webinarSchema = z.object({
   isActive: z.boolean().optional().default(true),
 })
 
+export const eventSchema = z.object({
+  title: z.string().min(2, 'Title must be at least 2 characters').max(200),
+  date: z.string().min(1, 'Date is required'),
+  location: z.string().min(2, 'Location must be at least 2 characters').max(200),
+  description: z.string().max(5000).optional().nullable(),
+  isActive: z.boolean().optional().default(true),
+})
+
+export const announcementSchema = z.object({
+  title: z.string().min(2, 'Title must be at least 2 characters').max(200),
+  date: z.string().min(1, 'Date is required'),
+  type: z.string().min(2, 'Type must be at least 2 characters').max(100),
+  content: z.string().max(5000).optional().nullable(),
+  isActive: z.boolean().optional().default(true),
+})
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type ContactInput = z.infer<typeof contactSchema>
@@ -74,3 +90,5 @@ export type JoinInput = z.infer<typeof joinSchema>
 export type NewsletterInput = z.infer<typeof newsletterSchema>
 export type WebinarRegistrationInput = z.infer<typeof webinarRegistrationSchema>
 export type WebinarInput = z.infer<typeof webinarSchema>
+export type EventInput = z.infer<typeof eventSchema>
+export type AnnouncementInput = z.infer<typeof announcementSchema>

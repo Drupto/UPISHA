@@ -161,6 +161,21 @@ export async function getContactMessages() {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
 }
 
+export async function updateContactMessage(id: string, data: Partial<ContactMessageDoc>) {
+  const ref = doc(db(), 'contactMessages', id)
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: new Date(),
+  })
+  return { id }
+}
+
+export async function deleteContactMessage(id: string) {
+  const ref = doc(db(), 'contactMessages', id)
+  await deleteDoc(ref)
+  return { id }
+}
+
 export async function createAnnouncement(data: AnnouncementDoc) {
   const ref = await addDoc(collection(db(), 'announcements'), {
     ...data,
@@ -243,6 +258,12 @@ export async function getNewsletterSubscribers() {
   )
   const subscribers = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
   return { subscribers, count: subscribers.length }
+}
+
+export async function deleteNewsletterSubscriber(id: string) {
+  const ref = doc(db(), 'newsletterSubscribers', id)
+  await deleteDoc(ref)
+  return { id }
 }
 
 // Webinar CRUD operations

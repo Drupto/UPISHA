@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { upsertNewsletterSubscriber, getNewsletterSubscribers } from '@/lib/firestore'
 import { newsletterSchema } from '@/lib/validations'
 import { withSecurityHeaders, rateLimit } from '@/lib/security'
-import { requireAuth } from '@/lib/auth-helpers'
+import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAuth(request)
-  if ('status' in auth && auth.status === 401) {
-    return withSecurityHeaders(auth as NextResponse)
+  const auth = await requireAdmin(request)
+  if (auth instanceof NextResponse) {
+    return withSecurityHeaders(auth)
   }
 
   try {

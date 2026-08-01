@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateWebinar, deleteWebinar } from '@/lib/firestore'
-import { webinarSchema } from '@/lib/validations'
+import { updateEvent, deleteEvent } from '@/lib/firestore'
+import { eventSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
@@ -16,25 +16,25 @@ export async function PUT(
 
   try {
     const body = await request.json()
-    const validated = webinarSchema.partial().parse(body)
+    const validated = eventSchema.partial().parse(body)
 
-    await updateWebinar(id, {
+    await updateEvent(id, {
       ...validated,
       title: validated.title ? sanitizeHtml(validated.title) : undefined,
-      speaker: validated.speaker ? sanitizeHtml(validated.speaker) : undefined,
+      location: validated.location ? sanitizeHtml(validated.location) : undefined,
       description: validated.description ? sanitizeHtml(validated.description) : undefined,
     })
 
     return withSecurityHeaders(NextResponse.json({
       success: true,
-      message: 'Webinar updated successfully',
+      message: 'Event updated successfully',
     }))
   } catch (err: unknown) {
-    console.error('Error updating webinar:', err)
+    console.error('Error updating event:', err)
     if (err instanceof Error && err.name === 'ZodError') {
       return withSecurityHeaders(NextResponse.json({ error: 'Invalid input data' }, { status: 400 }))
     }
-    return withSecurityHeaders(NextResponse.json({ error: 'Failed to update webinar' }, { status: 500 }))
+    return withSecurityHeaders(NextResponse.json({ error: 'Failed to update event' }, { status: 500 }))
   }
 }
 
@@ -49,13 +49,13 @@ export async function DELETE(
   }
 
   try {
-    await deleteWebinar(id)
+    await deleteEvent(id)
     return withSecurityHeaders(NextResponse.json({
       success: true,
-      message: 'Webinar deleted successfully',
+      message: 'Event deleted successfully',
     }))
   } catch (error) {
-    console.error('Error deleting webinar:', error)
-    return withSecurityHeaders(NextResponse.json({ error: 'Failed to delete webinar' }, { status: 500 }))
+    console.error('Error deleting event:', error)
+    return withSecurityHeaders(NextResponse.json({ error: 'Failed to delete event' }, { status: 500 }))
   }
 }

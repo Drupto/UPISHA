@@ -3,7 +3,7 @@ import { getWebinars } from '@/lib/data'
 import { createWebinar } from '@/lib/firestore'
 import { webinarSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
-import { requireAuth } from '@/lib/auth-helpers'
+import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function GET() {
   try {
@@ -16,9 +16,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAuth(request)
-  if ('status' in auth && auth.status === 401) {
-    return withSecurityHeaders(auth as NextResponse)
+  const auth = await requireAdmin(request)
+  if (auth instanceof NextResponse) {
+    return withSecurityHeaders(auth)
   }
 
   try {

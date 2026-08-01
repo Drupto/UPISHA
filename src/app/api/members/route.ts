@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getMembers } from '@/lib/data'
-import { withSecurityHeaders } from '@/lib/security'
-import { requireAuth } from '@/lib/auth-helpers'
+import { getMembers, createMember } from '@/lib/firestore'
+import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { requireAdmin } from '@/lib/auth-helpers'
+import { joinSchema } from '@/lib/validations'
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAuth(request)
-  if ('status' in auth && auth.status === 401) {
-    return withSecurityHeaders(auth as NextResponse)
+  const auth = await requireAdmin(request)
+  if (auth instanceof NextResponse) {
+    return withSecurityHeaders(auth)
   }
 
   try {
@@ -15,5 +16,51 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching members:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 }))
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request)
+  if (auth instanceof NextResponse) {
+    return withSecurityHeaders(auth)
+  }
+
+  try {
+    const body = await request.json()
+    const validated = joinSchema.parse(body)
+
+    if (!rateLimit(`member:create`, 10, 60 * 60 * 1000)) {
+      return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
+    }
+
+    const member = await createMember({
+      fullName: sanitizeHtml(validated.fullName),
+      email: validated.email.toLowerCase(),
+      phone: validated.phone,
+      qualification: sanitizeHtml(validated.qualification),
+      rciNumber: validated.rciNumber ? sanitizeHtml(validated.rciNumber) : null,
+      membershipType: sanitizeHtml(validated.membershipType),
+      city: sanitizeHtml(validated.city),
+      transactionNumber: sanitizeHtml(validated.transactionNumber),
+      message: validated.message ? sanitizeHtml(validated.message) : null,
+      address: sanitizeHtml(validated.address),
+      photoUrl: validated.photoUrl ?? null,
+      rciCertificateUrl: validated.rciCertificateUrl ?? null,
+      registrationDate: validated.registrationDate ?? null,
+      declaration: validated.declaration,
+      status: 'pending',
+    })
+
+    return withSecurityHeaders(NextResponse.json({
+      success: true,
+      id: member.id,
+      message: 'Member created successfully',
+    }, { status: 201 }))
+  } catch (err: unknown) {
+    console.error('Error creating member:', err)
+    if (err instanceof Error && err.name === 'ZodError') {
+      return withSecurityHeaders(NextResponse.json({ error: 'Invalid input data' }, { status: 400 }))
+    }
+    return withSecurityHeaders(NextResponse.json({ error: 'Failed to create member' }, { status: 500 }))
   }
 }
