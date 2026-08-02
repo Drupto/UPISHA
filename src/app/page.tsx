@@ -38,6 +38,18 @@ import {
   NewsTicker,
 } from '@/components/sections'
 import { navLinks } from '@/lib/static-data'
+import { StructuredData } from '@/components/seo/StructuredData'
+import { getFAQSchema, getEventsSchema, getBreadcrumbSchema, getAggregateRatingSchema } from '@/lib/seo'
+
+/* ─── Structured Data for Home Page ─── */
+const homePageSchemas = [
+  getFAQSchema(),
+  ...getEventsSchema(),
+  getBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+  ]),
+  getAggregateRatingSchema(),
+]
 
 /* ─── Main Page ─── */
 export default function Home() {
@@ -149,6 +161,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <StructuredData data={homePageSchemas} />
       <a href="#home" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-upisha-teal focus:text-white focus:rounded-md focus:shadow-lg">
         Skip to main content
       </a>
