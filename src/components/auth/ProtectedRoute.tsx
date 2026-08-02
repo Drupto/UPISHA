@@ -5,21 +5,12 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 
-// Client-side admin email allowlist (mirrors server-side ADMIN_EMAILS)
-const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
-  .split(',')
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean)
-
-function isAdminEmail(email: string | null | undefined): boolean {
-  if (!email || ADMIN_EMAILS.length === 0) return false
-  return ADMIN_EMAILS.includes(email.toLowerCase())
-}
-
+// Role-based access control using Firestore user records.
+// A user must have role 'admin' to access the admin panel.
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { user, loading } = useAuth()
-  const isAdmin = isAdminEmail(user?.email)
+  const { user, role, loading } = useAuth()
+  const isAdmin = role === 'admin'
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,7 +19,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       // Authenticated but not an admin — redirect home
       router.push('/')
     }
-  }, [user, loading, isAdmin, router])
+  }, [user, role, loading, isAdmin, router])
 
   if (loading) {
     return (

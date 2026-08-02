@@ -95,10 +95,23 @@ export interface WebinarRegistrationDoc {
   updatedAt?: FieldValue | Date
 }
 
+export type UserRole = 'admin' | 'member' | 'user'
+
+export interface UserDoc {
+  id?: string
+  uid: string
+  email: string
+  displayName?: string | null
+  role: UserRole
+  createdAt?: FieldValue | Date
+  updatedAt?: FieldValue | Date
+}
+
 import {
   collection,
   addDoc,
   getDocs,
+  getDoc,
   doc,
   setDoc,
   updateDoc,
@@ -107,6 +120,31 @@ import {
   orderBy,
   where,
 } from 'firebase/firestore'
+
+// User role management (role-based access control)
+export async function createUserRecord(data: UserDoc) {
+  const ref = doc(db(), 'users', data.uid)
+  await setDoc(
+    ref,
+    {
+      uid: data.uid,
+      email: data.email.toLowerCase(),
+      displayName: data.displayName ?? null,
+      role: data.role ?? 'user',
+      createdAt: data.createdAt ?? new Date(),
+      updatedAt: data.updatedAt ?? new Date(),
+    },
+    { merge: true }
+  )
+  return { id: ref.id }
+}
+
+export async function getUserByUid(uid: string): Promise<UserDoc | null> {
+  const ref = doc(db(), 'users', uid)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as UserDoc
+}
 
 export async function createMember(data: MemberDoc) {
   const ref = await addDoc(collection(db(), 'members'), {
