@@ -113,7 +113,7 @@ export interface Webinar {
   speaker: string
   duration: string
   description?: string | null
-  registrationLink?: string
+  registrationLink?: string | null
   isActive?: boolean
 }
 
@@ -228,6 +228,17 @@ export interface NewsletterSubscriberDoc {
   updatedAt?: Date
 }
 
+export interface NewsletterCampaignDoc {
+  id?: string
+  title: string
+  subject: string
+  content: string
+  status: 'draft' | 'sent'
+  sentAt?: Date | null
+  createdAt?: Date
+  updatedAt?: Date
+}
+
 export interface ProfessionalDoc {
   id?: string
   name: string
@@ -251,7 +262,7 @@ export interface WebinarDoc {
   speaker: string
   duration: string
   description?: string | null
-  registrationLink?: string
+  registrationLink?: string | null
   isActive?: boolean
   createdAt?: Date
   updatedAt?: Date

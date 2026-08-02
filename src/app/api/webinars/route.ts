@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
       speaker: sanitizeHtml(validated.speaker),
       duration: validated.duration,
       description: validated.description ? sanitizeHtml(validated.description) : null,
+      registrationLink: validated.registrationLink ? sanitizeHtml(validated.registrationLink) : null,
       isActive: validated.isActive,
     })
 

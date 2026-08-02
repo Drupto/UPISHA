@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import React from 'react'
+import { motion } from 'framer-motion'
 import {
   Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
   Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
@@ -19,12 +20,43 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { eventsTimeline } from '@/lib/static-data'
-import { AnimatedSection, SectionHeading, EventCalendar } from '@/components/sections'
+import { eventsTimeline as staticEvents } from '@/lib/static-data'
+import { AnimatedSection } from '@/components/sections/AnimatedSection'
+import { SectionHeading } from '@/components/sections/SectionHeading'
+import { EventCalendar } from '@/components/sections/EventCalendar'
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Trophy, Microscope, Megaphone, PlayCircle, GraduationCap, Calendar, Bell,
+  Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
+  Heart, Stethoscope, Globe, Shield, Activity, MapPinned, Building, Mailbox,
+  PhoneCall, Timer, Sparkles, Search, AlertCircle, Lightbulb, Newspaper,
+  TrendingUp, HandHeart, Star, Briefcase, ExternalLink, Download, Eye, Quote,
+}
+
+const resolveIcon = (icon: unknown): React.ComponentType<{ className?: string }> => {
+  if (!icon) return Calendar
+  if (typeof icon === 'function') return icon as React.ComponentType<{ className?: string }>
+  if (typeof icon === 'string') return iconMap[icon] || Calendar
+  return Calendar
+}
 
 /* ─── Events Timeline Section ─── */
-export function EventsTimelineSection() {
-  const [selectedEvent, setSelectedEvent] = useState<typeof eventsTimeline[0] | null>(null)
+export default function EventsTimelineSection() {
+  const [events, setEvents] = useState(staticEvents)
+  const [selectedEvent, setSelectedEvent] = useState<typeof staticEvents[0] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/events')
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data) => {
+        if (!cancelled && data.events?.length) {
+          setEvents(data.events)
+        }
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
   const { toast } = useToast()
   const typeColors: Record<string, string> = {
     Conference: 'bg-upisha-gold/20 text-upisha-gold border-upisha-gold/30',
@@ -53,7 +85,7 @@ export function EventsTimelineSection() {
     return eventDate >= startOfWeek && eventDate <= endOfWeek
   }
 
-  const handleShareEvent = (event: typeof eventsTimeline[0]) => {
+  const handleShareEvent = (event: typeof staticEvents[0]) => {
     if (navigator.share) {
       navigator.share({
         title: event.title,
@@ -83,7 +115,9 @@ export function EventsTimelineSection() {
           <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-upisha-teal via-upisha-gold to-upisha-teal opacity-30 md:-translate-x-1/2" />
 
           <div className="space-y-8">
-            {eventsTimeline.map((event, i) => (
+            {events.map((event, i) => {
+              const EventIcon = resolveIcon(event.icon)
+              return (
               <motion.div
                 key={event.title}
                 initial={{ opacity: 0, y: 30 }}
@@ -106,7 +140,7 @@ export function EventsTimelineSection() {
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/20 flex items-center justify-center group-hover:bg-upisha-teal transition-colors shrink-0">
-                            <event.icon className="h-5 w-5 text-upisha-teal group-hover:text-white transition-colors" />
+                            <EventIcon className="h-5 w-5 text-upisha-teal group-hover:text-white transition-colors" />
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5 mb-1">
@@ -159,7 +193,8 @@ export function EventsTimelineSection() {
                 {/* Spacer for alternating layout on desktop */}
                 <div className="hidden md:block flex-1" />
               </motion.div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
@@ -175,13 +210,13 @@ export function EventsTimelineSection() {
                   <Bell className="h-4.5 w-4.5 text-upisha-gold" />
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-upisha-navy dark:text-white">{eventsTimeline.length}</p>
+                  <p className="text-lg font-bold text-upisha-navy dark:text-white">{events.length}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Upcoming Events</p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {Object.entries(
-                  eventsTimeline.reduce<Record<string, number>>((acc, e) => {
+                  {Object.entries(
+                    events.reduce<Record<string, number>>((acc, e) => {
                     acc[e.type] = (acc[e.type] || 0) + 1
                     return acc
                   }, {})
@@ -214,7 +249,7 @@ export function EventsTimelineSection() {
             <div>
               <div className="flex items-start gap-3 mb-4">
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 flex items-center justify-center shrink-0">
-                  <selectedEvent.icon className="h-6 w-6 text-upisha-teal" />
+                  {(() => { const DialogIcon = resolveIcon(selectedEvent.icon); return React.createElement(DialogIcon, { className: 'h-6 w-6 text-upisha-teal' }) })()}
                 </div>
                 <div>
                   <Badge variant="outline" className={`text-[10px] mb-1.5 ${typeColors[selectedEvent.type] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
@@ -294,4 +329,3 @@ export function EventsTimelineSection() {
     </AnimatedSection>
   )
 }
-

@@ -1,16 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Monitor, Plus, Pencil, Trash2, X, Users, Search, Calendar, Clock, User,
-  CheckCircle2, AlertCircle, Loader2
+  CheckCircle2, AlertCircle, Loader2, Download
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 
 interface WebinarItem {
@@ -21,6 +22,7 @@ interface WebinarItem {
   speaker: string
   duration: string
   description?: string | null
+  registrationLink?: string | null
   isActive?: boolean
   createdAt?: Date
 }
@@ -58,6 +60,7 @@ export default function AdminWebinarsPage() {
     speaker: '',
     duration: '',
     description: '',
+    registrationLink: '',
   })
   const [webinarSubmitting, setWebinarSubmitting] = useState(false)
 
@@ -131,7 +134,7 @@ export default function AdminWebinarsPage() {
         })
         setShowWebinarForm(false)
         setEditingWebinar(null)
-        setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '' })
+        setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '' })
         fetchWebinars()
       } else {
         const err = await res.json().catch(() => ({}))
@@ -153,6 +156,7 @@ export default function AdminWebinarsPage() {
       speaker: webinar.speaker,
       duration: webinar.duration,
       description: webinar.description || '',
+      registrationLink: webinar.registrationLink || '',
     })
     setShowWebinarForm(true)
   }
@@ -172,15 +176,59 @@ export default function AdminWebinarsPage() {
     }
   }
 
-  const filteredRegistrations = registrations.filter((r) => {
+  const handleDeleteRegistration = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this registration?')) return
+    try {
+      const res = await fetch(`/api/webinars/register/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        toast({ title: 'Registration deleted', description: 'The registration has been removed.' })
+        fetchRegistrations()
+      } else {
+        toast({ title: 'Error', description: 'Failed to delete registration', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
+    }
+  }
+
+  const exportRegistrationsCSV = () => {
+    const rows = [
+      ['Name', 'Email', 'Phone', 'Qualification', 'City', 'Webinar', 'Transaction No', 'Date'],
+      ...filteredRegistrations.map((r) => [
+        r.fullName,
+        r.email,
+        r.phone,
+        r.qualification || '',
+        r.city,
+        r.webinarTitle,
+        r.transactionNumber || '',
+        r.createdAt ? new Date(r.createdAt.toString()).toLocaleDateString() : '',
+      ]),
+    ]
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'webinar-registrations.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const getRegistrationsCount = (webinarId: string) =>
+    registrations.filter((r) => r.webinarId === webinarId).length
+
+  const filteredRegistrations = useMemo(() => {
     const q = searchQuery.toLowerCase()
-    return (
-      r.fullName.toLowerCase().includes(q) ||
-      r.email.toLowerCase().includes(q) ||
-      r.webinarTitle.toLowerCase().includes(q) ||
-      r.city.toLowerCase().includes(q)
-    )
-  })
+    return registrations.filter((r) => {
+      return (
+        r.fullName.toLowerCase().includes(q) ||
+        r.email.toLowerCase().includes(q) ||
+        r.webinarTitle.toLowerCase().includes(q) ||
+        r.city.toLowerCase().includes(q)
+      )
+    })
+  }, [registrations, searchQuery])
 
   return (
     <div className="space-y-6">
@@ -229,7 +277,7 @@ export default function AdminWebinarsPage() {
               <Button
                 onClick={() => {
                   setEditingWebinar(null)
-                  setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '' })
+                  setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '' })
                   setShowWebinarForm(!showWebinarForm)
                 }}
                 className="bg-upisha-teal hover:bg-upisha-teal-dark text-white"
@@ -317,6 +365,16 @@ export default function AdminWebinarsPage() {
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                            Registration Link
+                          </label>
+                          <Input
+                            placeholder="https://..."
+                            value={webinarForm.registrationLink}
+                            onChange={(e) => setWebinarForm({ ...webinarForm, registrationLink: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                             Description
                           </label>
                           <Textarea
@@ -324,6 +382,16 @@ export default function AdminWebinarsPage() {
                             value={webinarForm.description}
                             onChange={(e) => setWebinarForm({ ...webinarForm, description: e.target.value })}
                             rows={3}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</label>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Show this webinar on the website</p>
+                          </div>
+                          <Switch
+                            checked={editingWebinar?.isActive ?? true}
+                            onCheckedChange={(checked) => setEditingWebinar((prev) => prev ? { ...prev, isActive: checked } : { ...webinarForm, title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '', isActive: checked } as any)}
                           />
                         </div>
                         <div className="flex gap-3">
@@ -384,6 +452,9 @@ export default function AdminWebinarsPage() {
                             <Badge variant="outline" className="shrink-0 text-xs">
                               {webinar.duration}
                             </Badge>
+                            <Badge variant={webinar.isActive !== false ? 'default' : 'secondary'} className="shrink-0 text-xs">
+                              {webinar.isActive !== false ? 'Active' : 'Inactive'}
+                            </Badge>
                           </div>
                           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
                             <span className="flex items-center gap-1">
@@ -395,6 +466,9 @@ export default function AdminWebinarsPage() {
                             <span className="flex items-center gap-1">
                               <User className="h-3 w-3" /> {webinar.speaker}
                             </span>
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" /> {getRegistrationsCount(webinar.id)} registered
+                            </span>
                           </div>
                           {webinar.description && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
@@ -402,23 +476,50 @@ export default function AdminWebinarsPage() {
                             </p>
                           )}
                         </div>
-                        <div className="flex gap-2 shrink-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditWebinar(webinar)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteWebinar(webinar.id)}
-                            className="h-8 w-8 p-0 text-red-500 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {webinar.isActive !== false ? 'Active' : 'Inactive'}
+                            </span>
+                            <Switch
+                              checked={webinar.isActive !== false}
+                              onCheckedChange={async (checked) => {
+                                try {
+                                  const res = await fetch(`/api/webinars/${webinar.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ isActive: checked }),
+                                  })
+                                  if (res.ok) {
+                                    toast({ title: checked ? 'Webinar activated' : 'Webinar deactivated' })
+                                    setWebinars((prev) => prev.map((w) => w.id === webinar.id ? { ...w, isActive: checked } : w))
+                                  } else {
+                                    toast({ title: 'Error', description: 'Failed to update status', variant: 'destructive' })
+                                  }
+                                } catch {
+                                  toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditWebinar(webinar)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteWebinar(webinar.id)}
+                              className="h-8 w-8 p-0 text-red-500 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -434,8 +535,8 @@ export default function AdminWebinarsPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            {/* Search */}
-            <div className="mb-4">
+            {/* Search + Export */}
+            <div className="flex items-center justify-between mb-4">
               <div className="relative max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -445,6 +546,14 @@ export default function AdminWebinarsPage() {
                   className="pl-9"
                 />
               </div>
+              <Button
+                variant="outline"
+                onClick={exportRegistrationsCSV}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
             </div>
 
             {/* Registrations Table */}
@@ -469,6 +578,7 @@ export default function AdminWebinarsPage() {
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Webinar</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Txn No.</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Date</th>
+                      <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -486,6 +596,16 @@ export default function AdminWebinarsPage() {
                         </td>
                         <td className="py-3 px-3 text-gray-500 dark:text-gray-400 text-xs">
                           {reg.createdAt ? new Date(reg.createdAt.toString()).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="py-3 px-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteRegistration(reg.id)}
+                            className="h-8 w-8 p-0 text-red-500 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </td>
                       </tr>
                     ))}

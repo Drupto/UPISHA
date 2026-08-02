@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAnnouncements, createAnnouncement } from '@/lib/firestore'
+import { getAnnouncements as fetchAnnouncements } from '@/lib/data'
+import { createAnnouncement } from '@/lib/firestore'
 import { announcementSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
-export async function GET(request: NextRequest) {
-  const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) {
-    return withSecurityHeaders(auth)
-  }
-
+export async function GET() {
   try {
-    const announcements = await getAnnouncements()
+    const announcements = await fetchAnnouncements()
     return withSecurityHeaders(NextResponse.json({ announcements }))
   } catch (error) {
     console.error('Error fetching announcements:', error)

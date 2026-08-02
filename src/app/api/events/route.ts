@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getEvents, createEvent } from '@/lib/firestore'
+import { getEvents as fetchEvents } from '@/lib/data'
+import { createEvent } from '@/lib/firestore'
 import { eventSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
-export async function GET(request: NextRequest) {
-  const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) {
-    return withSecurityHeaders(auth)
-  }
-
+export async function GET() {
   try {
-    const events = await getEvents()
+    const events = await fetchEvents()
     return withSecurityHeaders(NextResponse.json({ events }))
   } catch (error) {
     console.error('Error fetching events:', error)

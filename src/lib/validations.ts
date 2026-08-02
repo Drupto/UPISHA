@@ -42,6 +42,13 @@ export const newsletterSchema = z.object({
   email: z.string().email('Invalid email address'),
 })
 
+export const newsletterCampaignSchema = z.object({
+  title: z.string().min(2, 'Title must be at least 2 characters').max(200),
+  subject: z.string().min(2, 'Subject must be at least 2 characters').max(200),
+  content: z.string().min(10, 'Content must be at least 10 characters').max(20000),
+  status: z.enum(['draft', 'sent']).optional().default('draft'),
+})
+
 export const webinarRegistrationSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
   email: z.string().email('Invalid email address'),
@@ -64,6 +71,7 @@ export const webinarSchema = z.object({
   speaker: z.string().min(2, 'Speaker name must be at least 2 characters').max(100),
   duration: z.string().min(1, 'Duration is required'),
   description: z.string().max(2000).optional().nullable(),
+  registrationLink: z.string().url('Invalid URL').optional().nullable(),
   isActive: z.boolean().optional().default(true),
 })
 

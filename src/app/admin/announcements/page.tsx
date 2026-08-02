@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Megaphone, Plus, Pencil, Trash2, Calendar, Tag, Loader2
+  Megaphone, Plus, Pencil, Trash2, Calendar, Tag, Loader2, Search, X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 
 interface AnnouncementItem {
@@ -22,6 +23,17 @@ interface AnnouncementItem {
   createdAt?: Date
 }
 
+const ANNOUNCEMENT_TYPES = [
+  'Announcement',
+  'Event',
+  'Workshop',
+  'Publication',
+  'Notice',
+  'Press Release',
+  'Award',
+  'Other',
+]
+
 export default function AdminAnnouncementsPage() {
   const { toast } = useToast()
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([])
@@ -33,8 +45,11 @@ export default function AdminAnnouncementsPage() {
     date: '',
     type: 'Announcement',
     content: '',
+    isActive: true,
   })
   const [submitting, setSubmitting] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const fetchAnnouncements = async () => {
     try {
@@ -78,7 +93,7 @@ export default function AdminAnnouncementsPage() {
         })
         setShowForm(false)
         setEditing(null)
-        setForm({ title: '', date: '', type: 'Announcement', content: '' })
+        setForm({ title: '', date: '', type: 'Announcement', content: '', isActive: true })
         fetchAnnouncements()
       } else {
         const err = await res.json().catch(() => ({}))
@@ -98,6 +113,7 @@ export default function AdminAnnouncementsPage() {
       date: announcement.date,
       type: announcement.type,
       content: announcement.content || '',
+      isActive: announcement.isActive ?? true,
     })
     setShowForm(true)
   }
@@ -117,6 +133,18 @@ export default function AdminAnnouncementsPage() {
     }
   }
 
+  const filteredAnnouncements = useMemo(() => {
+    const q = searchQuery.toLowerCase()
+    return announcements.filter((a) =>
+      a.title.toLowerCase().includes(q) ||
+      a.type.toLowerCase().includes(q) ||
+      a.date.toLowerCase().includes(q) ||
+      (a.content && a.content.toLowerCase().includes(q))
+    )
+  }, [announcements, searchQuery])
+
+  const activeCount = announcements.filter((a) => a.isActive !== false).length
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -126,11 +154,25 @@ export default function AdminAnnouncementsPage() {
         </div>
       </div>
 
-      <div className="mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search announcements..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Badge variant="secondary" className="text-xs">
+            {activeCount} active
+          </Badge>
+        </div>
         <Button
           onClick={() => {
             setEditing(null)
-            setForm({ title: '', date: '', type: 'Announcement', content: '' })
+            setForm({ title: '', date: '', type: 'Announcement', content: '', isActive: true })
             setShowForm(!showForm)
           }}
           className="bg-upisha-teal hover:bg-upisha-teal-dark text-white"
@@ -156,18 +198,18 @@ export default function AdminAnnouncementsPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                      Title *
-                    </label>
-                    <Input
-                      required
-                      placeholder="Announcement title"
-                      value={form.title}
-                      onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    />
-                  </div>
                   <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                        Title *
+                      </label>
+                      <Input
+                        required
+                        placeholder="Announcement title"
+                        value={form.title}
+                        onChange={(e) => setForm({ ...form, title: e.target.value })}
+                      />
+                    </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                         Date *
@@ -179,16 +221,33 @@ export default function AdminAnnouncementsPage() {
                         onChange={(e) => setForm({ ...form, date: e.target.value })}
                       />
                     </div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                         Type *
                       </label>
-                      <Input
-                        required
-                        placeholder="e.g. Event, Workshop, Publication"
+                      <select
                         value={form.type}
                         onChange={(e) => setForm({ ...form, type: e.target.value })}
-                      />
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+                      >
+                        {ANNOUNCEMENT_TYPES.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-end">
+                      <div className="flex items-center justify-between rounded-lg border p-3 w-full">
+                        <div className="space-y-0.5">
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</label>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Show on website</p>
+                        </div>
+                        <Switch
+                          checked={form.isActive}
+                          onCheckedChange={(checked) => setForm({ ...form, isActive: checked })}
+                        />
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -239,15 +298,15 @@ export default function AdminAnnouncementsPage() {
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-upisha-teal" />
         </div>
-      ) : announcements.length === 0 ? (
+      ) : filteredAnnouncements.length === 0 ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <Megaphone className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-          <p>No announcements created yet.</p>
+          <p>{searchQuery ? 'No announcements match your search.' : 'No announcements created yet.'}</p>
           <p className="text-sm">Click "Add New Announcement" to create one.</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {announcements.map((announcement) => (
+          {filteredAnnouncements.map((announcement) => (
             <Card key={announcement.id} className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
@@ -259,6 +318,9 @@ export default function AdminAnnouncementsPage() {
                       <Badge variant="outline" className="shrink-0 text-xs">
                         {announcement.type}
                       </Badge>
+                      <Badge variant={announcement.isActive !== false ? 'default' : 'secondary'} className="shrink-0 text-xs">
+                        {announcement.isActive !== false ? 'Active' : 'Inactive'}
+                      </Badge>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
                       <span className="flex items-center gap-1">
@@ -266,28 +328,65 @@ export default function AdminAnnouncementsPage() {
                       </span>
                     </div>
                     {announcement.content && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
-                        {announcement.content}
-                      </p>
+                      <div className="mt-2">
+                        <p className={`text-xs text-gray-500 dark:text-gray-400 ${expandedId === announcement.id ? '' : 'line-clamp-2'}`}>
+                          {announcement.content}
+                        </p>
+                        {announcement.content.length > 120 && (
+                          <button
+                            onClick={() => setExpandedId(expandedId === announcement.id ? null : announcement.id)}
+                            className="text-xs text-upisha-teal hover:underline mt-1"
+                          >
+                            {expandedId === announcement.id ? 'Show less' : 'Show more'}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(announcement)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(announcement.id)}
-                      className="h-8 w-8 p-0 text-red-500 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {announcement.isActive !== false ? 'Active' : 'Inactive'}
+                      </span>
+                      <Switch
+                        checked={announcement.isActive !== false}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            const res = await fetch(`/api/announcements/${announcement.id}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ isActive: checked }),
+                            })
+                            if (res.ok) {
+                              toast({ title: checked ? 'Announcement activated' : 'Announcement deactivated' })
+                              setAnnouncements((prev) => prev.map((a) => a.id === announcement.id ? { ...a, isActive: checked } : a))
+                            } else {
+                              toast({ title: 'Error', description: 'Failed to update status', variant: 'destructive' })
+                            }
+                          } catch {
+                            toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(announcement)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(announcement.id)}
+                        className="h-8 w-8 p-0 text-red-500 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

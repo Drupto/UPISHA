@@ -1,27 +1,33 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import {
-  Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
-  Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
-  Heart, Stethoscope, GraduationCap, Globe, Facebook, Twitter, Instagram,
-  Linkedin, Youtube, Send, Clock, Calendar, ArrowRight, CheckCircle2,
-  Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote,
-  Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
-  PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
-  Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
-  PhoneCall, Building, Mailbox, Zap,
+  Calendar, ArrowRight, Megaphone, MapPin,
 } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { announcements } from '@/lib/static-data'
+import { announcements as staticAnnouncements } from '@/lib/static-data'
 
 /* ─── Announcement Section ─── */
 export function AnnouncementSection() {
+  const [announcements, setAnnouncements] = useState(staticAnnouncements)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/announcements')
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data) => {
+        if (!cancelled && data.announcements?.length) {
+          setAnnouncements(data.announcements)
+        }
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
   return (
     <section className="py-16 md:py-20 bg-white dark:bg-gray-900 border-t-2 border-t-upisha-teal/10 section-pattern">
       <div className="max-w-7xl mx-auto px-4">
@@ -35,7 +41,7 @@ export function AnnouncementSection() {
             <div className="space-y-3">
               {announcements.map((item, i) => (
                 <motion.div
-                  key={i}
+                  key={item.id || i}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
@@ -46,7 +52,7 @@ export function AnnouncementSection() {
                     <div className="bg-upisha-teal-light dark:bg-upisha-teal/20 rounded-lg p-2">
                       <Calendar className="h-5 w-5 text-upisha-teal mx-auto" />
                       <div className="text-xs text-upisha-teal font-medium mt-1">
-                        {item.date.split(' ').slice(0, 2).join(' ')}
+                        {String(item.date).split(' ').slice(0, 2).join(' ')}
                       </div>
                     </div>
                   </div>

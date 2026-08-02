@@ -2,28 +2,32 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Users, Mail, Calendar, Bell, Loader2 } from 'lucide-react'
+import { Users, Mail, Calendar, Bell, Loader2, Monitor, Megaphone } from 'lucide-react'
 import Link from 'next/link'
 
 interface DashboardStats {
   members: number
   messages: number
   events: number
+  webinars: number
+  announcements: number
   subscribers: number
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({ members: 0, messages: 0, events: 0, subscribers: 0 })
+  const [stats, setStats] = useState<DashboardStats>({ members: 0, messages: 0, events: 0, webinars: 0, announcements: 0, subscribers: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        const [membersRes, messagesRes, eventsRes, newsletterRes] = await Promise.allSettled([
+        const [membersRes, messagesRes, eventsRes, webinarsRes, announcementsRes, newsletterRes] = await Promise.allSettled([
           fetch('/api/members').then(r => r.json()),
           fetch('/api/contact').then(r => r.json()),
           fetch('/api/events').then(r => r.json()),
+          fetch('/api/webinars').then(r => r.json()),
+          fetch('/api/announcements').then(r => r.json()),
           fetch('/api/newsletter').then(r => r.json()),
         ])
 
@@ -31,6 +35,8 @@ export default function AdminDashboard() {
           members: membersRes.status === 'fulfilled' ? (membersRes.value as { members?: unknown[] }).members?.length || 0 : 0,
           messages: messagesRes.status === 'fulfilled' ? (messagesRes.value as { messages?: unknown[] }).messages?.length || 0 : 0,
           events: eventsRes.status === 'fulfilled' ? (eventsRes.value as { events?: unknown[] }).events?.length || 0 : 0,
+          webinars: webinarsRes.status === 'fulfilled' ? (webinarsRes.value as { webinars?: unknown[] }).webinars?.length || 0 : 0,
+          announcements: announcementsRes.status === 'fulfilled' ? (announcementsRes.value as { announcements?: unknown[] }).announcements?.length || 0 : 0,
           subscribers: newsletterRes.status === 'fulfilled' ? (newsletterRes.value as { count?: number }).count || 0 : 0,
         })
       } catch {
@@ -63,6 +69,8 @@ export default function AdminDashboard() {
     { label: 'Total Members', value: stats.members, icon: Users, href: '/admin/members', color: 'text-blue-600 bg-blue-100' },
     { label: 'Messages', value: stats.messages, icon: Mail, href: '/admin/messages', color: 'text-green-600 bg-green-100' },
     { label: 'Events', value: stats.events, icon: Calendar, href: '/admin/events', color: 'text-purple-600 bg-purple-100' },
+    { label: 'Webinars', value: stats.webinars, icon: Monitor, href: '/admin/webinars', color: 'text-indigo-600 bg-indigo-100' },
+    { label: 'Announcements', value: stats.announcements, icon: Megaphone, href: '/admin/announcements', color: 'text-orange-600 bg-orange-100' },
     { label: 'Newsletter Subscribers', value: stats.subscribers, icon: Bell, href: '/admin/newsletter', color: 'text-amber-600 bg-amber-100' },
   ] as const
 

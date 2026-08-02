@@ -65,6 +65,17 @@ export interface NewsletterSubscriberDoc {
   updatedAt?: FieldValue | Date
 }
 
+export interface NewsletterCampaignDoc {
+  id?: string
+  title: string
+  subject: string
+  content: string
+  status: 'draft' | 'sent'
+  sentAt?: FieldValue | Date | null
+  createdAt?: FieldValue | Date
+  updatedAt?: FieldValue | Date
+}
+
 export interface WebinarDoc {
   id?: string
   title: string
@@ -73,7 +84,7 @@ export interface WebinarDoc {
   speaker: string
   duration: string
   description?: string | null
-  registrationLink?: string
+  registrationLink?: string | null
   isActive?: boolean
   createdAt?: FieldValue | Date
   updatedAt?: FieldValue | Date
@@ -300,6 +311,38 @@ export async function getNewsletterSubscribers() {
 
 export async function deleteNewsletterSubscriber(id: string) {
   const ref = doc(db(), 'newsletterSubscribers', id)
+  await deleteDoc(ref)
+  return { id }
+}
+
+// Newsletter Campaign CRUD operations
+export async function createNewsletterCampaign(data: NewsletterCampaignDoc) {
+  const ref = await addDoc(collection(db(), 'newsletterCampaigns'), {
+    ...data,
+    status: data.status ?? 'draft',
+    sentAt: data.sentAt ?? null,
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+  })
+  return { id: ref.id }
+}
+
+export async function getNewsletterCampaigns() {
+  const snapshot = await getDocs(query(collection(db(), 'newsletterCampaigns'), orderBy('createdAt', 'desc')))
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+}
+
+export async function updateNewsletterCampaign(id: string, data: Partial<NewsletterCampaignDoc>) {
+  const ref = doc(db(), 'newsletterCampaigns', id)
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: new Date(),
+  })
+  return { id }
+}
+
+export async function deleteNewsletterCampaign(id: string) {
+  const ref = doc(db(), 'newsletterCampaigns', id)
   await deleteDoc(ref)
   return { id }
 }
