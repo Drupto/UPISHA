@@ -27,6 +27,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthChange(async (user) => {
       setUser(user)
       if (user) {
+        // Automatically verify the user to restore the session cookie
+        // This ensures users remain signed in after browser refresh
+        const token = await user.getIdToken()
+        try {
+          await fetch('/api/auth/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+            // Use no-cache to ensure we get the latest session state
+            cache: 'no-store',
+          })
+        } catch {
+          // If verification fails, continue with retries for role fetch
+        }
+
         // The session cookie is set by /api/auth/verify AFTER the auth state
         // change fires, so retry fetching the role until the cookie is available.
         let attempts = 0

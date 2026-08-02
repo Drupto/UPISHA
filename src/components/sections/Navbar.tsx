@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/sections'
 import { navLinks } from '@/lib/static-data'
+import { useAuth } from '@/lib/hooks/useAuth'
 
 /* ─── Navbar ─── */
 export function Navbar({
@@ -32,6 +33,7 @@ export function Navbar({
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const router = useRouter()
+  const { user, loading } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 40)
@@ -119,13 +121,22 @@ export function Navbar({
               </kbd>
             </button>
             <ThemeToggle />
-            <Button
-              className="hidden md:inline-flex bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md"
-              onClick={() => router.push('/register')}
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Sign Up / Sign In
-            </Button>
+            {!loading && user ? (
+              <Button
+                className="hidden md:inline-flex bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md"
+                onClick={() => router.push('/admin')}
+              >
+                Dashboard
+              </Button>
+            ) : (
+              <Button
+                className="hidden md:inline-flex bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md"
+                onClick={() => router.push('/register')}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Sign Up / Sign In
+              </Button>
+            )}
             <button
               className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               onClick={() => setIsMobileOpen(!isMobileOpen)}
@@ -167,16 +178,28 @@ export function Navbar({
                   {link.label}
                 </a>
               ))}
-              <Button
-                className="mt-2 bg-upisha-teal hover:bg-upisha-teal-dark text-white"
-                onClick={() => {
-                  router.push('/register')
-                  setIsMobileOpen(false)
-                }}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Sign Up / Sign In
-              </Button>
+              {!loading && user ? (
+                <Button
+                  className="mt-2 bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+                  onClick={() => {
+                    router.push('/admin')
+                    setIsMobileOpen(false)
+                  }}
+                >
+                  Dashboard
+                </Button>
+              ) : (
+                <Button
+                  className="mt-2 bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+                  onClick={() => {
+                    router.push('/register')
+                    setIsMobileOpen(false)
+                  }}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Sign Up / Sign In
+                </Button>
+              )}
             </nav>
           </motion.div>
         )}
