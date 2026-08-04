@@ -172,6 +172,7 @@ export default function AdminMembers() {
   const filteredMembers = members.filter((m) => {
     const q = searchQuery.toLowerCase()
     return (
+      m.id.toLowerCase().includes(q) ||
       m.fullName.toLowerCase().includes(q) ||
       m.email.toLowerCase().includes(q) ||
       m.city.toLowerCase().includes(q) ||
@@ -195,7 +196,7 @@ export default function AdminMembers() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
-          placeholder="Search by name, email, city, type, or status..."
+          placeholder="Search by ID, name, email, city, type, or status..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-9"
@@ -214,6 +215,7 @@ export default function AdminMembers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left">
+                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">ID</th>
                 <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Photo</th>
                 <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Name</th>
                 <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Email</th>
@@ -229,6 +231,7 @@ export default function AdminMembers() {
             <tbody>
               {filteredMembers.map((member) => (
                 <tr key={member.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="py-3 font-mono text-xs text-gray-500">{member.id}</td>
                   <td className="py-3">
                     {member.photoUrl ? (
                       <img

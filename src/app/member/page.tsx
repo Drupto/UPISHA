@@ -112,6 +112,10 @@ export default function MemberDashboard() {
             <CardTitle className="text-upisha-navy dark:text-white">Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Member ID</p>
+              <p className="font-mono text-sm text-upisha-teal bg-upisha-teal/5 rounded-lg py-2 px-3 inline-block">{profile.id}</p>
+            </div>
             <div className="flex justify-center">
               {profile.photoUrl ? (
                 <img
