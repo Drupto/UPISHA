@@ -85,6 +85,7 @@ export const webinarSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   registrationLink: z.string().url('Invalid URL').optional().nullable(),
   isActive: z.boolean().optional().default(true),
+  maxAttendees: z.number().int().positive().optional().nullable(),
 })
 
 export const eventSchema = z.object({

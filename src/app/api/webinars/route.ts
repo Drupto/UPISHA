@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getWebinars } from '@/lib/data'
-import { createWebinar } from '@/lib/firestore'
+import { createWebinar, getWebinarRegistrationCount } from '@/lib/firestore'
 import { webinarSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
@@ -8,7 +8,19 @@ import { requireAdmin } from '@/lib/auth-helpers'
 export async function GET() {
   try {
     const webinars = await getWebinars()
-    return withSecurityHeaders(NextResponse.json({ webinars }))
+    // Attach registration counts for capacity display
+    const webinarsWithCounts = await Promise.all(
+      webinars.map(async (w) => {
+        if (!w.id) return w
+        try {
+          const count = await getWebinarRegistrationCount(w.id)
+          return { ...w, registrationCount: count }
+        } catch {
+          return w
+        }
+      })
+    )
+    return withSecurityHeaders(NextResponse.json({ webinars: webinarsWithCounts }))
   } catch (error) {
     console.error('Error fetching webinars:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch webinars' }, { status: 500 }))
@@ -39,6 +51,7 @@ export async function POST(request: NextRequest) {
       description: validated.description ? sanitizeHtml(validated.description) : null,
       registrationLink: validated.registrationLink ? sanitizeHtml(validated.registrationLink) : null,
       isActive: validated.isActive,
+      maxAttendees: validated.maxAttendees ?? null,
     })
 
     return withSecurityHeaders(NextResponse.json({

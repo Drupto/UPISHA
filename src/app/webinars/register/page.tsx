@@ -39,6 +39,8 @@ export default function WebinarRegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [showRestored, setShowRestored] = useState(false)
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false)
+  const [checkingRegistration, setCheckingRegistration] = useState(false)
 
   useEffect(() => {
     const fetchWebinars = async () => {
@@ -119,6 +121,33 @@ export default function WebinarRegisterPage() {
     }
   }, [formData.webinarId, webinars, preselectedWebinarId])
 
+  // Check if the user has already registered for the selected webinar
+  useEffect(() => {
+    let cancelled = false
+    const checkRegistration = async () => {
+      if (!formData.webinarId) {
+        setAlreadyRegistered(false)
+        return
+      }
+      setCheckingRegistration(true)
+      try {
+        const res = await fetch('/api/webinars/register/mine')
+        if (res.ok) {
+          const data = await res.json()
+          const registrations = data.registrations || []
+          const exists = registrations.some((r: { webinarId: string }) => r.webinarId === formData.webinarId)
+          if (!cancelled) setAlreadyRegistered(exists)
+        }
+      } catch {
+        // Silently fail - user may not be authenticated
+      } finally {
+        if (!cancelled) setCheckingRegistration(false)
+      }
+    }
+    checkRegistration()
+    return () => { cancelled = true }
+  }, [formData.webinarId])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.webinarId) {
@@ -140,7 +169,7 @@ export default function WebinarRegisterPage() {
         setSubmitted(true)
         localStorage.removeItem('upisha-webinar-reg-form')
         const data = await res.json().catch(() => ({}))
-        toast({ title: 'Registration submitted!', description: data.message || 'You are now registered for the webinar.' })
+        toast({ title: 'Registration submitted!', description: data.message || 'Your registration is pending admin confirmation.' })
       } else {
         const errData = await res.json().catch(() => ({}))
         toast({ title: 'Registration failed', description: errData.error || 'Please try again or contact us directly.', variant: 'destructive' })
@@ -232,7 +261,7 @@ export default function WebinarRegisterPage() {
                 </motion.div>
                 <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">Registration Successful!</h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-6">
-                  Thank you for registering for <strong>{formData.webinarTitle}</strong>. You will receive a confirmation email with the webinar access details.
+                  Thank you for registering for <strong>{formData.webinarTitle}</strong>. Your registration is pending admin confirmation. You will receive an email once your registration is confirmed.
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button variant="outline" onClick={() => {
@@ -284,6 +313,18 @@ export default function WebinarRegisterPage() {
                     <div className="mt-2 p-2 rounded bg-upisha-teal/5 border border-upisha-teal/20 text-xs text-upisha-navy dark:text-gray-300 flex items-center gap-2">
                       <Monitor className="h-3.5 w-3.5 text-upisha-teal shrink-0" />
                       <span>Selected: <strong>{formData.webinarTitle}</strong></span>
+                    </div>
+                  )}
+                  {checkingRegistration && (
+                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                      <span className="h-3 w-3 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+                      Checking your registration status...
+                    </p>
+                  )}
+                  {alreadyRegistered && (
+                    <div className="mt-2 p-2 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                      <span>You have already registered for this webinar. Please check your registrations for the status.</span>
                     </div>
                   )}
                 </div>

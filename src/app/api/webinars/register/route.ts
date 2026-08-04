@@ -1,22 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createWebinarRegistration, getWebinarRegistrations } from '@/lib/firestore'
+import {
+  createWebinarRegistration,
+  getWebinarRegistrations,
+  getWebinarRegistrationsByEmail,
+  getWebinarById,
+  getWebinarRegistrationCount,
+} from '@/lib/firestore'
 import { webinarRegistrationSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, resetRateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const validated = webinarRegistrationSchema.parse(body)
+    const email = validated.email.toLowerCase()
 
-    // Rate limiting
-    if (!rateLimit(`webinar-reg:${validated.email}`, 3, 60 * 60 * 1000)) {
+    // Rate limiting - 10 attempts per hour per email (generous to avoid blocking legit users)
+    if (!rateLimit(`webinar-reg:${email}`, 10, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
+    }
+
+    // Duplicate registration check: same email + same webinar
+    const existing = await getWebinarRegistrationsByEmail(email)
+    const alreadyRegistered = existing.some((r) => r.webinarId === validated.webinarId)
+    if (alreadyRegistered) {
+      return withSecurityHeaders(NextResponse.json(
+        { error: 'You have already registered for this webinar.' },
+        { status: 409 }
+      ))
+    }
+
+    // Capacity check: enforce maxAttendees if set
+    const webinar = await getWebinarById(validated.webinarId)
+    if (webinar?.maxAttendees && webinar.maxAttendees > 0) {
+      const count = await getWebinarRegistrationCount(validated.webinarId)
+      if (count >= webinar.maxAttendees) {
+        return withSecurityHeaders(NextResponse.json(
+          { error: 'Sorry, this webinar has reached its maximum capacity.' },
+          { status: 409 }
+        ))
+      }
     }
 
     const registration = await createWebinarRegistration({
       fullName: sanitizeHtml(validated.fullName),
-      email: validated.email.toLowerCase(),
+      email,
       phone: validated.phone,
       qualification: validated.qualification ? sanitizeHtml(validated.qualification) : null,
       city: sanitizeHtml(validated.city),
@@ -25,12 +54,16 @@ export async function POST(request: NextRequest) {
       transactionNumber: sanitizeHtml(validated.transactionNumber),
       message: validated.message ? sanitizeHtml(validated.message) : null,
       declaration: validated.declaration,
+      status: 'pending',
     })
+
+    // Reset rate limit on success so a user can register for multiple webinars
+    resetRateLimit(`webinar-reg:${email}`)
 
     return withSecurityHeaders(NextResponse.json({
       success: true,
       id: registration.id,
-      message: 'Registration successful! You will receive a confirmation email shortly.',
+      message: 'Registration submitted successfully! Your registration is pending admin confirmation. You will receive an email once confirmed.',
     }, { status: 201 }))
   } catch (err: unknown) {
     console.error('Error creating webinar registration:', err)

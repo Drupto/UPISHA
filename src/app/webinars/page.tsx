@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Calendar, Clock, User, Monitor, ArrowRight, AlertCircle } from 'lucide-react'
+import { Calendar, Clock, User, Monitor, ArrowRight, AlertCircle, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -112,14 +112,25 @@ export default function WebinarsPage() {
                         {webinar.description}
                       </p>
                     )}
+                    {webinar.maxAttendees && (
+                      <div className={`flex items-center gap-2 text-sm ${(webinar.registrationCount ?? 0) >= webinar.maxAttendees ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <Users className="h-4 w-4 text-upisha-teal" />
+                        {(webinar.registrationCount ?? 0) >= webinar.maxAttendees
+                          ? 'Registration full'
+                          : `${webinar.maxAttendees - (webinar.registrationCount ?? 0)} seats remaining`}
+                      </div>
+                    )}
                   </CardContent>
                   <CardFooter className="pt-2">
                     <Link
                       href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}
                       className="w-full"
                     >
-                      <Button className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal">
-                        Register Now
+                      <Button
+                        className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal"
+                        disabled={webinar.maxAttendees ? (webinar.registrationCount ?? 0) >= webinar.maxAttendees : false}
+                      >
+                        {webinar.maxAttendees && (webinar.registrationCount ?? 0) >= webinar.maxAttendees ? 'Full' : 'Register Now'}
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </Link>

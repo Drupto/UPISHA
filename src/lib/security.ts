@@ -20,6 +20,11 @@ export function rateLimit(identifier: string, maxRequests: number, windowMs: num
   return true
 }
 
+// Reset the rate limit counter for an identifier (e.g. after a successful registration)
+export function resetRateLimit(identifier: string): void {
+  rateLimitStore.delete(identifier)
+}
+
 // Security headers middleware
 export function withSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Frame-Options', 'DENY')

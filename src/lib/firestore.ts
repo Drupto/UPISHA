@@ -87,6 +87,7 @@ export interface WebinarDoc {
   description?: string | null
   registrationLink?: string | null
   isActive?: boolean
+  maxAttendees?: number | null
   createdAt?: FieldValue | Date
   updatedAt?: FieldValue | Date
 }
@@ -103,6 +104,7 @@ export interface WebinarRegistrationDoc {
   transactionNumber?: string | null
   message?: string | null
   declaration: boolean
+  status?: 'pending' | 'confirmed' | 'rejected'
   createdAt?: FieldValue | Date
   updatedAt?: FieldValue | Date
 }
@@ -365,6 +367,7 @@ export async function createWebinar(data: WebinarDoc) {
     updatedAt: data.updatedAt ?? new Date(),
     description: data.description ?? null,
     registrationLink: data.registrationLink ?? null,
+    maxAttendees: data.maxAttendees ?? null,
   })
   return { id: ref.id }
 }
@@ -372,6 +375,13 @@ export async function createWebinar(data: WebinarDoc) {
 export async function getWebinars() {
   const snapshot = await getDocs(query(collection(db(), 'webinars'), orderBy('createdAt', 'desc')))
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+}
+
+export async function getWebinarById(id: string) {
+  const ref = doc(db(), 'webinars', id)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as WebinarDoc
 }
 
 export async function updateWebinar(id: string, data: Partial<WebinarDoc>) {
@@ -393,6 +403,7 @@ export async function deleteWebinar(id: string) {
 export async function createWebinarRegistration(data: WebinarRegistrationDoc) {
   const ref = await addDoc(collection(db(), 'webinarRegistrations'), {
     ...data,
+    status: data.status ?? 'pending',
     createdAt: data.createdAt ?? new Date(),
     updatedAt: data.updatedAt ?? new Date(),
     qualification: data.qualification ?? null,
@@ -405,6 +416,29 @@ export async function createWebinarRegistration(data: WebinarRegistrationDoc) {
 export async function getWebinarRegistrations() {
   const snapshot = await getDocs(query(collection(db(), 'webinarRegistrations'), orderBy('createdAt', 'desc')))
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+}
+
+export async function getWebinarRegistrationsByEmail(email: string): Promise<WebinarRegistrationDoc[]> {
+  const snapshot = await getDocs(
+    query(collection(db(), 'webinarRegistrations'), where('email', '==', email.toLowerCase()), orderBy('createdAt', 'desc'))
+  )
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as WebinarRegistrationDoc[]
+}
+
+export async function getWebinarRegistrationCount(webinarId: string) {
+  const snapshot = await getDocs(
+    query(collection(db(), 'webinarRegistrations'), where('webinarId', '==', webinarId))
+  )
+  return snapshot.size
+}
+
+export async function updateWebinarRegistration(id: string, data: Partial<WebinarRegistrationDoc>) {
+  const ref = doc(db(), 'webinarRegistrations', id)
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: new Date(),
+  })
+  return { id }
 }
 
 export async function deleteWebinarRegistration(id: string) {

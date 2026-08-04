@@ -115,6 +115,8 @@ export interface Webinar {
   description?: string | null
   registrationLink?: string | null
   isActive?: boolean
+  maxAttendees?: number | null
+  registrationCount?: number
 }
 
 export interface TimelineEvent {
@@ -264,6 +266,7 @@ export interface WebinarDoc {
   description?: string | null
   registrationLink?: string | null
   isActive?: boolean
+  maxAttendees?: number | null
   createdAt?: Date
   updatedAt?: Date
 }
@@ -293,6 +296,7 @@ export interface WebinarRegistrationDoc {
   transactionNumber?: string | null
   message?: string | null
   declaration: boolean
+  status?: 'pending' | 'confirmed' | 'rejected'
   createdAt?: Date
   updatedAt?: Date
 }
