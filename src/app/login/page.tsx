@@ -24,8 +24,16 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { token } = await login(email, password)
-      await fetch('/api/auth/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
-      router.push('/admin')
+      const verifyRes = await fetch('/api/auth/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
+      // Determine role from the verify response and redirect accordingly
+      const data = await verifyRes.json().catch(() => ({}))
+      if (data.role === 'admin') {
+        router.push('/admin')
+      } else if (data.role === 'member') {
+        router.push('/member')
+      } else {
+        router.push('/')
+      }
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string }
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
@@ -75,8 +83,13 @@ export default function LoginPage() {
                 {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Signing in...</> : 'Sign In'}
               </Button>
             </form>
-            <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-              <Link href="/register" className="text-upisha-teal hover:underline">Create an account</Link>
+            <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400 space-y-1">
+              <div>
+                Not a member yet? <Link href="/apply" className="text-upisha-teal hover:underline font-medium">Join UP ISHA</Link>
+              </div>
+              <div>
+                Admin? <Link href="/register" className="text-upisha-teal hover:underline">Create admin account</Link>
+              </div>
             </div>
           </CardContent>
         </Card>

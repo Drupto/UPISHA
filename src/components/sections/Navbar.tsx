@@ -33,7 +33,7 @@ export function Navbar({
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const router = useRouter()
-  const { user, loading } = useAuth()
+  const { user, role, loading } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 40)
@@ -124,14 +124,14 @@ export function Navbar({
             {!loading && user ? (
               <Button
                 className="hidden md:inline-flex bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md"
-                onClick={() => router.push('/admin')}
+                onClick={() => router.push(role === 'admin' ? '/admin' : '/member')}
               >
                 Dashboard
               </Button>
             ) : (
               <Button
                 className="hidden md:inline-flex bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md"
-                onClick={() => router.push('/register')}
+                onClick={() => router.push('/login')}
               >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Sign Up / Sign In
@@ -182,7 +182,7 @@ export function Navbar({
                 <Button
                   className="mt-2 bg-upisha-teal hover:bg-upisha-teal-dark text-white"
                   onClick={() => {
-                    router.push('/admin')
+                    router.push(role === 'admin' ? '/admin' : '/member')
                     setIsMobileOpen(false)
                   }}
                 >
@@ -192,7 +192,7 @@ export function Navbar({
                 <Button
                   className="mt-2 bg-upisha-teal hover:bg-upisha-teal-dark text-white"
                   onClick={() => {
-                    router.push('/register')
+                    router.push('/login')
                     setIsMobileOpen(false)
                   }}
                 >

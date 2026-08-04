@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
 import { getFirestore, Firestore, FieldValue } from 'firebase/firestore'
+import { getStorage, FirebaseStorage } from 'firebase/storage'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,12 +14,20 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
 
 let firestoreInstance: Firestore | null = null
+let storageInstance: FirebaseStorage | null = null
 
 export function getDb(): Firestore {
   if (!firestoreInstance) {
     firestoreInstance = getFirestore(app)
   }
   return firestoreInstance
+}
+
+export function getStorageInstance(): FirebaseStorage {
+  if (!storageInstance) {
+    storageInstance = getStorage(app)
+  }
+  return storageInstance
 }
 
 export { FieldValue }

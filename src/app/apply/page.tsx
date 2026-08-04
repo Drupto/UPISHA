@@ -287,10 +287,14 @@ export default function ApplyPage() {
                 <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">
                   Application Submitted!
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Thank you for your interest in joining UP ISHA. We will review your application
-                  and get back to you shortly.
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  Thank you for your interest in joining UP ISHA. Your account has been created and
+                  a verification email has been sent. We will review your application and get back
+                  to you shortly.
                 </p>
+                <Link href="/login" className="inline-block text-upisha-teal hover:underline text-sm font-medium">
+                  Click here to sign in to your member portal →
+                </Link>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">

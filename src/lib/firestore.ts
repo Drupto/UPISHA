@@ -5,6 +5,7 @@ const db = () => getDb()
 
 export interface MemberDoc {
   id?: string
+  uid?: string | null
   fullName: string
   email: string
   phone: string
@@ -160,6 +161,7 @@ export async function getUserByUid(uid: string): Promise<UserDoc | null> {
 export async function createMember(data: MemberDoc) {
   const ref = await addDoc(collection(db(), 'members'), {
     ...data,
+    uid: data.uid ?? null,
     status: data.status ?? 'pending',
     createdAt: data.createdAt ?? new Date(),
     updatedAt: data.updatedAt ?? new Date(),
@@ -173,6 +175,13 @@ export async function createMember(data: MemberDoc) {
     declaration: data.declaration ?? null,
   })
   return { id: ref.id }
+}
+
+export async function getMemberByUid(uid: string): Promise<MemberDoc | null> {
+  const snapshot = await getDocs(query(collection(db(), 'members'), where('uid', '==', uid)))
+  if (snapshot.empty) return null
+  const doc = snapshot.docs[0]
+  return { id: doc.id, ...doc.data() } as MemberDoc
 }
 
 export async function getMembers() {

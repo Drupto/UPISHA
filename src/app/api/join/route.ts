@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createMember, getMembers } from '@/lib/firestore'
+import { createMember, getMembers, createUserRecord } from '@/lib/firestore'
 import { joinSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { uploadDataUrl } from '@/lib/storage'
 
 async function createFirebaseAuthUser(email: string, password: string, displayName: string) {
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY
@@ -52,7 +53,17 @@ async function createFirebaseAuthUser(email: string, password: string, displayNa
   return { localId: signUpData.localId, email: signUpData.email }
 }
 
+/**
+ * Upload a base64 data URL to Firebase Storage if it is a data URL.
+ * Returns the resulting download URL, or the original value if it's not a data URL.
+ */
+async function maybeUploadToStorage(value: string | null | undefined, path: string): Promise<string | null> {
+  if (!value || !value.startsWith('data:')) return value ?? null
+  return uploadDataUrl(value, path)
+}
+
 export async function POST(request: NextRequest) {
+  let authUser: { localId: string; email: string } | null = null
   try {
     const body = await request.json()
     const validated = joinSchema.parse(body)
@@ -62,15 +73,41 @@ export async function POST(request: NextRequest) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
 
-    // Create Firebase Auth user account first
-    const authUser = await createFirebaseAuthUser(
+    // 1. Create Firebase Auth user account first
+    authUser = await createFirebaseAuthUser(
       validated.email.toLowerCase(),
       validated.password,
       validated.fullName
     )
 
-    // Then create the member document in Firestore
+    // 2. Upload photo & RCI certificate to Firebase Storage (if provided as base64 data URLs)
+    const timestamp = Date.now()
+    let photoUrl: string | null = null
+    let rciCertificateUrl: string | null = null
+
+    try {
+      if (validated.photoUrl) {
+        photoUrl = await maybeUploadToStorage(
+          validated.photoUrl,
+          `members/${authUser.localId}/photo-${timestamp}.jpg`
+        )
+      }
+      if (validated.rciCertificateUrl) {
+        rciCertificateUrl = await maybeUploadToStorage(
+          validated.rciCertificateUrl,
+          `members/${authUser.localId}/rci-certificate-${timestamp}.pdf`
+        )
+      }
+    } catch (storageErr) {
+      console.error('Storage upload failed, falling back to raw values:', storageErr)
+      // Fall back to the original values (may be null) so the join isn't blocked
+      photoUrl = validated.photoUrl || null
+      rciCertificateUrl = validated.rciCertificateUrl || null
+    }
+
+    // 3. Create the member document in Firestore (linked to the auth user via uid)
     const member = await createMember({
+      uid: authUser.localId,
       fullName: sanitizeHtml(validated.fullName),
       email: validated.email.toLowerCase(),
       phone: validated.phone,
@@ -81,11 +118,25 @@ export async function POST(request: NextRequest) {
       transactionNumber: sanitizeHtml(validated.transactionNumber),
       message: validated.message ? sanitizeHtml(validated.message) : null,
       address: sanitizeHtml(validated.address),
-      photoUrl: validated.photoUrl || null,
-      rciCertificateUrl: validated.rciCertificateUrl || null,
+      photoUrl,
+      rciCertificateUrl,
       registrationDate: validated.registrationDate || null,
       declaration: validated.declaration,
     })
+
+    // 4. Create a users record with role 'member' so the user is recognized after login
+    try {
+      await createUserRecord({
+        uid: authUser.localId,
+        email: validated.email.toLowerCase(),
+        displayName: validated.fullName,
+        role: 'member',
+      })
+    } catch (userErr) {
+      console.error('Failed to create user role record (non-fatal):', userErr)
+      // Non-fatal: the member document was created successfully.
+      // The user can still authenticate; role will default to 'user' on first verify.
+    }
 
     return withSecurityHeaders(NextResponse.json({
       success: true,
