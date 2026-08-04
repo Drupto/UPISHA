@@ -5,7 +5,24 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Loader2, Users, ExternalLink, Search, Trash2, CheckCircle2, XCircle } from 'lucide-react'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Loader2, Users, ExternalLink, Search, Trash2, CheckCircle2, XCircle, Pencil } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface Member {
@@ -23,12 +40,36 @@ interface Member {
   declaration?: boolean | null
 }
 
+interface EditForm {
+  fullName: string
+  email: string
+  phone: string
+  membershipType: string
+  city: string
+  address: string
+  status: string
+}
+
+const membershipTypes = ['life', 'annual', 'student']
+const statuses = ['pending', 'approved', 'rejected']
+
 export default function AdminMembers() {
   const { toast } = useToast()
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [editingMember, setEditingMember] = useState<Member | null>(null)
+  const [editForm, setEditForm] = useState<EditForm>({
+    fullName: '',
+    email: '',
+    phone: '',
+    membershipType: '',
+    city: '',
+    address: '',
+    status: '',
+  })
+  const [saving, setSaving] = useState(false)
 
   const fetchMembers = async () => {
     try {
@@ -80,6 +121,51 @@ export default function AdminMembers() {
       }
     } catch {
       toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
+    }
+  }
+
+  const openEditDialog = (member: Member) => {
+    setEditingMember(member)
+    setEditForm({
+      fullName: member.fullName || '',
+      email: member.email || '',
+      phone: member.phone || '',
+      membershipType: member.membershipType || '',
+      city: member.city || '',
+      address: member.address || '',
+      status: member.status || 'pending',
+    })
+  }
+
+  const handleEditSave = async () => {
+    if (!editingMember) return
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/members/${editingMember.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: editForm.fullName,
+          email: editForm.email,
+          phone: editForm.phone,
+          membershipType: editForm.membershipType,
+          city: editForm.city,
+          address: editForm.address,
+          status: editForm.status,
+        }),
+      })
+      if (res.ok) {
+        toast({ title: 'Member updated', description: 'Member profile has been updated.' })
+        setEditingMember(null)
+        fetchMembers()
+      } else {
+        const errData = await res.json().catch(() => ({}))
+        toast({ title: 'Update failed', description: errData.error || 'Please try again.', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -185,6 +271,15 @@ export default function AdminMembers() {
                   </td>
                   <td className="py-3">
                     <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditDialog(member)}
+                        className="h-8 w-8 p-0 text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/30"
+                        title="Edit member"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
                       {member.status !== 'approved' && (
                         <Button
                           variant="outline"
@@ -227,6 +322,124 @@ export default function AdminMembers() {
           </p>
         </div>
       )}
+
+      {/* Edit Member Dialog */}
+      <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMember(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Member</DialogTitle>
+            <DialogDescription>
+              Update member profile details. Changes will be reflected on the member's dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-fullName">Full Name</Label>
+                <Input
+                  id="edit-fullName"
+                  value={editForm.fullName}
+                  onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-city">City</Label>
+                <Input
+                  id="edit-city"
+                  value={editForm.city}
+                  onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Membership Type</Label>
+                <Select
+                  value={editForm.membershipType}
+                  onValueChange={(value) => setEditForm({ ...editForm, membershipType: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {membershipTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(value) => setEditForm({ ...editForm, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statuses.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-address">Address</Label>
+              <Textarea
+                id="edit-address"
+                rows={3}
+                value={editForm.address}
+                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingMember(null)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditSave}
+              disabled={saving || !editForm.fullName || !editForm.email || !editForm.phone || !editForm.city}
+              className="bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
