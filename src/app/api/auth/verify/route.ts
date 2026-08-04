@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
       email: decodedToken.email,
       name: decodedToken.name,
       role: userRecord?.role ?? 'user',
+      emailVerified: decodedToken.emailVerified,
     })
     response.cookies.set('session', token, { 
       httpOnly: true, 

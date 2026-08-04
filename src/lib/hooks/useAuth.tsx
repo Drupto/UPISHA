@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { User } from 'firebase/auth'
-import { onAuthChange, loginUser, registerUser, logoutUser, resetPassword } from '@/lib/auth'
+import { onAuthChange, loginUser, registerUser, logoutUser, resetPassword, sendVerificationEmail } from '@/lib/auth'
 import type { UserRole } from '@/lib/firestore'
 
 interface AuthContextType {
@@ -14,6 +14,7 @@ interface AuthContextType {
   register: (email: string, password: string, displayName: string) => Promise<{ user: User; token: string }>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
+  sendVerificationEmail: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -83,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register: registerUser,
         logout: logoutUser,
         resetPassword: resetPassword,
+        sendVerificationEmail,
       }}
     >
       {children}

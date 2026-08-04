@@ -5,6 +5,7 @@ import {
   signOut, 
   onAuthStateChanged,
   sendPasswordResetEmail,
+  sendEmailVerification,
   updateProfile,
   User,
 } from 'firebase/auth'
@@ -45,6 +46,12 @@ export async function logoutUser() {
 
 export async function resetPassword(email: string) {
   await sendPasswordResetEmail(auth, email)
+}
+
+export async function sendVerificationEmail() {
+  const user = auth.currentUser
+  if (!user) throw new Error('No authenticated user')
+  await sendEmailVerification(user)
 }
 
 export function onAuthChange(callback: (user: User | null) => void) {

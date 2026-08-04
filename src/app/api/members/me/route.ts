@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getMemberByUid, updateMember } from '@/lib/firestore'
 import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
-import { requireAuth } from '@/lib/auth-helpers'
+import { requireVerifiedMember } from '@/lib/auth-helpers'
 import { profileSchema } from '@/lib/validations'
 import { uploadDataUrl } from '@/lib/storage'
 
@@ -19,7 +19,7 @@ async function maybeUploadToStorage(value: string | null | undefined, path: stri
  * Returns the authenticated member's own profile.
  */
 export async function GET(request: NextRequest) {
-  const auth = await requireAuth(request)
+  const auth = await requireVerifiedMember(request)
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
  * Only allows editing safe, self-service fields.
  */
 export async function PATCH(request: NextRequest) {
-  const auth = await requireAuth(request)
+  const auth = await requireVerifiedMember(request)
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }

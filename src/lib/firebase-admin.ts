@@ -67,5 +67,6 @@ export async function verifyToken(token: string) {
     uid: user.localId,
     email: user.email || null,
     name: user.displayName || null,
+    emailVerified: user.emailVerified === true,
   }
 }

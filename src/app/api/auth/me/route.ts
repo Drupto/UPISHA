@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
       email: decodedToken.email,
       name: decodedToken.name,
       role: userRecord?.role ?? 'user',
+      emailVerified: decodedToken.emailVerified,
     })
   } catch {
     return NextResponse.json({ authenticated: false }, { status: 401 })

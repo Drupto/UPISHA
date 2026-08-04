@@ -30,7 +30,11 @@ export default function LoginPage() {
       if (data.role === 'admin') {
         router.push('/admin')
       } else if (data.role === 'member') {
-        router.push('/member')
+        if (data.emailVerified === false) {
+          setError('Please verify your email address before accessing the member dashboard. Check your inbox for the verification link.')
+        } else {
+          router.push('/member')
+        }
       } else {
         router.push('/')
       }
