@@ -38,6 +38,18 @@ export const joinSchema = z.object({
   }),
 })
 
+export const profileSchema = z.object({
+  fullName: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
+  phone: z.string().regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/, 'Invalid phone number').optional(),
+  qualification: z.string().min(2, 'Qualification is required').max(200).optional(),
+  rciNumber: z.string().optional().nullable(),
+  city: z.string().min(2, 'City is required').max(100).optional(),
+  address: z.string().min(5, 'Address must be at least 5 characters').max(500).optional(),
+  photoUrl: z.string().optional().nullable(),
+  rciCertificateUrl: z.string().optional().nullable(),
+  registrationDate: z.string().optional().nullable(),
+})
+
 export const newsletterSchema = z.object({
   email: z.string().email('Invalid email address'),
 })
@@ -95,6 +107,7 @@ export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type ContactInput = z.infer<typeof contactSchema>
 export type JoinInput = z.infer<typeof joinSchema>
+export type ProfileInput = z.infer<typeof profileSchema>
 export type NewsletterInput = z.infer<typeof newsletterSchema>
 export type WebinarRegistrationInput = z.infer<typeof webinarRegistrationSchema>
 export type WebinarInput = z.infer<typeof webinarSchema>
