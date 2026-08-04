@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { verifyToken } from './firebase-admin'
-import { getUserByUid } from './firestore'
+import { getUserByUid, getMemberByUid } from './firestore'
 
 export async function requireAuth(request: NextRequest) {
   const sessionToken = request.headers.get('authorization')?.replace('Bearer ', '') || 
@@ -19,8 +19,11 @@ export async function requireAuth(request: NextRequest) {
 }
 
 /**
- * Require an authenticated AND email-verified member user.
- * Role must be 'member' or 'admin', and the user's email must be verified.
+ * Require an authenticated member with BOTH:
+ *   1. Email-verified, AND
+ *   2. Admin-approved (member doc status === 'approved')
+ * Role must be 'member' or 'admin'.
+ * Admins bypass the admin-approval check (they always have access).
  * Returns the decoded token on success, or a 401/403 NextResponse on failure.
  */
 export async function requireVerifiedMember(request: NextRequest) {
@@ -39,11 +42,30 @@ export async function requireVerifiedMember(request: NextRequest) {
       { status: 403 }
     )
   }
+  // Layer 1: Email verification required
   if (!decoded.emailVerified) {
     return NextResponse.json(
       { authenticated: true, error: 'Email verification required' },
       { status: 403 }
     )
+  }
+  // Layer 2: Admin approval required (only for 'member' role; admins bypass)
+  if (userRecord?.role === 'member') {
+    const member = await getMemberByUid(decoded.uid)
+    if (!member || member.status !== 'approved') {
+      const approvalStatus = member?.status || 'pending'
+      return NextResponse.json(
+        {
+          authenticated: true,
+          error: 'Forbidden: membership approval required',
+          memberStatus: approvalStatus,
+          message: approvalStatus === 'rejected'
+            ? 'Your membership application was rejected. Please contact UP ISHA for assistance.'
+            : 'Your membership application is pending admin approval. Please check back later.',
+        },
+        { status: 403 }
+      )
+    }
   }
   return decoded
 }

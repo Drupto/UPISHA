@@ -9,6 +9,7 @@ import type { UserRole } from '@/lib/firestore'
 interface AuthContextType {
   user: User | null
   role: UserRole | null
+  memberStatus: string | null
   loading: boolean
   login: (email: string, password: string) => Promise<{ user: User; token: string }>
   register: (email: string, password: string, displayName: string) => Promise<{ user: User; token: string }>
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [role, setRole] = useState<UserRole | null>(null)
+  const [memberStatus, setMemberStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (res.ok) {
               const data = await res.json()
               setRole(data.role ?? 'user')
+              setMemberStatus(data.memberStatus ?? null)
               return
             }
           } catch {
@@ -63,11 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setTimeout(fetchRole, 500)
           } else {
             setRole(null)
+            setMemberStatus(null)
           }
         }
         fetchRole()
       } else {
         setRole(null)
+        setMemberStatus(null)
       }
       setLoading(false)
     })
@@ -79,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         role,
+        memberStatus,
         loading,
         login: loginUser,
         register: registerUser,

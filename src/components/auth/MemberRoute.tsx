@@ -3,23 +3,27 @@
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useEffect, useState } from 'react'
-import { Loader2, MailCheck, MailWarning, RefreshCw } from 'lucide-react'
+import { Loader2, MailCheck, MailWarning, RefreshCw, Clock, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 /**
- * Route guard for the member panel.
- * Allows access for users with role 'member' or 'admin' whose email is verified.
+ * Route guard for the member panel with 2-layer security:
+ *   Layer 1: Email verification
+ *   Layer 2: Admin approval (member status must be 'approved')
+ * Admins bypass Layer 2 (they always have access).
  * Redirects unauthenticated users to /login and unknown roles to /.
- * Unverified members see a verification-required screen with a resend option.
  */
 export default function MemberRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { user, role, loading, sendVerificationEmail } = useAuth()
+  const { user, role, memberStatus, loading, sendVerificationEmail } = useAuth()
   const [resending, setResending] = useState(false)
   const [resendMessage, setResendMessage] = useState<string | null>(null)
 
   const isMember = role === 'member' || role === 'admin'
   const isVerified = user?.emailVerified === true
+  // Layer 2: Admin approval — member status must be 'approved'
+  // Admins bypass this check entirely
+  const isApproved = role === 'admin' || memberStatus === 'approved'
 
   useEffect(() => {
     if (!loading && !user) {
@@ -52,7 +56,7 @@ export default function MemberRoute({ children }: { children: React.ReactNode })
 
   if (!user || !isMember) return null
 
-  // Email verification required for member dashboard access
+  // ── Layer 1: Email verification required for member dashboard access ──
   if (!isVerified) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4">
@@ -94,6 +98,57 @@ export default function MemberRoute({ children }: { children: React.ReactNode })
             )}
             <p className="text-xs text-gray-500 dark:text-gray-400">
               After verifying, refresh this page to continue.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Layer 2: Admin approval required for member dashboard access ──
+  if (!isApproved) {
+    const isRejected = memberStatus === 'rejected'
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
+            isRejected
+              ? 'bg-red-100 dark:bg-red-900/30'
+              : 'bg-amber-100 dark:bg-amber-900/30'
+          }`}>
+            {isRejected ? (
+              <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+            ) : (
+              <Clock className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+            )}
+          </div>
+          <h2 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">
+            {isRejected ? 'Membership Application Rejected' : 'Pending Admin Approval'}
+          </h2>
+          {isRejected ? (
+            <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
+              Your membership application has been reviewed and was not approved at this time.
+              Please contact UP ISHA for assistance or clarification.
+            </p>
+          ) : (
+            <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
+              Your email is verified. Your membership application is currently
+              <span className="font-medium"> pending admin approval</span>.
+              Once an admin approves your membership, you'll be able to access the member portal
+              to review your profile and benefits.
+            </p>
+          )}
+          <div className="space-y-3">
+            <Button
+              onClick={() => router.push('/')}
+              className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+            >
+              Back to Website
+            </Button>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {isRejected
+                ? 'If you believe this is an error, please reach out to UP ISHA.'
+                : 'Please check back later. You will be able to access the portal once approved.'}
             </p>
           </div>
         </div>

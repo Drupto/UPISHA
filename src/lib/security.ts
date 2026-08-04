@@ -36,10 +36,10 @@ export function withSecurityHeaders(response: NextResponse): NextResponse {
 export function sanitizeHtml(input: string): string {
   if (!input) return input
   const map: Record<string, string> = {
-    '&': '&',
-    '<': '<',
-    '>': '>',
-    '"': '"',
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
     "'": '&#039;'
   }
   return input.replace(/[&<>"']/g, c => map[c])
