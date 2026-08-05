@@ -1,13 +1,14 @@
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
   sendEmailVerification,
   updateProfile,
   User,
+  Auth,
 } from 'firebase/auth'
 import { getApps } from 'firebase/app'
 import { initializeApp } from 'firebase/app'
@@ -21,45 +22,55 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-const auth = getAuth(app)
+// Lazy initialization: defer getAuth() until first runtime use so that
+// module import during build (page data collection) does not throw
+// auth/invalid-api-key when env vars are not yet available.
+let authInstance: Auth | null = null
 
-export { auth }
+function getAuthInstance(): Auth {
+  if (!authInstance) {
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+    authInstance = getAuth(app)
+  }
+  return authInstance
+}
+
+export { getAuthInstance as auth }
 
 export async function loginUser(email: string, password: string) {
-  const result = await signInWithEmailAndPassword(auth, email, password)
+  const result = await signInWithEmailAndPassword(getAuthInstance(), email, password)
   const token = await result.user.getIdToken()
   return { user: result.user, token }
 }
 
 export async function registerUser(email: string, password: string, displayName: string) {
-  const result = await createUserWithEmailAndPassword(auth, email, password)
+  const result = await createUserWithEmailAndPassword(getAuthInstance(), email, password)
   await updateProfile(result.user, { displayName })
   const token = await result.user.getIdToken()
   return { user: result.user, token }
 }
 
 export async function logoutUser() {
-  await signOut(auth)
+  await signOut(getAuthInstance())
   await fetch('/api/auth/logout', { method: 'POST' })
 }
 
 export async function resetPassword(email: string) {
-  await sendPasswordResetEmail(auth, email)
+  await sendPasswordResetEmail(getAuthInstance(), email)
 }
 
 export async function sendVerificationEmail() {
-  const user = auth.currentUser
+  const user = getAuthInstance().currentUser
   if (!user) throw new Error('No authenticated user')
   await sendEmailVerification(user)
 }
 
 export function onAuthChange(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, callback)
+  return onAuthStateChanged(getAuthInstance(), callback)
 }
 
 export async function getCurrentUserToken(): Promise<string | null> {
-  const user = auth.currentUser
+  const user = getAuthInstance().currentUser
   if (!user) return null
   return user.getIdToken()
 }

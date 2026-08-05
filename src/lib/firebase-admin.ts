@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from 'firebase/app'
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app'
 import { getFirestore, Firestore, FieldValue } from 'firebase/firestore'
 import { getStorage, FirebaseStorage } from 'firebase/storage'
 
@@ -11,21 +11,31 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
+// Lazy initialization: defer initializeApp() until first runtime use so
+// that module import during build (page data collection) does not run
+// when env vars are not yet available.
+let appInstance: FirebaseApp | null = null
+
+function getAppInstance(): FirebaseApp {
+  if (!appInstance) {
+    appInstance = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
+  }
+  return appInstance
+}
 
 let firestoreInstance: Firestore | null = null
 let storageInstance: FirebaseStorage | null = null
 
 export function getDb(): Firestore {
   if (!firestoreInstance) {
-    firestoreInstance = getFirestore(app)
+    firestoreInstance = getFirestore(getAppInstance())
   }
   return firestoreInstance
 }
 
 export function getStorageInstance(): FirebaseStorage {
   if (!storageInstance) {
-    storageInstance = getStorage(app)
+    storageInstance = getStorage(getAppInstance())
   }
   return storageInstance
 }

@@ -17,11 +17,35 @@ import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { upcomingWebinars } from '@/lib/static-data'
 import Link from 'next/link'
+import type { Webinar } from '@/lib/types'
 
 /* ─── Webinars Section ─── */
 export function WebinarsSection() {
+  const [webinars, setWebinars] = useState<Webinar[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchWebinars = async () => {
+      try {
+        const res = await fetch('/api/webinars')
+        if (res.ok) {
+          const data = await res.json()
+          // Show only first 3 webinars on landing page
+          setWebinars((data.webinars || []).slice(0, 3))
+        } else {
+          setError('Failed to load webinars')
+        }
+      } catch {
+        setError('Failed to load webinars')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchWebinars()
+  }, [])
+
   return (
     <section className="py-16 md:py-20 bg-gradient-to-br from-upisha-teal-light via-white to-upisha-gold-light dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 border-t-2 border-t-upisha-teal/10">
       <div className="max-w-7xl mx-auto px-4">
@@ -60,58 +84,73 @@ export function WebinarsSection() {
             </Link>
           </div>
           <div className="lg:col-span-2 space-y-4">
-            {upcomingWebinars.map((webinar, i) => (
-              <motion.div
-                key={webinar.title}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card className="hover:shadow-lg transition-all duration-300 group border-l-4 border-l-upisha-teal dark:bg-gray-800 dark:border-gray-700 dark:border-l-upisha-teal shadow-sm hover:shadow-md">
-                  <CardContent className="p-5">
-                    <div className="flex items-start gap-4">
-                      <div className="shrink-0 w-14 h-14 bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/20 rounded-xl flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
-                        <PlayCircle className="h-7 w-7 text-upisha-teal group-hover:text-white transition-colors" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-upisha-navy dark:text-white mb-1 group-hover:text-upisha-teal transition-colors">
-                          {webinar.title}
-                        </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                          Speaker: <span className="font-medium">{webinar.speaker}</span>
-                        </p>
-                        <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5 text-upisha-gold" />
-                            {webinar.date}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5 text-upisha-gold" />
-                            {webinar.time}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Activity className="h-3.5 w-3.5 text-upisha-gold" />
-                            {webinar.duration}
-                          </span>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="h-8 w-8 border-4 border-upisha-teal border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <AlertCircle className="h-10 w-10 text-red-400 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">{error}</p>
+              </div>
+            ) : webinars.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No upcoming webinars at this time.</p>
+              </div>
+            ) : (
+              webinars.map((webinar, i) => (
+                <motion.div
+                  key={webinar.id || i}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  viewport={{ once: true }}
+                >
+                  <Card className="hover:shadow-lg transition-all duration-300 group border-l-4 border-l-upisha-teal dark:bg-gray-800 dark:border-gray-700 dark:border-l-upisha-teal shadow-sm hover:shadow-md">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4">
+                        <div className="shrink-0 w-14 h-14 bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/20 rounded-xl flex items-center justify-center group-hover:bg-upisha-teal transition-colors">
+                          <PlayCircle className="h-7 w-7 text-upisha-teal group-hover:text-white transition-colors" />
                         </div>
-                      </div>
-                      <Link
-                        href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}
-                      >
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="shrink-0 border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-upisha-navy dark:text-white mb-1 group-hover:text-upisha-teal transition-colors">
+                            {webinar.title}
+                          </h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                            Speaker: <span className="font-medium">{webinar.speaker}</span>
+                          </p>
+                          <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5 text-upisha-gold" />
+                              {webinar.date}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5 text-upisha-gold" />
+                              {webinar.time}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Activity className="h-3.5 w-3.5 text-upisha-gold" />
+                              {webinar.duration}
+                            </span>
+                          </div>
+                        </div>
+                        <Link
+                          href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}
                         >
-                          Register
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="shrink-0 border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
+                          >
+                            Register
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </div>
