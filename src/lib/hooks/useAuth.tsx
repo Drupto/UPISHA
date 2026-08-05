@@ -27,56 +27,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthChange(async (user) => {
-      setUser(user)
-      if (user) {
-        // Automatically verify the user to restore the session cookie
-        // This ensures users remain signed in after browser refresh
-        const token = await user.getIdToken()
-        try {
-          await fetch('/api/auth/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token }),
-            // Use no-cache to ensure we get the latest session state
-            cache: 'no-store',
-          })
-        } catch {
-          // If verification fails, continue with retries for role fetch
-        }
-
-        // The session cookie is set by /api/auth/verify AFTER the auth state
-        // change fires, so retry fetching the role until the cookie is available.
-        let attempts = 0
-        const maxAttempts = 5
-        const fetchRole = async (): Promise<void> => {
+    let unsubscribe: (() => void) | undefined
+    try {
+      unsubscribe = onAuthChange(async (user) => {
+        setUser(user)
+        if (user) {
+          // Automatically verify the user to restore the session cookie
+          // This ensures users remain signed in after browser refresh
+          const token = await user.getIdToken()
           try {
-            const res = await fetch('/api/auth/me')
-            if (res.ok) {
-              const data = await res.json()
-              setRole(data.role ?? 'user')
-              setMemberStatus(data.memberStatus ?? null)
-              return
-            }
+            await fetch('/api/auth/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token }),
+              // Use no-cache to ensure we get the latest session state
+              cache: 'no-store',
+            })
           } catch {
-            // fall through to retry
+            // If verification fails, continue with retries for role fetch
           }
-          attempts++
-          if (attempts < maxAttempts) {
-            setTimeout(fetchRole, 500)
-          } else {
-            setRole(null)
-            setMemberStatus(null)
+
+          // The session cookie is set by /api/auth/verify AFTER the auth state
+          // change fires, so retry fetching the role until the cookie is available.
+          let attempts = 0
+          const maxAttempts = 5
+          const fetchRole = async (): Promise<void> => {
+            try {
+              const res = await fetch('/api/auth/me')
+              if (res.ok) {
+                const data = await res.json()
+                setRole(data.role ?? 'user')
+                setMemberStatus(data.memberStatus ?? null)
+                return
+              }
+            } catch {
+              // fall through to retry
+            }
+            attempts++
+            if (attempts < maxAttempts) {
+              setTimeout(fetchRole, 500)
+            } else {
+              setRole(null)
+              setMemberStatus(null)
+            }
           }
+          fetchRole()
+        } else {
+          setRole(null)
+          setMemberStatus(null)
         }
-        fetchRole()
-      } else {
-        setRole(null)
-        setMemberStatus(null)
-      }
+        setLoading(false)
+      })
+    } catch {
+      // Firebase env vars may not be configured (e.g. during build or
+      // on Netlify if NEXT_PUBLIC_FIREBASE_* are not set). Gracefully
+      // set loading=false so the page renders without auth.
       setLoading(false)
-    })
-    return unsubscribe
+    }
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
   }, [])
 
   return (
