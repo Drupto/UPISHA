@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
@@ -214,11 +215,11 @@ export default function AdminAnnouncementsPage() {
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                         Date *
                       </label>
-                      <Input
-                        required
-                        placeholder="e.g. 15 Mar 2026"
+                      <DatePicker
                         value={form.date}
-                        onChange={(e) => setForm({ ...form, date: e.target.value })}
+                        onChange={(value) => setForm({ ...form, date: value })}
+                        placeholder="Select announcement date"
+                        required
                       />
                     </div>
                   </div>

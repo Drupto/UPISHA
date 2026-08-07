@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
@@ -387,11 +388,12 @@ export default function AdminWebinarsPage() {
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                               Date *
                             </label>
-                            <Input
-                              required
-                              type="date"
+                            <DatePicker
                               value={webinarForm.date}
-                              onChange={(e) => setWebinarForm({ ...webinarForm, date: e.target.value })}
+                              onChange={(value) => setWebinarForm({ ...webinarForm, date: value })}
+                              placeholder="Select webinar date"
+                              isoValue
+                              required
                             />
                           </div>
                           <div>

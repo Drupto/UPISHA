@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
@@ -216,11 +217,11 @@ export default function AdminEventsPage() {
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                         Date *
                       </label>
-                      <Input
-                        required
-                        placeholder="e.g. 15-17 Oct 2026"
+                      <DatePicker
                         value={form.date}
-                        onChange={(e) => setForm({ ...form, date: e.target.value })}
+                        onChange={(value) => setForm({ ...form, date: value })}
+                        placeholder="Select event date"
+                        required
                       />
                     </div>
                   </div>
@@ -273,11 +274,12 @@ export default function AdminEventsPage() {
                           <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                             Countdown Date/Time *
                           </label>
-                          <Input
-                            required={form.countdownEnabled}
-                            type="datetime-local"
+                          <DatePicker
                             value={form.countdownDate}
-                            onChange={(e) => setForm({ ...form, countdownDate: e.target.value })}
+                            onChange={(value) => setForm({ ...form, countdownDate: value })}
+                            placeholder="Select countdown date & time"
+                            withTime
+                            required={form.countdownEnabled}
                           />
                         </div>
                         <div>
