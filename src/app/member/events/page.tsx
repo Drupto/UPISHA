@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Loader2, MapPin } from 'lucide-react'
+import { formatEventDate } from '@/lib/date-utils'
 
 interface EventItem {
   id: string
@@ -63,7 +64,7 @@ export default function MemberEventsPage() {
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                   <Calendar className="h-4 w-4 text-upisha-teal" />
-                  {new Date(event.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                  {formatEventDate(event.date)}
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                   <MapPin className="h-4 w-4 text-upisha-teal" />

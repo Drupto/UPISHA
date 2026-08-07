@@ -4,19 +4,27 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  Calendar, ArrowRight, Megaphone, MapPin, X,
+  Calendar, ArrowRight, MapPin, X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { announcements as staticAnnouncements } from '@/lib/static-data'
-import type { Announcement } from '@/lib/types'
+import { announcements as staticAnnouncements, eventsTimeline as staticEvents } from '@/lib/static-data'
+import type { Announcement, TimelineEvent } from '@/lib/types'
+import { formatShortDate, formatEventDate } from '@/lib/date-utils'
+
+interface SidebarEvent {
+  title: string
+  date: string
+  location: string
+}
 
 /* ─── Announcement Section ─── */
 export function AnnouncementSection() {
   const [announcements, setAnnouncements] = useState(staticAnnouncements)
+  const [sidebarEvents, setSidebarEvents] = useState<SidebarEvent[]>([])
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null)
 
   useEffect(() => {
@@ -29,6 +37,39 @@ export function AnnouncementSection() {
         }
       })
       .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  // Fetch events for the News & Events sidebar
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/events')
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data) => {
+        if (!cancelled && data.events?.length) {
+          setSidebarEvents(data.events.slice(0, 3).map((e: TimelineEvent) => ({
+            title: e.title,
+            date: e.date,
+            location: e.location,
+          })))
+        } else if (!cancelled) {
+          // Fallback to static events
+          setSidebarEvents(staticEvents.slice(0, 3).map((e) => ({
+            title: e.title,
+            date: e.date,
+            location: e.location,
+          })))
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSidebarEvents(staticEvents.slice(0, 3).map((e) => ({
+            title: e.title,
+            date: e.date,
+            location: e.location,
+          })))
+        }
+      })
     return () => { cancelled = true }
   }, [])
 
@@ -51,13 +92,22 @@ export function AnnouncementSection() {
                   transition={{ delay: i * 0.1 }}
                   viewport={{ once: true }}
                   onClick={() => setSelectedAnnouncement(item)}
-                  className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group cursor-pointer"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setSelectedAnnouncement(item)
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View announcement: ${item.title}`}
+                  className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group cursor-pointer focus:outline-none focus:ring-2 focus:ring-upisha-teal/50"
                 >
                   <div className="shrink-0 w-16 text-center">
                     <div className="bg-upisha-teal-light dark:bg-upisha-teal/20 rounded-lg p-2">
                       <Calendar className="h-5 w-5 text-upisha-teal mx-auto" />
                       <div className="text-xs text-upisha-teal font-medium mt-1">
-                        {String(item.date).split(' ').slice(0, 2).join(' ')}
+                        {formatShortDate(item.date)}
                       </div>
                     </div>
                   </div>
@@ -94,42 +144,34 @@ export function AnnouncementSection() {
             </div>
             <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top">
               <CardContent className="p-5 space-y-4">
-                <div className="space-y-1">
-                  <h4 className="font-semibold text-upisha-navy dark:text-white">UP ISHACON 2026</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" /> October 18-20, 2026
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5" /> Lucknow, UP
-                  </p>
-                </div>
-                <Separator className="dark:bg-gray-700" />
-                <div className="space-y-1">
-                  <h4 className="font-semibold text-upisha-navy dark:text-white">World Hearing Day 2026</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" /> March 3, 2026
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5" /> Across UP
-                  </p>
-                </div>
-                <Separator className="dark:bg-gray-700" />
-                <div className="space-y-1">
-                  <h4 className="font-semibold text-upisha-navy dark:text-white">Pediatric SLP Workshop</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" /> April 12, 2026
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5" /> Varanasi, UP
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-upisha-teal text-upisha-teal hover:bg-upisha-teal-light"
-                >
-                  View All Events
-                </Button>
+                {sidebarEvents.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No upcoming events at this time.</p>
+                ) : (
+                  sidebarEvents.map((event, i) => (
+                    <div key={i}>
+                      {i > 0 && <Separator className="dark:bg-gray-700 mb-4" />}
+                      <div className="space-y-1">
+                        <h4 className="font-semibold text-upisha-navy dark:text-white">{event.title}</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5" /> {formatEventDate(event.date)}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5" /> {event.location}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <Link href="/events" className="block">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-upisha-teal text-upisha-teal hover:bg-upisha-teal-light"
+                  >
+                    View All Events
+                    <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -167,11 +209,7 @@ export function AnnouncementSection() {
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Date</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                    {new Date(selectedAnnouncement.date).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
+                    {formatEventDate(selectedAnnouncement.date)}
                   </p>
                 </div>
               </div>
@@ -197,4 +235,3 @@ export function AnnouncementSection() {
     </section>
   )
 }
-

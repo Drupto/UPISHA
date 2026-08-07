@@ -2,28 +2,26 @@
 
 import { useState, useEffect } from 'react'
 import React from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
-  Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
-  Heart, Stethoscope, GraduationCap, Globe, Facebook, Twitter, Instagram,
-  Linkedin, Youtube, Send, Clock, Calendar, ArrowRight, CheckCircle2,
-  Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote,
-  Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
-  PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
-  Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
-  PhoneCall, Building, Mailbox, Zap,
+  Calendar, ArrowRight, Share2, MapPinned, Users, Clock, MapPin,
+  Trophy, Microscope, Megaphone, PlayCircle, GraduationCap, Bell,
+  BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
+  Heart, Stethoscope, Globe, Shield, Activity, Building, Mailbox,
+  PhoneCall, Timer, Sparkles, Search, AlertCircle, Lightbulb, Newspaper,
+  TrendingUp, HandHeart, Star, Briefcase, ExternalLink, Download, Eye, Quote,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { eventsTimeline as staticEvents } from '@/lib/static-data'
 import { AnimatedSection } from '@/components/sections/AnimatedSection'
 import { SectionHeading } from '@/components/sections/SectionHeading'
 import { EventCalendar } from '@/components/sections/EventCalendar'
+import { isEventLive } from '@/lib/date-utils'
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Trophy, Microscope, Megaphone, PlayCircle, GraduationCap, Calendar, Bell,
@@ -65,25 +63,6 @@ export default function EventsTimelineSection() {
     Webinar: 'bg-blue-100 text-blue-700 border-blue-200',
   }
 
-  // Check if event is happening today or within the current week
-  const isEventLive = (dateStr: string): boolean => {
-    const now = new Date()
-    const startOfWeek = new Date(now)
-    startOfWeek.setDate(now.getDate() - now.getDay())
-    startOfWeek.setHours(0, 0, 0, 0)
-    const endOfWeek = new Date(startOfWeek)
-    endOfWeek.setDate(startOfWeek.getDate() + 7)
-
-    // Parse date strings like '18-20 Oct 2026', '25 Mar 2026', '03 Mar 2026'
-    const parts = dateStr.match(/(\d{1,2})(?:-\d{1,2})?\s+([A-Za-z]+)\s+(\d{4})/)
-    if (!parts) return false
-    const day = parseInt(parts[1], 10)
-    const month = new Date(`${parts[2]} 1, ${parts[3]}`).getMonth()
-    const year = parseInt(parts[3], 10)
-    const eventDate = new Date(year, month, day)
-
-    return eventDate >= startOfWeek && eventDate <= endOfWeek
-  }
 
   const handleShareEvent = (event: typeof staticEvents[0]) => {
     if (navigator.share) {
@@ -207,7 +186,7 @@ export default function EventsTimelineSection() {
             <CardContent className="p-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-9 h-9 rounded-lg bg-upisha-gold/10 flex items-center justify-center">
-                  <Bell className="h-4.5 w-4.5 text-upisha-gold" />
+                  <Bell className="h-5 w-5 text-upisha-gold" />
                 </div>
                 <div>
                   <p className="text-lg font-bold text-upisha-navy dark:text-white">{events.length}</p>
@@ -232,10 +211,13 @@ export default function EventsTimelineSection() {
         </div>
 
         <div className="text-center mt-12">
-          <Button className="bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md">
-            <Calendar className="h-4 w-4 mr-2" />
-            View Full Calendar
-          </Button>
+          <Link href="/events" className="inline-block">
+            <Button className="bg-upisha-teal hover:bg-upisha-teal-dark text-white shadow-sm hover:shadow-md">
+              <Calendar className="h-4 w-4 mr-2" />
+              View Full Calendar
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </Link>
         </div>
       </div>
 

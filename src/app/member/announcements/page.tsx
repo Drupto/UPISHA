@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Megaphone, Loader2, Calendar } from 'lucide-react'
+import { formatEventDate } from '@/lib/date-utils'
 
 interface AnnouncementItem {
   id: string
@@ -67,7 +68,7 @@ export default function MemberAnnouncementsPage() {
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                   <Calendar className="h-4 w-4" />
-                  {new Date(announcement.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                  {formatEventDate(announcement.date)}
                 </div>
                 {announcement.content && (
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 whitespace-pre-wrap">{announcement.content}</p>

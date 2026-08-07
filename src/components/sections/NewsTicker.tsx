@@ -1,22 +1,29 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
-import {
-  Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
-  Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
-  Heart, Stethoscope, GraduationCap, Globe, Facebook, Twitter, Instagram,
-  Linkedin, Youtube, Send, Clock, Calendar, ArrowRight, CheckCircle2,
-  Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote,
-  Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
-  PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
-  Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
-  PhoneCall, Building, Mailbox, Zap,
-} from 'lucide-react'
-import { newsTickerItems } from '@/lib/static-data'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { Megaphone } from 'lucide-react'
 
 /* ─── News Ticker ─── */
 export function NewsTicker() {
+  const [items, setItems] = useState<string[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/announcements')
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data) => {
+        if (!cancelled && data.announcements?.length) {
+          // Use the first 5 announcements as ticker items
+          setItems(data.announcements.slice(0, 5).map((a: { title: string }) => a.title))
+        }
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  if (items.length === 0) return null
+
   return (
     <div className="bg-upisha-navy dark:bg-gray-950 text-white py-2.5 overflow-hidden border-b border-upisha-teal/30">
       <div className="max-w-7xl mx-auto px-4 flex items-center gap-4">
@@ -30,7 +37,7 @@ export function NewsTicker() {
             animate={{ x: ['0%', '-50%'] }}
             transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
           >
-            {[...newsTickerItems, ...newsTickerItems].map((item, i) => (
+            {[...items, ...items].map((item, i) => (
               <span key={i} className="text-sm text-gray-200 flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-upisha-gold" />
                 {item}
@@ -42,4 +49,3 @@ export function NewsTicker() {
     </div>
   )
 }
-

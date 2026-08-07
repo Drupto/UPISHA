@@ -1,63 +1,24 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
-import {
-  Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
-  Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
-  Heart, Stethoscope, GraduationCap, Globe, Facebook, Twitter, Instagram,
-  Linkedin, Youtube, Send, Clock, Calendar, ArrowRight, CheckCircle2,
-  Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote,
-  Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
-  PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
-  Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
-  PhoneCall, Building, Mailbox, Zap,
-} from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useMemo } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { eventsTimeline } from '@/lib/static-data'
+import { eventsTimeline as staticEvents } from '@/lib/static-data'
+import type { TimelineEvent } from '@/lib/types'
+import { parseEventDates } from '@/lib/date-utils'
 
 /* ─── Event Calendar Mini-View ─── */
-export function parseEventDates(dateStr: string): { year: number; month: number; days: number[] }[] {
-  // Parse formats like '18-20 Oct 2026', '25 Mar 2026', '03 Mar 2026'
-  const results: { year: number; month: number; days: number[] }[] = []
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-  // Try matching "DD-DD Mon YYYY" (range)
-  const rangeMatch = dateStr.match(/^(\d{1,2})-(\d{1,2})\s+(\w{3})\s+(\d{4})$/)
-  if (rangeMatch) {
-    const startDay = parseInt(rangeMatch[1])
-    const endDay = parseInt(rangeMatch[2])
-    const monthIdx = monthNames.indexOf(rangeMatch[3])
-    const year = parseInt(rangeMatch[4])
-    if (monthIdx !== -1) {
-      const days: number[] = []
-      for (let d = startDay; d <= endDay; d++) days.push(d)
-      results.push({ year, month: monthIdx, days })
-    }
-    return results
-  }
-
-  // Try matching "DD Mon YYYY"
-  const singleMatch = dateStr.match(/^(\d{1,2})\s+(\w{3})\s+(\d{4})$/)
-  if (singleMatch) {
-    const day = parseInt(singleMatch[1])
-    const monthIdx = monthNames.indexOf(singleMatch[2])
-    const year = parseInt(singleMatch[3])
-    if (monthIdx !== -1) {
-      results.push({ year, month: monthIdx, days: [day] })
-    }
-  }
-
-  return results
-}
-
-export function EventCalendar({ onEventClick }: { onEventClick: (event: typeof eventsTimeline[0]) => void }) {
+export function EventCalendar({ onEventClick, events }: {
+  onEventClick: (event: TimelineEvent) => void
+  events?: TimelineEvent[]
+}) {
   const [currentDate, setCurrentDate] = useState(() => new Date())
   const [hoveredDay, setHoveredDay] = useState<number | null>(null)
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null)
-  const [tooltipEvents, setTooltipEvents] = useState<typeof eventsTimeline>([])
+  const [tooltipEvents, setTooltipEvents] = useState<TimelineEvent[]>([])
+
+  const calendarEvents = events && events.length > 0 ? events : staticEvents
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -65,8 +26,8 @@ export function EventCalendar({ onEventClick }: { onEventClick: (event: typeof e
 
   // Build event map: key = "YYYY-MM-DD" → events[]
   const eventMap = useMemo(() => {
-    const map: Record<string, typeof eventsTimeline> = {}
-    eventsTimeline.forEach((event) => {
+    const map: Record<string, TimelineEvent[]> = {}
+    calendarEvents.forEach((event) => {
       const parsed = parseEventDates(event.date)
       parsed.forEach((p) => {
         p.days.forEach((day) => {
@@ -77,7 +38,7 @@ export function EventCalendar({ onEventClick }: { onEventClick: (event: typeof e
       })
     })
     return map
-  }, [])
+  }, [calendarEvents])
 
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
   const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']

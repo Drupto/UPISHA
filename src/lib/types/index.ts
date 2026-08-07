@@ -221,6 +221,10 @@ export interface EventDoc {
   date: string
   location: string
   description?: string | null
+  type?: string
+  time?: string
+  speakers?: string[]
+  icon?: unknown
   isActive?: boolean
   countdownEnabled?: boolean
   countdownDate?: string | null

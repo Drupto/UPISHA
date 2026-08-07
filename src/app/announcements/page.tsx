@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Calendar, Megaphone, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Calendar, Megaphone, AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AnimatedSection } from '@/components/sections'
+import { formatEventDate } from '@/lib/date-utils'
 
 interface AnnouncementItem {
   id: string
@@ -22,6 +23,7 @@ export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [visibleCount, setVisibleCount] = useState(10)
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
@@ -83,7 +85,7 @@ export default function AnnouncementsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {announcements.map((announcement, index) => (
+            {announcements.slice(0, visibleCount).map((announcement, index) => (
               <motion.div
                 key={announcement.id || index}
                 initial={{ opacity: 0, y: 20 }}
@@ -105,11 +107,7 @@ export default function AnnouncementsPage() {
                     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <Calendar className="h-4 w-4 text-upisha-teal" />
                       <span>
-                        {new Date(announcement.date).toLocaleDateString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
+                        {formatEventDate(announcement.date)}
                       </span>
                     </div>
                     {announcement.content && (
@@ -125,6 +123,16 @@ export default function AnnouncementsPage() {
         )}
 
         <div className="mt-12 text-center">
+          {visibleCount < announcements.length && (
+            <Button
+              variant="outline"
+              className="mb-6 border-upisha-teal text-upisha-teal hover:bg-upisha-teal-light"
+              onClick={() => setVisibleCount(prev => prev + 10)}
+            >
+              Load More Announcements
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
           <Link href="/" className="text-sm text-gray-500 hover:text-upisha-teal transition-colors inline-flex items-center gap-1.5">
             <ArrowLeft className="h-4 w-4" />
             Back to Home
