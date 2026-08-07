@@ -315,6 +315,7 @@ export async function upsertNewsletterSubscriber(email: string) {
     {
       email: email.toLowerCase(),
       isActive: true,
+      createdAt: new Date(),
       updatedAt: new Date(),
     },
     { merge: true }
@@ -326,7 +327,16 @@ export async function getNewsletterSubscribers() {
   const snapshot = await getDocs(
     query(collection(db(), 'newsletterSubscribers'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
   )
-  const subscribers = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  const subscribers = snapshot.docs.map((doc) => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      email: data.email,
+      isActive: data.isActive,
+      createdAt: data.createdAt?.toDate?.() || data.createdAt || new Date(),
+      updatedAt: data.updatedAt?.toDate?.() || data.updatedAt || new Date(),
+    }
+  })
   return { subscribers, count: subscribers.length }
 }
 
