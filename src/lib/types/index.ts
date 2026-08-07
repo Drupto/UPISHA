@@ -131,6 +131,10 @@ export interface TimelineEvent {
   speakers: string[]
   registrationLink: string
   isActive?: boolean
+  countdownEnabled?: boolean
+  countdownDate?: string | null
+  badgeLabel?: string | null
+  registrationLabel?: string | null
 }
 
 export interface MemberSpotlight {
@@ -218,6 +222,11 @@ export interface EventDoc {
   location: string
   description?: string | null
   isActive?: boolean
+  countdownEnabled?: boolean
+  countdownDate?: string | null
+  badgeLabel?: string | null
+  registrationLink?: string | null
+  registrationLabel?: string | null
   createdAt?: Date
   updatedAt?: Date
 }

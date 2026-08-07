@@ -54,6 +54,11 @@ export interface EventDoc {
   location: string
   description?: string | null
   isActive?: boolean
+  countdownEnabled?: boolean
+  countdownDate?: string | null
+  badgeLabel?: string | null
+  registrationLink?: string | null
+  registrationLabel?: string | null
   createdAt?: FieldValue | Date
   updatedAt?: FieldValue | Date
 }
@@ -274,6 +279,11 @@ export async function createEvent(data: EventDoc) {
     createdAt: data.createdAt ?? new Date(),
     updatedAt: data.updatedAt ?? new Date(),
     description: data.description ?? null,
+    countdownEnabled: data.countdownEnabled ?? false,
+    countdownDate: data.countdownDate ?? null,
+    badgeLabel: data.badgeLabel ?? null,
+    registrationLink: data.registrationLink ?? null,
+    registrationLabel: data.registrationLabel ?? null,
   })
   return { id: ref.id }
 }

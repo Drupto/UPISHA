@@ -94,6 +94,11 @@ export const eventSchema = z.object({
   location: z.string().min(2, 'Location must be at least 2 characters').max(200),
   description: z.string().max(5000).optional().nullable(),
   isActive: z.boolean().optional().default(true),
+  countdownEnabled: z.boolean().optional().default(false),
+  countdownDate: z.string().optional().nullable(),
+  badgeLabel: z.string().max(100).optional().nullable(),
+  registrationLink: z.string().max(500).optional().nullable(),
+  registrationLabel: z.string().max(100).optional().nullable(),
 })
 
 export const announcementSchema = z.object({

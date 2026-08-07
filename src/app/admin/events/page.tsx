@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Calendar, Plus, Pencil, Trash2, MapPin, X, Loader2, Search
+  Calendar, Plus, Pencil, Trash2, MapPin, X, Loader2, Search, Timer
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +20,11 @@ interface EventItem {
   location: string
   description?: string | null
   isActive?: boolean
+  countdownEnabled?: boolean
+  countdownDate?: string | null
+  badgeLabel?: string | null
+  registrationLink?: string | null
+  registrationLabel?: string | null
   createdAt?: Date
 }
 
@@ -35,6 +40,11 @@ export default function AdminEventsPage() {
     location: '',
     description: '',
     isActive: true,
+    countdownEnabled: false,
+    countdownDate: '',
+    badgeLabel: '',
+    registrationLink: '',
+    registrationLabel: '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -81,7 +91,7 @@ export default function AdminEventsPage() {
         })
         setShowForm(false)
         setEditing(null)
-        setForm({ title: '', date: '', location: '', description: '', isActive: true })
+        setForm({ title: '', date: '', location: '', description: '', isActive: true, countdownEnabled: false, countdownDate: '', badgeLabel: '', registrationLink: '', registrationLabel: '' })
         fetchEvents()
       } else {
         const err = await res.json().catch(() => ({}))
@@ -102,6 +112,11 @@ export default function AdminEventsPage() {
       location: event.location,
       description: event.description || '',
       isActive: event.isActive ?? true,
+      countdownEnabled: event.countdownEnabled ?? false,
+      countdownDate: event.countdownDate || '',
+      badgeLabel: event.badgeLabel || '',
+      registrationLink: event.registrationLink || '',
+      registrationLabel: event.registrationLabel || '',
     })
     setShowForm(true)
   }
@@ -159,7 +174,7 @@ export default function AdminEventsPage() {
         <Button
           onClick={() => {
             setEditing(null)
-            setForm({ title: '', date: '', location: '', description: '', isActive: true })
+            setForm({ title: '', date: '', location: '', description: '', isActive: true, countdownEnabled: false, countdownDate: '', badgeLabel: '', registrationLink: '', registrationLabel: '' })
             setShowForm(!showForm)
           }}
           className="bg-upisha-teal hover:bg-upisha-teal-dark text-white"
@@ -241,6 +256,63 @@ export default function AdminEventsPage() {
                       onCheckedChange={(checked) => setForm({ ...form, isActive: checked })}
                     />
                   </div>
+                  <div className="rounded-lg border border-upisha-teal/20 p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <label className="text-sm font-medium text-upisha-navy dark:text-white">Countdown Timer</label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Show a live countdown banner for this event on the homepage</p>
+                      </div>
+                      <Switch
+                        checked={form.countdownEnabled}
+                        onCheckedChange={(checked) => setForm({ ...form, countdownEnabled: checked })}
+                      />
+                    </div>
+                    {form.countdownEnabled && (
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                            Countdown Date/Time *
+                          </label>
+                          <Input
+                            required={form.countdownEnabled}
+                            type="datetime-local"
+                            value={form.countdownDate}
+                            onChange={(e) => setForm({ ...form, countdownDate: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                            Badge Label
+                          </label>
+                          <Input
+                            placeholder="e.g. Save the Date"
+                            value={form.badgeLabel}
+                            onChange={(e) => setForm({ ...form, badgeLabel: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                            Registration Link
+                          </label>
+                          <Input
+                            placeholder="e.g. #join or https://..."
+                            value={form.registrationLink}
+                            onChange={(e) => setForm({ ...form, registrationLink: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                            Registration Button Label
+                          </label>
+                          <Input
+                            placeholder="e.g. Register Now"
+                            value={form.registrationLabel}
+                            onChange={(e) => setForm({ ...form, registrationLabel: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex gap-3">
                     <Button
                       type="submit"
@@ -298,6 +370,11 @@ export default function AdminEventsPage() {
                       <Badge variant={event.isActive !== false ? 'default' : 'secondary'} className="shrink-0 text-xs">
                         {event.isActive !== false ? 'Active' : 'Inactive'}
                       </Badge>
+                      {event.countdownEnabled && (
+                        <Badge className="shrink-0 text-xs bg-upisha-gold text-white border-0">
+                          <Timer className="h-3 w-3 mr-1" /> Countdown
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
                       <span className="flex items-center gap-1">

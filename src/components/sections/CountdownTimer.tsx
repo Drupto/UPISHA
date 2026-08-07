@@ -1,25 +1,85 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
-import {
-  Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
-  Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
-  Heart, Stethoscope, GraduationCap, Globe, Facebook, Twitter, Instagram,
-  Linkedin, Youtube, Send, Clock, Calendar, ArrowRight, CheckCircle2,
-  Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote,
-  Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
-  PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
-  Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
-  PhoneCall, Building, Mailbox, Zap,
-} from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { Timer, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
-/* ─── Event Countdown Timer ─── */
+interface CountdownEvent {
+  id?: string
+  title: string
+  date: string
+  location: string
+  description?: string | null
+  isActive?: boolean
+  countdownEnabled?: boolean
+  countdownDate?: string | null
+  badgeLabel?: string | null
+  registrationLink?: string | null
+  registrationLabel?: string | null
+}
+
+const DEFAULT_COUNTDOWN = {
+  title: 'UP ISHACON 2026',
+  subtitle: 'October 18-20, 2026 • Lucknow, Uttar Pradesh',
+  badgeLabel: 'Save the Date',
+  countdownDate: '2026-10-18T09:00:00+05:30',
+  registrationLink: '#join',
+  registrationLabel: 'Register Now',
+}
+
+function formatSubtitle(event: CountdownEvent): string {
+  if (event.date && event.location) {
+    return `${event.date} • ${event.location}`
+  }
+  if (event.date) return event.date
+  if (event.location) return event.location
+  return ''
+}
+
 export function CountdownTimer() {
-  const targetDate = new Date('2026-10-18T09:00:00+05:30').getTime()
+  const [countdownEvent, setCountdownEvent] = useState<CountdownEvent | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/events')
+        if (res.ok) {
+          const data = await res.json()
+          const events: CountdownEvent[] = data.events || []
+          const active = events.find(
+            (e) => e.isActive !== false && e.countdownEnabled && e.countdownDate
+          )
+          if (!cancelled && active) {
+            setCountdownEvent(active)
+          }
+        }
+      } catch {
+        // Fall back to default below
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const config = countdownEvent
+    ? {
+        title: countdownEvent.title,
+        subtitle: formatSubtitle(countdownEvent),
+        badgeLabel: countdownEvent.badgeLabel || DEFAULT_COUNTDOWN.badgeLabel,
+        countdownDate: countdownEvent.countdownDate || DEFAULT_COUNTDOWN.countdownDate,
+        registrationLink: countdownEvent.registrationLink || DEFAULT_COUNTDOWN.registrationLink,
+        registrationLabel: countdownEvent.registrationLabel || DEFAULT_COUNTDOWN.registrationLabel,
+      }
+    : DEFAULT_COUNTDOWN
+
+  const targetDate = new Date(config.countdownDate).getTime()
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 
   useEffect(() => {
@@ -43,6 +103,25 @@ export function CountdownTimer() {
     { label: 'Seconds', value: timeLeft.seconds },
   ]
 
+  const handleRegister = () => {
+    const link = config.registrationLink
+    if (link.startsWith('#')) {
+      document.getElementById(link.slice(1))?.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      window.open(link, '_blank', 'noopener,noreferrer')
+    }
+  }
+
+  if (loading) {
+    return (
+      <section className="py-12 md:py-16 bg-gradient-to-r from-upisha-teal to-upisha-teal-dark dark:from-gray-800 dark:to-gray-900 relative overflow-hidden border-t-2 border-t-upisha-gold/20">
+        <div className="max-w-5xl mx-auto px-4 relative flex justify-center py-8">
+          <div className="h-8 w-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-12 md:py-16 bg-gradient-to-r from-upisha-teal to-upisha-teal-dark dark:from-gray-800 dark:to-gray-900 relative overflow-hidden border-t-2 border-t-upisha-gold/20">
       {/* Decorative elements */}
@@ -55,10 +134,19 @@ export function CountdownTimer() {
         <div className="text-center mb-8">
           <Badge className="bg-white/20 text-white mb-3">
             <Timer className="h-3 w-3 mr-1" />
-            Save the Date
+            {config.badgeLabel}
           </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-white">UP ISHACON 2026</h2>
-          <p className="text-white/80 mt-2">October 18-20, 2026 • Lucknow, Uttar Pradesh</p>
+          <motion.h2
+            key={config.title}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-3xl md:text-4xl font-bold text-white"
+          >
+            {config.title}
+          </motion.h2>
+          {config.subtitle && (
+            <p className="text-white/80 mt-2">{config.subtitle}</p>
+          )}
         </div>
         <div className="grid grid-cols-4 gap-3 md:gap-6 max-w-xl mx-auto">
           {units.map((unit) => (
@@ -74,8 +162,12 @@ export function CountdownTimer() {
           ))}
         </div>
         <div className="text-center mt-8">
-          <Button size="lg" className="bg-white text-upisha-teal hover:bg-white/90 font-semibold">
-            Register Now
+          <Button
+            size="lg"
+            className="bg-white text-upisha-teal hover:bg-white/90 font-semibold"
+            onClick={handleRegister}
+          >
+            {config.registrationLabel}
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
@@ -83,4 +175,3 @@ export function CountdownTimer() {
     </section>
   )
 }
-

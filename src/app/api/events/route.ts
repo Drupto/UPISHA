@@ -35,6 +35,11 @@ export async function POST(request: NextRequest) {
       location: sanitizeHtml(validated.location),
       description: validated.description ? sanitizeHtml(validated.description) : null,
       isActive: validated.isActive,
+      countdownEnabled: validated.countdownEnabled,
+      countdownDate: validated.countdownDate,
+      badgeLabel: validated.badgeLabel ? sanitizeHtml(validated.badgeLabel) : null,
+      registrationLink: validated.registrationLink,
+      registrationLabel: validated.registrationLabel ? sanitizeHtml(validated.registrationLabel) : null,
     })
 
     return withSecurityHeaders(NextResponse.json({

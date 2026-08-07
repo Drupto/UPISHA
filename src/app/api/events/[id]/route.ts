@@ -23,6 +23,8 @@ export async function PUT(
       title: validated.title ? sanitizeHtml(validated.title) : undefined,
       location: validated.location ? sanitizeHtml(validated.location) : undefined,
       description: validated.description ? sanitizeHtml(validated.description) : undefined,
+      badgeLabel: validated.badgeLabel ? sanitizeHtml(validated.badgeLabel) : undefined,
+      registrationLabel: validated.registrationLabel ? sanitizeHtml(validated.registrationLabel) : undefined,
     })
 
     return withSecurityHeaders(NextResponse.json({
