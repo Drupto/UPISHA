@@ -49,14 +49,8 @@ export function FeaturesSection() {
                     <feature.icon className="h-8 w-8 text-upisha-teal group-hover:text-white transition-colors" />
                   </div>
                   <h3 className="font-bold text-upisha-navy dark:text-white mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{feature.description}</p>
-                  <Button
-                    variant="link"
-                    className="mt-3 text-upisha-teal p-0 h-auto font-semibold"
-                  >
-                    Read More <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                  </Button>
-                </CardContent>
+                   <p className="text-sm text-gray-500 dark:text-gray-400">{feature.description}</p>
+                 </CardContent>
               </Card>
             </motion.div>
           ))}

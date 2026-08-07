@@ -92,12 +92,8 @@ export function AboutSection() {
                   healthcare services provided by qualified professionals.
                 </p>
               </div>
-            </div>
-
-            <Button className="bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal">
-              Learn More <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
+             </div>
+           </div>
         </div>
 
         {/* President's Message - enhanced with avatar */}
