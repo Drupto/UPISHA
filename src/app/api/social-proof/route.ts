@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRateLimiter, SimpleCache } from '@/lib/rate-limit'
 import { getMembers, getEvents, getWebinars, getWebinarRegistrations } from '@/lib/data'
 
-// Rate limiter: 1 request per 30 seconds per IP
+// Rate limiter: 3 requests per 30 seconds per IP
+// Increased from 1 to handle dev mode hot reloads and component remounts
 const rateLimiter = createRateLimiter({
   windowMs: 30 * 1000,
-  maxRequests: 1,
+  maxRequests: 3,
 })
 
 // Cache for 5 minutes to reduce database load
