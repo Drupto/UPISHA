@@ -1,41 +1,49 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
-import {
-  Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
-  Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
-  Heart, Stethoscope, GraduationCap, Globe, Facebook, Twitter, Instagram,
-  Linkedin, Youtube, Send, Clock, Calendar, ArrowRight, CheckCircle2,
-  Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote,
-  Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
-  PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
-  Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
-  PhoneCall, Building, Mailbox, Zap,
-} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { X, Users, Calendar, UserPlus, Sparkles } from 'lucide-react'
 
 /* ─── Social Proof Notification ─── */
 export function SocialProofNotification() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
   const [dismissed, setDismissed] = useState(false)
-
-  const messages = [
-    { icon: Users, text: 'Dr. Priya from Lucknow just joined UP ISHA', emoji: '🎉' },
-    { icon: Calendar, text: '3 new events added this week', emoji: '📅' },
-    { icon: UserPlus, text: '12 professionals registered this month', emoji: '👥' },
-    { icon: Sparkles, text: 'UP ISHACON 2026 registration is now open!', emoji: '🏆' },
-  ]
+  const [notifications, setNotifications] = useState<Array<{ icon: string; text: string; emoji: string }>>([])
 
   useEffect(() => {
-    if (dismissed) return
+    async function loadData() {
+      try {
+        const response = await fetch('/api/social-proof')
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch social proof data')
+        }
+
+        const data = await response.json()
+        setNotifications(data)
+      } catch (error) {
+        console.error('Failed to load social proof data:', error)
+        // Fallback notifications on error
+        setNotifications([
+          { icon: 'users', text: 'Join our growing community', emoji: '🎉' },
+          { icon: 'calendar', text: 'Check out our upcoming events', emoji: '📅' },
+        ])
+      }
+    }
+
+    loadData()
+  }, [])
+
+  useEffect(() => {
+    if (dismissed || notifications.length === 0) return
+
     const showInterval = setInterval(() => {
       setIsVisible(true)
       setTimeout(() => setIsVisible(false), 5000)
-      setCurrentIndex((prev) => (prev + 1) % messages.length)
+      setCurrentIndex((prev) => (prev + 1) % notifications.length)
     }, 18000)
 
-    // Show first notification after 6 seconds
     const initialTimeout = setTimeout(() => {
       setIsVisible(true)
       setTimeout(() => setIsVisible(false), 5000)
@@ -45,11 +53,21 @@ export function SocialProofNotification() {
       clearInterval(showInterval)
       clearTimeout(initialTimeout)
     }
-  }, [dismissed, messages.length])
+  }, [dismissed, notifications])
 
   if (dismissed) return null
 
-  const msg = messages[currentIndex]
+  const msg = notifications[currentIndex] || { icon: 'users', text: '', emoji: '' }
+
+  // Map icon strings to Lucide components
+  const iconMap: Record<string, any> = {
+    users: Users,
+    calendar: Calendar,
+    'user-plus': UserPlus,
+    sparkles: Sparkles,
+  }
+
+  const IconComponent = iconMap[msg.icon] || Users
 
   return (
     <AnimatePresence>
@@ -63,7 +81,7 @@ export function SocialProofNotification() {
         >
           <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg border border-gray-200/60 dark:border-gray-700/60 p-3.5 flex items-start gap-3">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-upisha-teal/15 to-upisha-gold/15 flex items-center justify-center shrink-0">
-              <msg.icon className="h-4 w-4 text-upisha-teal" />
+              <IconComponent className="h-4 w-4 text-upisha-teal" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-upisha-navy dark:text-white leading-relaxed">
@@ -85,4 +103,3 @@ export function SocialProofNotification() {
     </AnimatePresence>
   )
 }
-
