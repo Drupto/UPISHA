@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createMember, getMembers, createUserRecord } from '@/lib/firestore'
 import { joinSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { uploadDataUrl } from '@/lib/storage'
 
 async function createFirebaseAuthUser(email: string, password: string, displayName: string) {
@@ -72,6 +72,10 @@ export async function POST(request: NextRequest) {
     if (!rateLimit(`join:${validated.email}`, 3, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
+
+    // CSRF protection
+    const csrfError = withCsrfProtection(request)
+    if (csrfError) return csrfError
 
     // 1. Create Firebase Auth user account first
     authUser = await createFirebaseAuthUser(
@@ -157,12 +161,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
-  try {
-    const members = await getMembers()
-    return withSecurityHeaders(NextResponse.json({ members }))
-  } catch (error) {
-    console.error('Error fetching members:', error)
-    return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 }))
-  }
-}

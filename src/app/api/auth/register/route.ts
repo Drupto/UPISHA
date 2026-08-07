@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { registerUser } from '@/lib/auth'
 import { registerSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, rateLimit, withCsrfProtection } from '@/lib/security'
 
 export async function POST(request: Request) {
   try {
@@ -12,6 +12,10 @@ export async function POST(request: Request) {
     if (!rateLimit(`register:${validated.email}`, 3, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many registration attempts. Please try again later.' }, { status: 429 }))
     }
+
+    // CSRF protection
+    const csrfError = withCsrfProtection(request)
+    if (csrfError) return csrfError
 
     const { user, token } = await registerUser(validated.email, validated.password, validated.displayName)
     const response = withSecurityHeaders(NextResponse.json({ 

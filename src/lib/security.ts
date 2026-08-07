@@ -65,3 +65,16 @@ export function validateCsrfToken(request: Request): boolean {
 export function generateCsrfToken(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, '0')).join('')
 }
+
+// CSRF protection middleware for POST/PUT/DELETE endpoints
+export function withCsrfProtection(request: Request): NextResponse | null {
+  // Check if request has valid CSRF token
+  if (!validateCsrfToken(request)) {
+    return withSecurityHeaders(NextResponse.json(
+      { error: 'Invalid or missing CSRF token' },
+      { status: 403 }
+    ))
+  }
+  
+  return null // Continue with request
+}

@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getWebinars } from '@/lib/data'
 import { createWebinar, getWebinarRegistrationCount } from '@/lib/firestore'
 import { webinarSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Rate limiting for public endpoint
+    const forwarded = request.headers.get('x-forwarded-for')
+    const realIp = request.headers.get('x-real-ip')
+    const ip = forwarded ? forwarded.split(',')[0].trim() : realIp || 'anonymous'
+    
+    if (!rateLimit(`webinars:${ip}`, 30, 60 * 1000)) {
+      return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
+    }
+
     const webinars = await getWebinars()
     // Attach registration counts for capacity display
     const webinarsWithCounts = await Promise.all(
@@ -32,6 +41,10 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+
+  // CSRF protection
+  const csrfError = withCsrfProtection(request)
+  if (csrfError) return csrfError
 
   try {
     const body = await request.json()

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createContactMessage, getContactMessages } from '@/lib/firestore'
 import { contactSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
@@ -13,6 +13,10 @@ export async function POST(request: NextRequest) {
     if (!rateLimit(`contact:${validated.email}`, 3, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
+
+    // CSRF protection
+    const csrfError = withCsrfProtection(request)
+    if (csrfError) return csrfError
 
     await createContactMessage({
       name: validated.name,

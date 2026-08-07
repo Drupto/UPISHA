@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAnnouncements as fetchAnnouncements } from '@/lib/data'
 import { createAnnouncement } from '@/lib/firestore'
 import { announcementSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Rate limiting for public endpoint
+    const forwarded = request.headers.get('x-forwarded-for')
+    const realIp = request.headers.get('x-real-ip')
+    const ip = forwarded ? forwarded.split(',')[0].trim() : realIp || 'anonymous'
+    
+    if (!rateLimit(`announcements:${ip}`, 30, 60 * 1000)) {
+      return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
+    }
+
     const announcements = await fetchAnnouncements()
     return withSecurityHeaders(NextResponse.json({ announcements }))
   } catch (error) {
@@ -20,6 +29,10 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+
+  // CSRF protection
+  const csrfError = withCsrfProtection(request)
+  if (csrfError) return csrfError
 
   try {
     const body = await request.json()
