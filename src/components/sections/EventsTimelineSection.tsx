@@ -196,7 +196,8 @@ export default function EventsTimelineSection() {
               <div className="flex flex-wrap gap-1.5 mt-2">
                   {Object.entries(
                     events.reduce<Record<string, number>>((acc, e) => {
-                    acc[e.type] = (acc[e.type] || 0) + 1
+                    const eventType = e.type || 'Other'
+                    acc[eventType] = (acc[eventType] || 0) + 1
                     return acc
                   }, {})
                 ).map(([type, count]) => (
