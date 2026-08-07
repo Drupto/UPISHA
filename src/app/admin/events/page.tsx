@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
+import { eventSchema } from '@/lib/validations'
+import { sanitizeFormData } from '@/lib/sanitize'
 
 interface EventItem {
   id: string
@@ -70,10 +72,29 @@ export default function AdminEventsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.title || !form.date || !form.location) {
-      toast({ title: 'Validation error', description: 'Please fill all required fields', variant: 'destructive' })
-      return
+    
+    // Client-side validation using Zod schema
+    try {
+      const sanitizedData = sanitizeFormData(form)
+      eventSchema.parse({
+        title: sanitizedData.title,
+        date: sanitizedData.date,
+        location: sanitizedData.location,
+        description: sanitizedData.description,
+        isActive: sanitizedData.isActive,
+        countdownEnabled: sanitizedData.countdownEnabled,
+        countdownDate: sanitizedData.countdownDate,
+        badgeLabel: sanitizedData.badgeLabel,
+        registrationLink: sanitizedData.registrationLink,
+        registrationLabel: sanitizedData.registrationLabel,
+      })
+    } catch (err) {
+      if (err instanceof Error && err.name === 'ZodError') {
+        toast({ title: 'Validation error', description: 'Please check the form fields', variant: 'destructive' })
+        return
+      }
     }
+
     setSubmitting(true)
     try {
       const url = editing ? `/api/events/${editing.id}` : '/api/events'

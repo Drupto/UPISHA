@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { Ear, Loader2, AlertCircle } from 'lucide-react'
+import { Ear, Loader2, AlertCircle, Upload, FileText } from 'lucide-react'
+import { sanitizeEmail, sanitizeString, sanitizePhone } from '@/lib/sanitize'
 
 export default function RegisterPage() {
   const router = useRouter()

@@ -22,8 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, Users, ExternalLink, Search, Trash2, CheckCircle2, XCircle, Pencil } from 'lucide-react'
+import { Loader2, Users, ExternalLink, Search, Trash2, CheckCircle2, XCircle, Pencil, Download } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { sendMemberApprovalEmail } from '@/lib/email'
 
 interface Member {
   id: string
@@ -59,6 +60,8 @@ export default function AdminMembers() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(20)
   const [editingMember, setEditingMember] = useState<Member | null>(null)
   const [editForm, setEditForm] = useState<EditForm>({
     fullName: '',
@@ -100,6 +103,13 @@ export default function AdminMembers() {
       })
       if (res.ok) {
         toast({ title: `Member ${status}`, description: `Member has been ${status}.` })
+        
+        // Send email notification to member
+        const member = members.find(m => m.id === id)
+        if (member && (status === 'approved' || status === 'rejected')) {
+          await sendMemberApprovalEmail(member.email, member.fullName, status)
+        }
+        
         fetchMembers()
       } else {
         toast({ title: 'Error', description: 'Failed to update member status', variant: 'destructive' })
@@ -181,6 +191,35 @@ export default function AdminMembers() {
     )
   })
 
+  // Pagination
+  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedMembers = filteredMembers.slice(startIndex, startIndex + itemsPerPage)
+
+  const exportMembersCSV = () => {
+    const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Membership Type', 'City', 'Address', 'Registration Date', 'Status']
+    const rows = filteredMembers.map(m => [
+      m.id,
+      m.fullName,
+      m.email,
+      m.phone,
+      m.membershipType,
+      m.city,
+      m.address || '',
+      m.registrationDate || '',
+      m.status || 'pending'
+    ])
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `members-export-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast({ title: 'Export successful', description: `Exported ${filteredMembers.length} members to CSV` })
+  }
+
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-upisha-teal" /></div>
   if (error) return <div className="text-center py-12 text-red-500">{error} <button onClick={() => window.location.reload()} className="text-upisha-teal hover:underline ml-2">Retry</button></div>
 
@@ -211,119 +250,175 @@ export default function AdminMembers() {
           </CardContent>
         </Card>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">ID</th>
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Photo</th>
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Name</th>
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Email</th>
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Phone</th>
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Type</th>
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">City</th>
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Reg. Date</th>
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">RCI Cert</th>
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredMembers.map((member) => (
-                <tr key={member.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <td className="py-3 font-mono text-xs text-gray-500">{member.id}</td>
-                  <td className="py-3">
-                    {member.photoUrl ? (
-                      <img
-                        src={member.photoUrl}
-                        alt={member.fullName}
-                        className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-500">
-                        N/A
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-3 font-medium">{member.fullName}</td>
-                  <td className="py-3 text-gray-500">{member.email}</td>
-                  <td className="py-3 text-gray-500">{member.phone}</td>
-                  <td className="py-3"><Badge variant="outline">{member.membershipType}</Badge></td>
-                  <td className="py-3 text-gray-500">{member.city}</td>
-                  <td className="py-3 text-gray-500 whitespace-nowrap">
-                    {member.registrationDate || '-'}
-                  </td>
-                  <td className="py-3">
-                    {member.rciCertificateUrl ? (
-                      <a
-                        href={member.rciCertificateUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-upisha-teal hover:underline inline-flex items-center gap-1"
-                      >
-                        View <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </td>
-                  <td className="py-3">
-                    <Badge className={member.status === 'approved' ? 'bg-green-100 text-green-700' : member.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
-                      {member.status || 'pending'}
-                    </Badge>
-                  </td>
-                  <td className="py-3">
-                    <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditDialog(member)}
-                        className="h-8 w-8 p-0 text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/30"
-                        title="Edit member"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      {member.status !== 'approved' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStatusChange(member.id, 'approved')}
-                          className="h-8 w-8 p-0 text-green-600 border-green-200 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-900/30"
-                          title="Approve member"
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      {member.status !== 'rejected' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStatusChange(member.id, 'rejected')}
-                          className="h-8 w-8 p-0 text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-900/30"
-                          title="Reject member"
-                        >
-                          <XCircle className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(member.id)}
-                        className="h-8 w-8 p-0 text-red-500 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
-                        title="Delete member"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </td>
+        <>
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-gray-500">
+              Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredMembers.length)} of {filteredMembers.length} members
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportMembersCSV}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left">
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">ID</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Photo</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Name</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Email</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Phone</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Type</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">City</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Reg. Date</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">RCI Cert</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="text-xs text-gray-400 mt-2">
-            Showing {filteredMembers.length} of {members.length} members
-          </p>
-        </div>
+              </thead>
+              <tbody>
+                {paginatedMembers.map((member) => (
+                  <tr key={member.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-3 font-mono text-xs text-gray-500">{member.id}</td>
+                    <td className="py-3">
+                      {member.photoUrl ? (
+                        <img
+                          src={member.photoUrl}
+                          alt={member.fullName}
+                          className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-500">
+                          N/A
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 font-medium">{member.fullName}</td>
+                    <td className="py-3 text-gray-500">{member.email}</td>
+                    <td className="py-3 text-gray-500">{member.phone}</td>
+                    <td className="py-3"><Badge variant="outline">{member.membershipType}</Badge></td>
+                    <td className="py-3 text-gray-500">{member.city}</td>
+                    <td className="py-3 text-gray-500 whitespace-nowrap">
+                      {member.registrationDate || '-'}
+                    </td>
+                    <td className="py-3">
+                      {member.rciCertificateUrl ? (
+                        <a
+                          href={member.rciCertificateUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-upisha-teal hover:underline inline-flex items-center gap-1"
+                        >
+                          View <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="py-3">
+                      <Badge className={member.status === 'approved' ? 'bg-green-100 text-green-700' : member.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
+                        {member.status || 'pending'}
+                      </Badge>
+                    </td>
+                    <td className="py-3">
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditDialog(member)}
+                          className="h-8 w-8 p-0 text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/30"
+                          title="Edit member"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        {member.status !== 'approved' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStatusChange(member.id, 'approved')}
+                            className="h-8 w-8 p-0 text-green-600 border-green-200 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-900/30"
+                            title="Approve member"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        {member.status !== 'rejected' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStatusChange(member.id, 'rejected')}
+                            className="h-8 w-8 p-0 text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-900/30"
+                            title="Reject member"
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(member.id)}
+                          className="h-8 w-8 p-0 text-red-500 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
+                          title="Delete member"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">Rows per page:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value))
+                    setCurrentPage(1)
+                  }}
+                  className="text-sm border rounded-md px-2 py-1 dark:bg-gray-800 dark:border-gray-700"
+                >
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Edit Member Dialog */}
