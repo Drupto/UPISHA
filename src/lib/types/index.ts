@@ -338,3 +338,31 @@ export interface GalleryImageDoc {
   createdAt?: Date
   updatedAt?: Date
 }
+
+// Publication-related types
+export interface PublicationDoc {
+  id?: string
+  title: string
+  description: string
+  type: 'Journal' | 'Monograph' | 'Research'
+  author?: string | null
+  fileUrl?: string | null
+  link?: string | null
+  isActive?: boolean
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface PublicationSubmissionDoc {
+  id?: string
+  title: string
+  description: string
+  type: 'Journal' | 'Monograph' | 'Research'
+  authorName: string
+  authorEmail: string
+  abstract?: string | null
+  fileUrl?: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt?: Date
+  updatedAt?: Date
+}

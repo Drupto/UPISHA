@@ -11,18 +11,187 @@ import {
   Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
   PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
   Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
-  PhoneCall, Building, Mailbox, Zap,
+  PhoneCall, Building, Mailbox, Zap, Loader2, Upload, Lock,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { publications } from '@/lib/static-data'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { AnimatedSection } from '@/components/sections'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+
+interface PublicationItem {
+  id?: string
+  title: string
+  description: string
+  type: 'Journal' | 'Monograph' | 'Research'
+  author?: string | null
+  fileUrl?: string | null
+  link?: string | null
+  isActive?: boolean
+}
 
 /* ─── Publications Section ─── */
 export function PublicationsSection() {
+  const [publications, setPublications] = useState<PublicationItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [submitOpen, setSubmitOpen] = useState(false)
+  const [submitType, setSubmitType] = useState<'Journal' | 'Monograph' | 'Research'>('Journal')
+  const [submitting, setSubmitting] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
+  const { user } = useAuth()
+  const router = useRouter()
+
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    abstract: '',
+    fileUrl: '',
+  })
+
+  useEffect(() => {
+    async function loadPublications() {
+      try {
+        const response = await fetch('/api/publications')
+        const data = await response.json()
+        if (data.publications && data.publications.length > 0) {
+          setPublications(data.publications.filter((p: PublicationItem) => p.isActive !== false))
+        }
+      } catch (error) {
+        console.error('Failed to load publications:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadPublications()
+  }, [])
+
+  const journalItems = publications.filter((p) => p.type === 'Journal')
+  const monographItems = publications.filter((p) => p.type === 'Monograph')
+  const researchItems = publications.filter((p) => p.type === 'Research')
+
+  const handleSubmitClick = (type: 'Journal' | 'Monograph' | 'Research') => {
+    if (!user) {
+      toast({ title: 'Login required', description: 'Please login as a member to submit your work.' })
+      router.push('/login')
+      return
+    }
+    setSubmitType(type)
+    setFormData({ title: '', description: '', abstract: '', fileUrl: '' })
+    setSubmitOpen(true)
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.type !== 'application/pdf') {
+      toast({ title: 'Error', description: 'Please select a PDF file', variant: 'destructive' })
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'Error', description: 'PDF size should be less than 10MB', variant: 'destructive' })
+      return
+    }
+
+    setUploading(true)
+    setUploadProgress(0)
+
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      try {
+        const dataUrl = event.target?.result as string
+        const timestamp = Date.now()
+        const filename = `publications/${timestamp}-${file.name.replace(/\s+/g, '-')}`
+        
+        setUploadProgress(50)
+        
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl, path: filename }),
+        })
+
+        if (!response.ok) throw new Error('Upload failed')
+
+        const data = await response.json()
+        setUploadProgress(100)
+        
+        setFormData({ ...formData, fileUrl: data.url })
+        toast({ title: 'Success', description: 'PDF uploaded successfully' })
+      } catch (error) {
+        toast({ title: 'Error', description: 'Failed to upload PDF', variant: 'destructive' })
+      } finally {
+        setUploading(false)
+        setUploadProgress(0)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+      }
+    }
+    reader.onerror = () => {
+      toast({ title: 'Error', description: 'Failed to read file', variant: 'destructive' })
+      setUploading(false)
+      setUploadProgress(0)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!user?.email) {
+      toast({ title: 'Error', description: 'Please login to submit', variant: 'destructive' })
+      return
+    }
+    if (!formData.title || !formData.description) {
+      toast({ title: 'Validation error', description: 'Please fill all required fields', variant: 'destructive' })
+      return
+    }
+    setSubmitting(true)
+    try {
+      const response = await fetch('/api/publications/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          type: submitType,
+          authorName: user.displayName || user.email,
+          authorEmail: user.email,
+          abstract: formData.abstract || null,
+          fileUrl: formData.fileUrl || null,
+        }),
+      })
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to submit')
+      }
+
+      toast({ title: 'Submission received!', description: 'Your work is pending admin review. You will be notified once approved.' })
+      setSubmitOpen(false)
+      setFormData({ title: '', description: '', abstract: '', fileUrl: '' })
+    } catch (error) {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to submit', variant: 'destructive' })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <AnimatedSection id="publications" className="py-16 md:py-20 bg-white dark:bg-gray-900 border-t-2 border-t-upisha-teal/10">
       <div className="max-w-7xl mx-auto px-4">
@@ -56,156 +225,320 @@ export function PublicationsSection() {
               Research
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="journal" className="mt-8">
-            <div className="grid md:grid-cols-2 gap-8">
-              <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <BookOpen className="h-8 w-8 text-upisha-teal" />
-                    <div>
-                      <h3 className="font-bold text-upisha-navy dark:text-white text-lg">
-                        UP Journal of Speech & Hearing
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Official Peer-Reviewed Journal</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    The UP Journal of Speech & Hearing is the official peer-reviewed publication of
-                    UP ISHA, featuring original research, case studies, clinical reports, and review
-                    articles in audiology and speech-language pathology.
-                  </p>
-                  <div className="space-y-2 mb-4">
-                    <h4 className="font-semibold text-upisha-navy dark:text-white text-sm">Current Issue Highlights:</h4>
-                    <ul className="space-y-1.5">
-                      <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
-                        Effectiveness of Tele-Audiology in Rural UP
-                      </li>
-                      <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
-                        Language Development in Hindi-Speaking Children
-                      </li>
-                      <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
-                        <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
-                        Cochlear Implant Outcomes: A 5-Year Review
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button size="sm" className="bg-upisha-teal hover:bg-upisha-teal-dark text-white">
-                      <Eye className="h-4 w-4 mr-1" />
-                      Current Issue
-                    </Button>
-                    <Button size="sm" variant="outline" className="border-upisha-teal text-upisha-teal">
-                      <FileText className="h-4 w-4 mr-1" />
-                      Previous Issues
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="border-upisha-gold/20 bg-upisha-gold-light/30 dark:bg-gray-800 dark:border-gray-700">
-                <CardContent className="p-6">
-                  <h3 className="font-bold text-upisha-navy dark:text-white mb-4">Call for Papers</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    We invite researchers, clinicians, and academicians to submit original research
-                    articles, case studies, and reviews for publication in the UP Journal of Speech
-                    & Hearing.
-                  </p>
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                      <Clock className="h-4 w-4 text-upisha-gold" />
-                      Submission Deadline: June 30, 2026
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                      <FileText className="h-4 w-4 text-upisha-gold" />
-                      Follow APA 7th Edition formatting
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                      <Send className="h-4 w-4 text-upisha-gold" />
-                      Submit to: editor@upisha.org
-                    </div>
-                  </div>
-                  <Button size="sm" className="bg-upisha-gold hover:bg-upisha-gold/90 text-white">
-                    <Download className="h-4 w-4 mr-1" />
-                    Author Guidelines
-                  </Button>
-                </CardContent>
-              </Card>
+
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-upisha-teal" />
             </div>
-          </TabsContent>
-          <TabsContent value="monograph" className="mt-8">
-            <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <FileText className="h-8 w-8 text-upisha-teal" />
-                  <div>
-                    <h3 className="font-bold text-upisha-navy dark:text-white text-lg">Clinical Monograph Series</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Specialized Topic Publications</p>
-                  </div>
+          ) : (
+            <>
+              <TabsContent value="journal" className="mt-8">
+                <div className="grid md:grid-cols-2 gap-8">
+                  <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <BookOpen className="h-8 w-8 text-upisha-teal" />
+                        <div>
+                          <h3 className="font-bold text-upisha-navy dark:text-white text-lg">
+                            UP Journal of Speech & Hearing
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Official Peer-Reviewed Journal</p>
+                        </div>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300 mb-4">
+                        The UP Journal of Speech & Hearing is the official peer-reviewed publication of
+                        UP ISHA, featuring original research, case studies, clinical reports, and review
+                        articles in audiology and speech-language pathology.
+                      </p>
+                      <div className="space-y-2 mb-4">
+                        <h4 className="font-semibold text-upisha-navy dark:text-white text-sm">Current Issue Highlights:</h4>
+                        {journalItems.length > 0 ? (
+                          <ul className="space-y-1.5">
+                            {journalItems.map((item, i) => (
+                              <li key={item.id || i} className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
+                                <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
+                                <span>
+                                  {item.title}
+                                  {item.author && <span className="text-gray-400"> — {item.author}</span>}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <ul className="space-y-1.5">
+                            <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
+                              <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
+                              Effectiveness of Tele-Audiology in Rural UP
+                            </li>
+                            <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
+                              <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
+                              Language Development in Hindi-Speaking Children
+                            </li>
+                            <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
+                              <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
+                              Cochlear Implant Outcomes: A 5-Year Review
+                            </li>
+                          </ul>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <Link href="/publications">
+                          <Button size="sm" className="bg-upisha-teal hover:bg-upisha-teal-dark text-white">
+                            <Eye className="h-4 w-4 mr-1" />
+                            Current Issue
+                          </Button>
+                        </Link>
+                        <Link href="/publications">
+                          <Button size="sm" variant="outline" className="border-upisha-teal text-upisha-teal">
+                            <FileText className="h-4 w-4 mr-1" />
+                            Previous Issues
+                          </Button>
+                        </Link>
+                        <Button size="sm" variant="outline" className="border-upisha-gold text-upisha-gold" onClick={() => handleSubmitClick('Journal')}>
+                          <Upload className="h-4 w-4 mr-1" />
+                          Submit Paper
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-upisha-gold/20 bg-upisha-gold-light/30 dark:bg-gray-800 dark:border-gray-700">
+                    <CardContent className="p-6">
+                      <h3 className="font-bold text-upisha-navy dark:text-white mb-4">Call for Papers</h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-4">
+                        We invite researchers, clinicians, and academicians to submit original research
+                        articles, case studies, and reviews for publication in the UP Journal of Speech
+                        & Hearing.
+                      </p>
+                      <div className="space-y-3 mb-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                          <Clock className="h-4 w-4 text-upisha-gold" />
+                          Submission Deadline: June 30, 2026
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                          <FileText className="h-4 w-4 text-upisha-gold" />
+                          Follow APA 7th Edition formatting
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                          <Send className="h-4 w-4 text-upisha-gold" />
+                          Submit to: editor@upisha.org
+                        </div>
+                      </div>
+                      <Button size="sm" className="bg-upisha-gold hover:bg-upisha-gold/90 text-white">
+                        <Download className="h-4 w-4 mr-1" />
+                        Author Guidelines
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Our monograph series provides in-depth coverage of specialized topics in audiology
-                  and speech-language pathology, authored by leading experts in the field.
-                </p>
-                <div className="space-y-3">
-                  {[
-                    'Pediatric Audiology Assessment in Hindi-Speaking Populations',
-                    'Neurogenic Communication Disorders: Clinical Management',
-                    'Aural Rehabilitation for Adult Cochlear Implant Users',
-                  ].map((title, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{title}</span>
-                      <Button variant="ghost" size="sm" className="text-upisha-teal">
-                        <ExternalLink className="h-4 w-4" />
+              </TabsContent>
+
+              <TabsContent value="monograph" className="mt-8">
+                <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <FileText className="h-8 w-8 text-upisha-teal" />
+                      <div>
+                        <h3 className="font-bold text-upisha-navy dark:text-white text-lg">Clinical Monograph Series</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Specialized Topic Publications</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                      Our monograph series provides in-depth coverage of specialized topics in audiology
+                      and speech-language pathology, authored by leading experts in the field.
+                    </p>
+                    <div className="space-y-3">
+                      {monographItems.length > 0 ? monographItems.map((item, i) => (
+                        <div
+                          key={item.id || i}
+                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 block truncate">{item.title}</span>
+                            {item.author && <span className="text-xs text-gray-500 dark:text-gray-400">{item.author}</span>}
+                          </div>
+                          {item.fileUrl ? (
+                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
+                              <Button variant="ghost" size="sm" className="text-upisha-teal">
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </a>
+                          ) : (
+                            <Button variant="ghost" size="sm" className="text-upisha-teal">
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      )) : (
+                        ['Pediatric Audiology Assessment in Hindi-Speaking Populations', 'Neurogenic Communication Disorders: Clinical Management', 'Aural Rehabilitation for Adult Cochlear Implant Users'].map((title, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
+                          >
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{title}</span>
+                            <Button variant="ghost" size="sm" className="text-upisha-teal">
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="mt-4">
+                      <Button size="sm" variant="outline" className="border-upisha-gold text-upisha-gold" onClick={() => handleSubmitClick('Monograph')}>
+                        <Upload className="h-4 w-4 mr-1" />
+                        Propose a Monograph
                       </Button>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="research" className="mt-8">
-            <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <GraduationCap className="h-8 w-8 text-upisha-teal" />
-                  <div>
-                    <h3 className="font-bold text-upisha-navy dark:text-white text-lg">
-                      Research in Uttar Pradesh
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Ongoing & Completed Research</p>
-                  </div>
-                </div>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Browse the directory of research projects being conducted in the field of speech
-                  and hearing across Uttar Pradesh. Submit your research for inclusion.
-                </p>
-                <div className="space-y-3">
-                  {[
-                    'Prevalence of Hearing Loss in School Children of Lucknow District',
-                    'Effectiveness of Early Intervention for Speech Sound Disorders',
-                    'Tele-Practice Feasibility Study for Rural Communities in UP',
-                  ].map((title, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{title}</span>
-                      <Button variant="ghost" size="sm" className="text-upisha-teal">
-                        <ExternalLink className="h-4 w-4" />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="research" className="mt-8">
+                <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <GraduationCap className="h-8 w-8 text-upisha-teal" />
+                      <div>
+                        <h3 className="font-bold text-upisha-navy dark:text-white text-lg">
+                          Research in Uttar Pradesh
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Ongoing & Completed Research</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                      Browse the directory of research projects being conducted in the field of speech
+                      and hearing across Uttar Pradesh. Submit your research for inclusion.
+                    </p>
+                    <div className="space-y-3">
+                      {researchItems.length > 0 ? researchItems.map((item, i) => (
+                        <div
+                          key={item.id || i}
+                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 block truncate">{item.title}</span>
+                            {item.author && <span className="text-xs text-gray-500 dark:text-gray-400">{item.author}</span>}
+                          </div>
+                          {item.fileUrl ? (
+                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
+                              <Button variant="ghost" size="sm" className="text-upisha-teal">
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </a>
+                          ) : (
+                            <Button variant="ghost" size="sm" className="text-upisha-teal">
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      )) : (
+                        ['Prevalence of Hearing Loss in School Children of Lucknow District', 'Effectiveness of Early Intervention for Speech Sound Disorders', 'Tele-Practice Feasibility Study for Rural Communities in UP'].map((title, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
+                          >
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{title}</span>
+                            <Button variant="ghost" size="sm" className="text-upisha-teal">
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="mt-4">
+                      <Button size="sm" variant="outline" className="border-upisha-gold text-upisha-gold" onClick={() => handleSubmitClick('Research')}>
+                        <Upload className="h-4 w-4 mr-1" />
+                        Submit Your Research
                       </Button>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
+
+      {/* Submission Dialog */}
+      <Dialog open={submitOpen} onOpenChange={setSubmitOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Submit {submitType === 'Journal' ? 'Paper' : submitType === 'Monograph' ? 'Monograph Proposal' : 'Research'}</DialogTitle>
+            <DialogDescription>
+              Fill in the details below to submit your work for review. Your submission will be reviewed by our editorial team.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="pubTitle">Title *</Label>
+              <Input
+                id="pubTitle"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Enter the title of your work"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="pubDesc">Description *</Label>
+              <Textarea
+                id="pubDesc"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Brief description of your work"
+                rows={3}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="pubAbstract">Abstract</Label>
+              <Textarea
+                id="pubAbstract"
+                value={formData.abstract}
+                onChange={(e) => setFormData({ ...formData, abstract: e.target.value })}
+                placeholder="Abstract or summary (optional)"
+                rows={4}
+              />
+            </div>
+            <div>
+              <Label htmlFor="pubFile">Upload PDF</Label>
+              <div className="mt-2 flex items-center gap-4">
+                <Input
+                  ref={fileInputRef}
+                  id="pubFile"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileUpload}
+                  className="cursor-pointer"
+                />
+                {uploading && (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-gray-500">{uploadProgress}%</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Supported format: PDF (max 10MB)</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <Lock className="h-3.5 w-3.5" />
+              Submitting as: {user?.email}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setSubmitOpen(false)}>Cancel</Button>
+              <Button type="submit" className="bg-upisha-teal hover:bg-upisha-teal-dark text-white" disabled={submitting || uploading}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit for Review'
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AnimatedSection>
   )
 }
-

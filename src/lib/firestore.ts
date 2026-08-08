@@ -1,6 +1,6 @@
 import { getDb } from './firebase-admin'
 import { FieldValue } from 'firebase/firestore'
-import type { TestimonialDoc, GalleryImageDoc } from '@/lib/types'
+import type { TestimonialDoc, GalleryImageDoc, PublicationDoc, PublicationSubmissionDoc } from '@/lib/types'
 
 const db = () => getDb()
 
@@ -526,6 +526,80 @@ export async function updateGalleryImage(id: string, data: Partial<GalleryImageD
 
 export async function deleteGalleryImage(id: string) {
   const ref = doc(db(), 'galleryImages', id)
+  await deleteDoc(ref)
+  return { id }
+}
+
+// Publication CRUD operations
+export async function createPublication(data: PublicationDoc) {
+  const ref = await addDoc(collection(db(), 'publications'), {
+    ...data,
+    isActive: data.isActive ?? true,
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+    author: data.author ?? null,
+    fileUrl: data.fileUrl ?? null,
+    link: data.link ?? null,
+  })
+  return { id: ref.id }
+}
+
+export async function getPublications() {
+  const snapshot = await getDocs(query(collection(db(), 'publications'), orderBy('createdAt', 'desc')))
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+}
+
+export async function updatePublication(id: string, data: Partial<PublicationDoc>) {
+  const ref = doc(db(), 'publications', id)
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: new Date(),
+  })
+  return { id }
+}
+
+export async function deletePublication(id: string) {
+  const ref = doc(db(), 'publications', id)
+  await deleteDoc(ref)
+  return { id }
+}
+
+// Publication Submission CRUD operations
+export async function createPublicationSubmission(data: PublicationSubmissionDoc) {
+  const ref = await addDoc(collection(db(), 'publicationSubmissions'), {
+    ...data,
+    status: data.status ?? 'pending',
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+    abstract: data.abstract ?? null,
+    fileUrl: data.fileUrl ?? null,
+  })
+  return { id: ref.id }
+}
+
+export async function getPublicationSubmissions() {
+  const snapshot = await getDocs(query(collection(db(), 'publicationSubmissions'), orderBy('createdAt', 'desc')))
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+}
+
+export async function getPublicationSubmissionsByEmail(email: string): Promise<PublicationSubmissionDoc[]> {
+  const snapshot = await getDocs(
+    query(collection(db(), 'publicationSubmissions'), where('authorEmail', '==', email.toLowerCase()), orderBy('createdAt', 'desc'))
+  )
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as PublicationSubmissionDoc[]
+}
+
+export async function updatePublicationSubmission(id: string, data: Partial<PublicationSubmissionDoc>) {
+  const ref = doc(db(), 'publicationSubmissions', id)
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: new Date(),
+  })
+  return { id }
+}
+
+export async function deletePublicationSubmission(id: string) {
+  const ref = doc(db(), 'publicationSubmissions', id)
   await deleteDoc(ref)
   return { id }
 }

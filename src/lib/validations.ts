@@ -113,6 +113,26 @@ export const announcementSchema = z.object({
   isActive: z.boolean().optional().default(true),
 })
 
+export const publicationSchema = z.object({
+  title: z.string().min(2, 'Title must be at least 2 characters').max(200),
+  description: z.string().min(10, 'Description must be at least 10 characters').max(5000),
+  type: z.enum(['Journal', 'Monograph', 'Research']),
+  author: z.string().max(200).optional().nullable(),
+  fileUrl: z.string().max(1000).optional().nullable(),
+  link: z.string().max(1000).optional().nullable(),
+  isActive: z.boolean().optional().default(true),
+})
+
+export const publicationSubmissionSchema = z.object({
+  title: z.string().min(2, 'Title must be at least 2 characters').max(200),
+  description: z.string().min(10, 'Description must be at least 10 characters').max(5000),
+  type: z.enum(['Journal', 'Monograph', 'Research']),
+  authorName: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  authorEmail: z.string().email('Invalid email address'),
+  abstract: z.string().max(5000).optional().nullable(),
+  fileUrl: z.string().max(1000).optional().nullable(),
+})
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type ContactInput = z.infer<typeof contactSchema>
@@ -123,3 +143,5 @@ export type WebinarRegistrationInput = z.infer<typeof webinarRegistrationSchema>
 export type WebinarInput = z.infer<typeof webinarSchema>
 export type EventInput = z.infer<typeof eventSchema>
 export type AnnouncementInput = z.infer<typeof announcementSchema>
+export type PublicationInput = z.infer<typeof publicationSchema>
+export type PublicationSubmissionInput = z.infer<typeof publicationSubmissionSchema>

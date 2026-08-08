@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Users, Mail, Calendar, Bell, Loader2, Monitor, Megaphone, Star, Image } from 'lucide-react'
+import { Users, Mail, Calendar, Bell, Loader2, Monitor, Megaphone, Star, Image, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 
 interface DashboardStats {
@@ -13,18 +13,19 @@ interface DashboardStats {
   announcements: number
   testimonials: number
   gallery: number
+  publications: number
   subscribers: number
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({ members: 0, messages: 0, events: 0, webinars: 0, announcements: 0, testimonials: 0, gallery: 0, subscribers: 0 })
+  const [stats, setStats] = useState<DashboardStats>({ members: 0, messages: 0, events: 0, webinars: 0, announcements: 0, testimonials: 0, gallery: 0, publications: 0, subscribers: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        const [membersRes, messagesRes, eventsRes, webinarsRes, announcementsRes, testimonialsRes, galleryRes, newsletterRes] = await Promise.allSettled([
+        const [membersRes, messagesRes, eventsRes, webinarsRes, announcementsRes, testimonialsRes, galleryRes, publicationsRes, newsletterRes] = await Promise.allSettled([
           fetch('/api/members').then(r => r.json()),
           fetch('/api/contact').then(r => r.json()),
           fetch('/api/events').then(r => r.json()),
@@ -32,6 +33,7 @@ export default function AdminDashboard() {
           fetch('/api/announcements').then(r => r.json()),
           fetch('/api/testimonials').then(r => r.json()),
           fetch('/api/gallery').then(r => r.json()),
+          fetch('/api/publications').then(r => r.json()),
           fetch('/api/newsletter').then(r => r.json()),
         ])
 
@@ -43,6 +45,7 @@ export default function AdminDashboard() {
           announcements: announcementsRes.status === 'fulfilled' ? (announcementsRes.value as { announcements?: unknown[] }).announcements?.length || 0 : 0,
           testimonials: testimonialsRes.status === 'fulfilled' ? (testimonialsRes.value as { testimonials?: unknown[] }).testimonials?.length || 0 : 0,
           gallery: galleryRes.status === 'fulfilled' ? (galleryRes.value as { images?: unknown[] }).images?.length || 0 : 0,
+          publications: publicationsRes.status === 'fulfilled' ? (publicationsRes.value as { publications?: unknown[] }).publications?.length || 0 : 0,
           subscribers: newsletterRes.status === 'fulfilled' ? (newsletterRes.value as { count?: number }).count || 0 : 0,
         })
       } catch {
@@ -79,6 +82,7 @@ export default function AdminDashboard() {
     { label: 'Announcements', value: stats.announcements, icon: Megaphone, href: '/admin/announcements', color: 'text-orange-600 bg-orange-100' },
     { label: 'Testimonials', value: stats.testimonials, icon: Star, href: '/admin/testimonials', color: 'text-yellow-600 bg-yellow-100' },
     { label: 'Gallery Images', value: stats.gallery, icon: Image, href: '/admin/gallery', color: 'text-pink-600 bg-pink-100' },
+    { label: 'Publications', value: stats.publications, icon: BookOpen, href: '/admin/publications', color: 'text-teal-600 bg-teal-100' },
     { label: 'Newsletter Subscribers', value: stats.subscribers, icon: Bell, href: '/admin/newsletter', color: 'text-amber-600 bg-amber-100' },
   ] as const
 
