@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Monitor, Loader2, Clock, User, Calendar, ExternalLink, CheckCircle2, XCircle, Clock3, Users } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Monitor, Loader2, Clock, User, Calendar, ExternalLink, CheckCircle2, XCircle, Clock3, Users, BadgeCheck, CreditCard } from 'lucide-react'
 import Link from 'next/link'
 
 interface WebinarItem {
@@ -15,6 +16,8 @@ interface WebinarItem {
   duration: string
   description?: string | null
   registrationLink?: string | null
+  meetingLink?: string | null
+  type?: 'paid' | 'free'
   isActive?: boolean
   maxAttendees?: number | null
   registrationCount?: number
@@ -134,12 +137,20 @@ export default function MemberWebinarsPage() {
                     {webinar.description && (
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{webinar.description}</p>
                     )}
-                    <div className="flex gap-2 mt-3">
+                    <div className="flex flex-wrap gap-2 mt-3">
                       <Link href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}>
                         <Button size="sm" className="bg-upisha-teal hover:bg-upisha-teal-dark text-white" disabled={isFull}>
-                          {isFull ? 'Full' : 'Register'}
+                          {isFull ? 'Full' : webinar.type === 'free' ? 'Register Free' : 'Register'}
                         </Button>
                       </Link>
+                      {webinar.type === 'free' && webinar.meetingLink && (
+                        <a href={webinar.meetingLink} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" variant="outline" className="border-green-500 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-300">
+                            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                            Join Meeting
+                          </Button>
+                        </a>
+                      )}
                       {webinar.registrationLink && (
                         <a href={webinar.registrationLink} target="_blank" rel="noopener noreferrer">
                           <Button size="sm" variant="outline">

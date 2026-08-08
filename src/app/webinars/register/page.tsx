@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { UserPlus, Sparkles, Send, AlertCircle, CheckCircle2, Monitor } from 'lucide-react'
+import { UserPlus, Sparkles, Send, AlertCircle, CheckCircle2, Monitor, BadgeCheck, ExternalLink } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,6 +23,7 @@ export default function WebinarRegisterPage() {
 
   const [webinars, setWebinars] = useState<Webinar[]>([])
   const [webinarsLoading, setWebinarsLoading] = useState(true)
+  const [selectedWebinar, setSelectedWebinar] = useState<Webinar | null>(null)
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -41,6 +42,7 @@ export default function WebinarRegisterPage() {
   const [showRestored, setShowRestored] = useState(false)
   const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const [checkingRegistration, setCheckingRegistration] = useState(false)
+  const [registrationStatus, setRegistrationStatus] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchWebinars = async () => {
@@ -59,13 +61,25 @@ export default function WebinarRegisterPage() {
     fetchWebinars()
   }, [])
 
+  // Track selected webinar for conditional UI
+  useEffect(() => {
+    if (formData.webinarId && webinars.length) {
+      const found = webinars.find((w) => w.id === formData.webinarId) || null
+      setSelectedWebinar(found)
+    } else {
+      setSelectedWebinar(null)
+    }
+  }, [formData.webinarId, webinars])
+
+  const isFree = selectedWebinar?.type === 'free'
+
   const errors: Record<string, string> = {}
   if (touched.fullName && formData.fullName.trim().length < 2) errors.fullName = 'Name must be at least 2 characters'
   if (touched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = 'Please enter a valid email address'
   if (touched.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) errors.phone = 'Please enter a valid 10-digit phone number'
   if (touched.city && formData.city.trim().length === 0) errors.city = 'City is required'
   if (touched.webinarId && !formData.webinarId) errors.webinarId = 'Please select a webinar'
-  if (touched.transactionNumber && formData.transactionNumber.trim().length < 2) errors.transactionNumber = 'Transaction number is required'
+  if (!isFree && touched.transactionNumber && formData.transactionNumber.trim().length < 2) errors.transactionNumber = 'Transaction number is required'
   if (touched.declaration && !formData.declaration) errors.declaration = 'You must accept the declaration to submit'
 
   const valid: Record<string, boolean> = {
@@ -74,7 +88,7 @@ export default function WebinarRegisterPage() {
     phone: /^\d{10}$/.test(formData.phone.replace(/\D/g, '')),
     city: formData.city.trim().length > 0,
     webinarId: !!formData.webinarId,
-    transactionNumber: formData.transactionNumber.trim().length >= 2,
+    transactionNumber: isFree ? true : formData.transactionNumber.trim().length >= 2,
     declaration: formData.declaration === true,
   }
 
@@ -169,6 +183,7 @@ export default function WebinarRegisterPage() {
         setSubmitted(true)
         localStorage.removeItem('upisha-webinar-reg-form')
         const data = await res.json().catch(() => ({}))
+        setRegistrationStatus(data.status || null)
         toast({ title: 'Registration submitted!', description: data.message || 'Your registration is pending admin confirmation.' })
       } else {
         const errData = await res.json().catch(() => ({}))
@@ -203,36 +218,60 @@ export default function WebinarRegisterPage() {
           </p>
         </div>
 
-        <Card id="payment-details" className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top max-w-3xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-upisha-navy dark:text-white">Payment Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid sm:grid-cols-2 gap-6">
-              <div>
-                <h4 className="text-sm font-semibold text-upisha-navy dark:text-white mb-2">Bank Transfer</h4>
-                <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <p><span className="font-medium">Account Name:</span> Uttar Pradesh Indian Speech and Hearing Association</p>
-                  <p><span className="font-medium">Account No:</span> 126401003059</p>
-                  <p><span className="font-medium">IFSC:</span> ICICI0001264</p>
-                  <p><span className="font-medium">Bank:</span> ICICI BANK</p>
+        {selectedWebinar?.type === 'free' ? (
+          <Card className="border-green-200 dark:border-green-800 dark:bg-gray-800 card-gradient-top max-w-3xl mx-auto">
+            <CardHeader>
+              <CardTitle className="text-upisha-navy dark:text-white flex items-center gap-2">
+                <BadgeCheck className="h-5 w-5 text-green-600" />
+                Free Webinar — No Payment Required
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                This is a free webinar. Complete the registration form below to secure your spot.
+                {selectedWebinar.meetingLink && (
+                  <span className="block mt-2">
+                    After registering, you will receive the meeting link via email, or you can join directly:
+                    <a href={selectedWebinar.meetingLink} target="_blank" rel="noopener noreferrer" className="text-upisha-teal hover:underline ml-1">
+                      Join Meeting <ExternalLink className="h-3.5 w-3.5 inline" />
+                    </a>
+                  </span>
+                )}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card id="payment-details" className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top max-w-3xl mx-auto">
+            <CardHeader>
+              <CardTitle className="text-upisha-navy dark:text-white">Payment Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-sm font-semibold text-upisha-navy dark:text-white mb-2">Bank Transfer</h4>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                    <p><span className="font-medium">Account Name:</span> Uttar Pradesh Indian Speech and Hearing Association</p>
+                    <p><span className="font-medium">Account No:</span> 126401003059</p>
+                    <p><span className="font-medium">IFSC:</span> ICICI0001264</p>
+                    <p><span className="font-medium">Bank:</span> ICICI BANK</p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-upisha-navy dark:text-white mb-2">UPI Payment</h4>
+                  <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 flex items-center justify-center bg-white dark:bg-gray-900">
+                    <img
+                      src="/images/UPISHA_QR.png"
+                      alt="UPI Payment QR Code"
+                      className="w-full max-w-[220px] h-auto object-contain"
+                      width={603}
+                      height={972}
+                    />
+                  </div>
                 </div>
               </div>
-              <div>
-                <h4 className="text-sm font-semibold text-upisha-navy dark:text-white mb-2">UPI Payment</h4>
-                <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 flex items-center justify-center bg-white dark:bg-gray-900">
-                  <img
-                    src="/images/UPISHA_QR.png"
-                    alt="UPI Payment QR Code"
-                    className="w-full max-w-[220px] h-auto object-contain"
-                    width={603}
-                    height={972}
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         <Card id="webinar-reg-form" className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top scroll-mt-32 mt-8">
           <CardHeader>
@@ -261,7 +300,10 @@ export default function WebinarRegisterPage() {
                 </motion.div>
                 <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">Registration Successful!</h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-6">
-                  Thank you for registering for <strong>{formData.webinarTitle}</strong>. Your registration is pending admin confirmation. You will receive an email once your registration is confirmed.
+                  Thank you for registering for <strong>{formData.webinarTitle}</strong>.
+                  {registrationStatus === 'confirmed'
+                    ? ' You are now registered and confirmed for this webinar.'
+                    : ' Your registration is pending admin confirmation. You will receive an email once your registration is confirmed.'}
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button variant="outline" onClick={() => {
@@ -390,16 +432,18 @@ export default function WebinarRegisterPage() {
                     className="input-focus-ring" />
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Transaction Number *</label>
-                  <Input required placeholder="Enter payment transaction / reference number"
-                    value={formData.transactionNumber}
-                    onChange={(e) => setFormData({ ...formData, transactionNumber: e.target.value })}
-                    onBlur={() => setTouched((prev) => ({ ...prev, transactionNumber: true }))}
-                    className={fieldClass('transactionNumber')} />
-                  {touched.transactionNumber && errors.transactionNumber && <p className="text-xs text-red-500 mt-1">{errors.transactionNumber}</p>}
-                  <p className="text-[10px] text-gray-400 mt-1">Enter the transaction/reference number from your payment above.</p>
-                </div>
+                {!isFree && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Transaction Number *</label>
+                    <Input required placeholder="Enter payment transaction / reference number"
+                      value={formData.transactionNumber}
+                      onChange={(e) => setFormData({ ...formData, transactionNumber: e.target.value })}
+                      onBlur={() => setTouched((prev) => ({ ...prev, transactionNumber: true }))}
+                      className={fieldClass('transactionNumber')} />
+                    {touched.transactionNumber && errors.transactionNumber && <p className="text-xs text-red-500 mt-1">{errors.transactionNumber}</p>}
+                    <p className="text-[10px] text-gray-400 mt-1">Enter the transaction/reference number from your payment above.</p>
+                  </div>
+                )}
 
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Additional Message</label>

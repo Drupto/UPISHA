@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Calendar, Clock, User, Monitor, ArrowRight, AlertCircle, Users } from 'lucide-react'
+import { Calendar, Clock, User, Monitor, ArrowRight, AlertCircle, Users, BadgeCheck, CreditCard } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -86,9 +86,22 @@ export default function WebinarsPage() {
                 <Card className="h-full flex flex-col border-upisha-teal/10 dark:bg-gray-800 dark:border-gray-700 hover:border-upisha-teal/30 transition-colors">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-lg text-upisha-navy dark:text-white">
-                        {webinar.title}
-                      </CardTitle>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <CardTitle className="text-lg text-upisha-navy dark:text-white">
+                          {webinar.title}
+                        </CardTitle>
+                        {webinar.type === 'free' ? (
+                          <Badge className="shrink-0 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                            <BadgeCheck className="h-3 w-3 mr-1" />
+                            Free
+                          </Badge>
+                        ) : (
+                          <Badge className="shrink-0 text-xs bg-upisha-gold/20 text-upisha-gold-dark dark:text-upisha-gold">
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            Paid
+                          </Badge>
+                        )}
+                      </div>
                       <Badge variant="outline" className="shrink-0 text-xs border-upisha-teal/30 text-upisha-teal">
                         {webinar.duration}
                       </Badge>
@@ -97,7 +110,7 @@ export default function WebinarsPage() {
                   <CardContent className="flex-1 space-y-3">
                     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <Calendar className="h-4 w-4 text-upisha-teal" />
-                      <span>{webinar.date}</span>
+                      <span>{webinar.date ? new Date(webinar.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date TBD'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <Clock className="h-4 w-4 text-upisha-teal" />
@@ -130,7 +143,9 @@ export default function WebinarsPage() {
                         className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal"
                         disabled={webinar.maxAttendees ? (webinar.registrationCount ?? 0) >= webinar.maxAttendees : false}
                       >
-                        {webinar.maxAttendees && (webinar.registrationCount ?? 0) >= webinar.maxAttendees ? 'Full' : 'Register Now'}
+                        {webinar.maxAttendees && (webinar.registrationCount ?? 0) >= webinar.maxAttendees
+                          ? 'Full'
+                          : webinar.type === 'free' ? 'Register Free' : 'Register Now'}
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </Link>

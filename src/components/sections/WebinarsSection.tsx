@@ -11,7 +11,7 @@ import {
   Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
   PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
   Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
-  PhoneCall, Building, Mailbox, Zap,
+  PhoneCall, Building, Mailbox, Zap, BadgeCheck, CreditCard,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
@@ -122,7 +122,7 @@ export function WebinarsSection() {
                           <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3.5 w-3.5 text-upisha-gold" />
-                              {webinar.date}
+                              {webinar.date ? new Date(webinar.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date TBD'}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5 text-upisha-gold" />
@@ -132,6 +132,15 @@ export function WebinarsSection() {
                               <Activity className="h-3.5 w-3.5 text-upisha-gold" />
                               {webinar.duration}
                             </span>
+                            {webinar.type === 'free' ? (
+                              <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+                                <BadgeCheck className="h-3.5 w-3.5" /> Free
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-upisha-gold">
+                                <CreditCard className="h-3.5 w-3.5" /> Paid
+                              </span>
+                            )}
                           </div>
                         </div>
                         <Link
@@ -142,7 +151,7 @@ export function WebinarsSection() {
                             variant="outline"
                             className="shrink-0 border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
                           >
-                            Register
+                            {webinar.type === 'free' ? 'Register Free' : 'Register'}
                           </Button>
                         </Link>
                       </div>
@@ -157,4 +166,3 @@ export function WebinarsSection() {
     </section>
   )
 }
-

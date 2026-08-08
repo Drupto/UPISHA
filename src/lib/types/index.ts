@@ -109,6 +109,8 @@ export interface Partner {
   icon: LucideIcon
 }
 
+export type WebinarType = 'paid' | 'free'
+
 export interface Webinar {
   id?: string
   title: string
@@ -118,6 +120,8 @@ export interface Webinar {
   duration: string
   description?: string | null
   registrationLink?: string | null
+  meetingLink?: string | null
+  type?: WebinarType
   isActive?: boolean
   maxAttendees?: number | null
   registrationCount?: number
@@ -282,6 +286,8 @@ export interface WebinarDoc {
   duration: string
   description?: string | null
   registrationLink?: string | null
+  meetingLink?: string | null
+  type?: WebinarType
   isActive?: boolean
   maxAttendees?: number | null
   createdAt?: Date
@@ -296,7 +302,8 @@ export interface WebinarRegistrationFormData {
   city: string
   webinarId: string
   webinarTitle: string
-  transactionNumber: string
+  webinarType?: WebinarType
+  transactionNumber?: string | null
   message: string
   declaration: boolean
 }
@@ -310,6 +317,7 @@ export interface WebinarRegistrationDoc {
   city: string
   webinarId: string
   webinarTitle: string
+  webinarType?: WebinarType
   transactionNumber?: string | null
   message?: string | null
   declaration: boolean

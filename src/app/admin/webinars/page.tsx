@@ -24,6 +24,8 @@ interface WebinarItem {
   duration: string
   description?: string | null
   registrationLink?: string | null
+  meetingLink?: string | null
+  type?: 'paid' | 'free'
   isActive?: boolean
   maxAttendees?: number | null
   registrationCount?: number
@@ -39,6 +41,7 @@ interface RegistrationItem {
   city: string
   webinarId: string
   webinarTitle: string
+  webinarType?: 'paid' | 'free'
   transactionNumber?: string | null
   message?: string | null
   declaration: boolean
@@ -72,6 +75,8 @@ export default function AdminWebinarsPage() {
     duration: '',
     description: '',
     registrationLink: '',
+    meetingLink: '',
+    type: 'paid' as 'paid' | 'free',
     maxAttendees: '',
   })
   const [webinarSubmitting, setWebinarSubmitting] = useState(false)
@@ -153,7 +158,7 @@ export default function AdminWebinarsPage() {
         })
         setShowWebinarForm(false)
         setEditingWebinar(null)
-        setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '', maxAttendees: '' })
+        setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '', meetingLink: '', type: 'paid', maxAttendees: '' })
         fetchWebinars()
       } else {
         const err = await res.json().catch(() => ({}))
@@ -176,6 +181,8 @@ export default function AdminWebinarsPage() {
       duration: webinar.duration,
       description: webinar.description || '',
       registrationLink: webinar.registrationLink || '',
+      meetingLink: webinar.meetingLink || '',
+      type: webinar.type || 'paid',
       maxAttendees: webinar.maxAttendees ? String(webinar.maxAttendees) : '',
     })
     setShowWebinarForm(true)
@@ -234,17 +241,20 @@ export default function AdminWebinarsPage() {
   const exportRegistrationsCSV = () => {
     const rows = [
       ['Name', 'Email', 'Phone', 'Qualification', 'City', 'Webinar', 'Transaction No', 'Status', 'Date'],
-      ...filteredRegistrations.map((r) => [
-        r.fullName,
-        r.email,
-        r.phone,
-        r.qualification || '',
-        r.city,
-        r.webinarTitle,
-        r.transactionNumber || '',
-        r.status || 'pending',
-        r.createdAt ? new Date(r.createdAt.toString()).toLocaleDateString() : '',
-      ]),
+      ...filteredRegistrations.map((r) => {
+        const dateVal = r.createdAt && !isNaN(new Date(r.createdAt as any).getTime()) ? new Date(r.createdAt as any).toLocaleDateString() : ''
+        return [
+          r.fullName,
+          r.email,
+          r.phone,
+          r.qualification || '',
+          r.city,
+          r.webinarTitle,
+          r.transactionNumber || '',
+          r.status || 'pending',
+          dateVal,
+        ]
+      }),
     ]
     const csv = rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -332,7 +342,7 @@ export default function AdminWebinarsPage() {
               <Button
                 onClick={() => {
                   setEditingWebinar(null)
-                  setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '', maxAttendees: '' })
+                  setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '', meetingLink: '', type: 'paid', maxAttendees: '' })
                   setShowWebinarForm(!showWebinarForm)
                 }}
                 className="bg-upisha-teal hover:bg-upisha-teal-dark text-white"
@@ -422,13 +432,29 @@ export default function AdminWebinarsPage() {
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                              Registration Link
+                              Webinar Type *
                             </label>
-                            <Input
-                              placeholder="https://..."
-                              value={webinarForm.registrationLink}
-                              onChange={(e) => setWebinarForm({ ...webinarForm, registrationLink: e.target.value })}
-                            />
+                            <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                              {(['paid', 'free'] as const).map((t) => (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => setWebinarForm({ ...webinarForm, type: t })}
+                                  className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium capitalize transition-colors ${
+                                    webinarForm.type === t
+                                      ? 'bg-white dark:bg-gray-700 text-upisha-teal shadow-sm'
+                                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                  }`}
+                                >
+                                  {t === 'free' ? 'Free' : 'Paid'}
+                                </button>
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {webinarForm.type === 'free'
+                                ? 'Free webinars are auto-confirmed on registration. No payment required.'
+                                : 'Paid webinars require a transaction number and admin confirmation.'}
+                            </p>
                           </div>
                           <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
@@ -442,6 +468,30 @@ export default function AdminWebinarsPage() {
                               onChange={(e) => setWebinarForm({ ...webinarForm, maxAttendees: e.target.value })}
                             />
                             <p className="text-xs text-gray-400 mt-1">Leave empty for unlimited seats</p>
+                          </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                              Registration Link
+                            </label>
+                            <Input
+                              placeholder="https://..."
+                              value={webinarForm.registrationLink}
+                              onChange={(e) => setWebinarForm({ ...webinarForm, registrationLink: e.target.value })}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">External registration link (optional)</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                              Meeting / Join Link
+                            </label>
+                            <Input
+                              placeholder="https://meet.google.com/..."
+                              value={webinarForm.meetingLink}
+                              onChange={(e) => setWebinarForm({ ...webinarForm, meetingLink: e.target.value })}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">Live meeting link for attendees (e.g. for free webinars)</p>
                           </div>
                         </div>
                         <div>
@@ -532,7 +582,7 @@ export default function AdminWebinarsPage() {
                             </div>
                             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
                               <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" /> {webinar.date}
+                                <Calendar className="h-3 w-3" /> {webinar.date ? new Date(webinar.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date TBD'}
                               </span>
                               <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" /> {webinar.time}
@@ -695,9 +745,9 @@ export default function AdminWebinarsPage() {
                               {st.label}
                             </span>
                           </td>
-                          <td className="py-3 px-3 text-gray-500 dark:text-gray-400 text-xs">
-                            {reg.createdAt ? new Date(reg.createdAt.toString()).toLocaleDateString() : '-'}
-                          </td>
+                           <td className="py-3 px-3 text-gray-500 dark:text-gray-400 text-xs">
+                             {reg.createdAt && !isNaN(new Date(reg.createdAt as any).getTime()) ? new Date(reg.createdAt as any).toLocaleDateString() : '-'}
+                           </td>
                           <td className="py-3 px-3">
                             <div className="flex gap-1.5">
                               <Button
@@ -784,12 +834,12 @@ export default function AdminWebinarsPage() {
                     <p className="text-xs text-gray-400">Qualification</p>
                     <p className="text-gray-700 dark:text-gray-300">{selectedRegistration.qualification || '-'}</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Registered On</p>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {selectedRegistration.createdAt ? new Date(selectedRegistration.createdAt.toString()).toLocaleString() : '-'}
-                    </p>
-                  </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">Registered On</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        {selectedRegistration.createdAt && !isNaN(new Date(selectedRegistration.createdAt as any).getTime()) ? new Date(selectedRegistration.createdAt as any).toLocaleString() : '-'}
+                      </p>
+                    </div>
                 </div>
 
                 <div>

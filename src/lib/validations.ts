@@ -69,7 +69,8 @@ export const webinarRegistrationSchema = z.object({
   city: z.string().min(2, 'City is required').max(100),
   webinarId: z.string().min(1, 'Webinar selection is required'),
   webinarTitle: z.string().min(1, 'Webinar title is required'),
-  transactionNumber: z.string().min(2, 'Transaction number is required').max(100),
+  webinarType: z.enum(['paid', 'free']).optional().nullable(),
+  transactionNumber: z.string().max(100).optional().nullable(),
   message: z.string().max(5000).optional().nullable(),
   declaration: z.boolean().refine((val) => val === true, {
     message: 'You must accept the declaration to submit',
@@ -84,6 +85,8 @@ export const webinarSchema = z.object({
   duration: z.string().min(1, 'Duration is required'),
   description: z.string().max(2000).optional().nullable(),
   registrationLink: z.string().url('Invalid URL').optional().nullable(),
+  meetingLink: z.string().url('Invalid URL').optional().nullable(),
+  type: z.enum(['paid', 'free']).optional().default('paid'),
   isActive: z.boolean().optional().default(true),
   maxAttendees: z.number().int().positive().optional().nullable(),
 })

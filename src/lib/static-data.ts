@@ -160,9 +160,9 @@ export const partners: Partner[] = [
 ]
 
 export const upcomingWebinars: Webinar[] = [
-  { title: 'Advanced Audiological Assessment in Pediatric Population', date: 'March 25, 2026', time: '4:00 PM IST', speaker: 'Dr. Anita Deshpande', duration: '90 min' },
-  { title: 'Tele-Practice in Speech-Language Pathology', date: 'April 8, 2026', time: '5:00 PM IST', speaker: 'Dr. Manoj Kumar', duration: '60 min' },
-  { title: 'Cochlear Implant Rehabilitation: Best Practices', date: 'April 22, 2026', time: '4:30 PM IST', speaker: 'Dr. Sunita Verma', duration: '75 min' },
+  { title: 'Advanced Audiological Assessment in Pediatric Population', date: '2026-03-25', time: '4:00 PM IST', speaker: 'Dr. Anita Deshpande', duration: '90 min', type: 'free' },
+  { title: 'Tele-Practice in Speech-Language Pathology', date: '2026-04-08', time: '5:00 PM IST', speaker: 'Dr. Manoj Kumar', duration: '60 min', type: 'paid' },
+  { title: 'Cochlear Implant Rehabilitation: Best Practices', date: '2026-04-22', time: '4:30 PM IST', speaker: 'Dr. Sunita Verma', duration: '75 min', type: 'free' },
 ]
 
 export const sampleProfessionals: Professional[] = [

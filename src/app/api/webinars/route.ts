@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getWebinars } from '@/lib/data'
 import { createWebinar, getWebinarRegistrationCount } from '@/lib/firestore'
 import { webinarSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function GET(request: NextRequest) {
@@ -42,10 +42,6 @@ export async function POST(request: NextRequest) {
     return withSecurityHeaders(auth)
   }
 
-  // CSRF protection
-  const csrfError = withCsrfProtection(request)
-  if (csrfError) return csrfError
-
   try {
     const body = await request.json()
     const validated = webinarSchema.parse(body)
@@ -63,6 +59,8 @@ export async function POST(request: NextRequest) {
       duration: validated.duration,
       description: validated.description ? sanitizeHtml(validated.description) : null,
       registrationLink: validated.registrationLink ? sanitizeHtml(validated.registrationLink) : null,
+      meetingLink: validated.meetingLink ? sanitizeHtml(validated.meetingLink) : null,
+      type: validated.type ?? 'paid',
       isActive: validated.isActive,
       maxAttendees: validated.maxAttendees ?? null,
     })

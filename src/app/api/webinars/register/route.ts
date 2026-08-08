@@ -43,6 +43,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Determine webinar type (fall back to the submitted value, or infer from webinar record)
+    const webinarType = validated.webinarType ?? webinar?.type ?? 'paid'
+    const isFree = webinarType === 'free'
+
+    // For paid webinars, a transaction number is required
+    if (!isFree && !validated.transactionNumber?.trim()) {
+      return withSecurityHeaders(NextResponse.json(
+        { error: 'Transaction number is required for paid webinars.' },
+        { status: 400 }
+      ))
+    }
+
+    // Free webinars are auto-confirmed; paid webinars require admin confirmation
+    const status = isFree ? 'confirmed' : 'pending'
+
     const registration = await createWebinarRegistration({
       fullName: sanitizeHtml(validated.fullName),
       email,
@@ -51,19 +66,25 @@ export async function POST(request: NextRequest) {
       city: sanitizeHtml(validated.city),
       webinarId: validated.webinarId,
       webinarTitle: sanitizeHtml(validated.webinarTitle),
-      transactionNumber: sanitizeHtml(validated.transactionNumber),
+      webinarType,
+      transactionNumber: validated.transactionNumber ? sanitizeHtml(validated.transactionNumber) : null,
       message: validated.message ? sanitizeHtml(validated.message) : null,
       declaration: validated.declaration,
-      status: 'pending',
+      status,
     })
 
     // Reset rate limit on success so a user can register for multiple webinars
     resetRateLimit(`webinar-reg:${email}`)
 
+    const message = isFree
+      ? 'Registration successful! You are now registered for this free webinar. You will receive the webinar link via email.'
+      : 'Registration submitted successfully! Your registration is pending admin confirmation. You will receive an email once confirmed.'
+
     return withSecurityHeaders(NextResponse.json({
       success: true,
       id: registration.id,
-      message: 'Registration submitted successfully! Your registration is pending admin confirmation. You will receive an email once confirmed.',
+      status,
+      message,
     }, { status: 201 }))
   } catch (err: unknown) {
     console.error('Error creating webinar registration:', err)
