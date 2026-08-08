@@ -1,5 +1,5 @@
-import { announcements as staticAnnouncements, eventsTimeline as staticEvents, sampleProfessionals as staticProfessionals, upcomingWebinars as staticWebinars } from '@/lib/static-data'
-import type { Announcement, TimelineEvent, Professional, MemberDoc, ContactMessageDoc, NewsletterSubscriberDoc, Webinar, WebinarRegistrationDoc } from '@/lib/types'
+import { announcements as staticAnnouncements, eventsTimeline as staticEvents, sampleProfessionals as staticProfessionals, upcomingWebinars as staticWebinars, testimonials as staticTestimonials, galleryImages as staticGalleryImages } from '@/lib/static-data'
+import type { Announcement, TimelineEvent, Professional, MemberDoc, ContactMessageDoc, NewsletterSubscriberDoc, Webinar, WebinarRegistrationDoc, Testimonial, GalleryImage } from '@/lib/types'
 
 // Check if Firebase is configured (using NEXT_PUBLIC_* env vars)
 function isFirebaseConfigured(): boolean {
@@ -83,5 +83,29 @@ export async function getWebinarRegistrations(): Promise<WebinarRegistrationDoc[
     return await fbGetRegistrations() as WebinarRegistrationDoc[]
   } catch {
     return []
+  }
+}
+
+export async function getTestimonials(): Promise<Testimonial[]> {
+  if (!isFirebaseConfigured()) return staticTestimonials
+  try {
+    const { getTestimonials: fbGetTestimonials } = await import('@/lib/firestore')
+    const docs = await fbGetTestimonials()
+    if (docs && docs.length > 0) return docs as unknown as Testimonial[]
+    return staticTestimonials
+  } catch {
+    return staticTestimonials
+  }
+}
+
+export async function getGalleryImages(): Promise<GalleryImage[]> {
+  if (!isFirebaseConfigured()) return staticGalleryImages
+  try {
+    const { getGalleryImages: fbGetGalleryImages } = await import('@/lib/firestore')
+    const docs = await fbGetGalleryImages()
+    if (docs && docs.length > 0) return docs as unknown as GalleryImage[]
+    return staticGalleryImages
+  } catch {
+    return staticGalleryImages
   }
 }

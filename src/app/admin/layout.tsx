@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Users, Mail, Calendar, Megaphone, Bell, Menu, X, Monitor, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, Mail, Calendar, Megaphone, Bell, Menu, X, Monitor, LogOut, Star, Image } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
@@ -15,6 +15,8 @@ const adminLinks = [
   { href: '/admin/events', label: 'Events', icon: Calendar },
   { href: '/admin/webinars', label: 'Webinars', icon: Monitor },
   { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
+  { href: '/admin/testimonials', label: 'Testimonials', icon: Star },
+  { href: '/admin/gallery', label: 'Gallery', icon: Image },
   { href: '/admin/newsletter', label: 'Newsletter', icon: Bell },
 ]
 

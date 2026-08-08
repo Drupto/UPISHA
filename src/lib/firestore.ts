@@ -1,5 +1,6 @@
 import { getDb } from './firebase-admin'
 import { FieldValue } from 'firebase/firestore'
+import type { TestimonialDoc, GalleryImageDoc } from '@/lib/types'
 
 const db = () => getDb()
 
@@ -463,6 +464,68 @@ export async function updateWebinarRegistration(id: string, data: Partial<Webina
 
 export async function deleteWebinarRegistration(id: string) {
   const ref = doc(db(), 'webinarRegistrations', id)
+  await deleteDoc(ref)
+  return { id }
+}
+
+// Testimonial CRUD operations
+export async function createTestimonial(data: TestimonialDoc) {
+  const ref = await addDoc(collection(db(), 'testimonials'), {
+    ...data,
+    isActive: data.isActive ?? true,
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+  })
+  return { id: ref.id }
+}
+
+export async function getTestimonials() {
+  const snapshot = await getDocs(query(collection(db(), 'testimonials'), orderBy('createdAt', 'desc')))
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+}
+
+export async function updateTestimonial(id: string, data: Partial<TestimonialDoc>) {
+  const ref = doc(db(), 'testimonials', id)
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: new Date(),
+  })
+  return { id }
+}
+
+export async function deleteTestimonial(id: string) {
+  const ref = doc(db(), 'testimonials', id)
+  await deleteDoc(ref)
+  return { id }
+}
+
+// Gallery CRUD operations
+export async function createGalleryImage(data: GalleryImageDoc) {
+  const ref = await addDoc(collection(db(), 'galleryImages'), {
+    ...data,
+    isActive: data.isActive ?? true,
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+  })
+  return { id: ref.id }
+}
+
+export async function getGalleryImages() {
+  const snapshot = await getDocs(query(collection(db(), 'galleryImages'), orderBy('createdAt', 'desc')))
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+}
+
+export async function updateGalleryImage(id: string, data: Partial<GalleryImageDoc>) {
+  const ref = doc(db(), 'galleryImages', id)
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: new Date(),
+  })
+  return { id }
+}
+
+export async function deleteGalleryImage(id: string) {
+  const ref = doc(db(), 'galleryImages', id)
   await deleteDoc(ref)
   return { id }
 }

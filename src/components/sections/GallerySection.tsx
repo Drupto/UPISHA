@@ -18,15 +18,34 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { galleryImages } from '@/lib/static-data'
 import { AnimatedSection } from '@/components/sections'
+import { Loader2 } from 'lucide-react'
 
 /* ─── Gallery Section ─── */
 export function GallerySection() {
   const [selectedImage, setSelectedImage] = useState<{ src: string; index: number } | null>(null)
   const [filter, setFilter] = useState('All')
   const [visibleCount, setVisibleCount] = useState(6)
+  const [galleryImages, setGalleryImages] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+
+  useEffect(() => {
+    async function loadImages() {
+      try {
+        const response = await fetch('/api/gallery')
+        const data = await response.json()
+        if (data.images && data.images.length > 0) {
+          setGalleryImages(data.images)
+        }
+      } catch (error) {
+        console.error('Failed to load gallery:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadImages()
+  }, [])
 
   const categories = ['All', 'Events', 'Workshops', 'Meetings', 'Outreach', 'Training', 'Conferences']
   const filteredImages =
@@ -129,42 +148,48 @@ export function GallerySection() {
         )}
 
         {/* Gallery Grid - Masonry-like layout with varying heights */}
-        <div className="masonry-grid">
-          {visibleImages.map((img, i) => {
-            // Vary aspect ratios for masonry effect
-            const aspectClass = i % 5 === 0 ? 'aspect-[3/4]' : i % 5 === 2 ? 'aspect-[4/3]' : i % 5 === 4 ? 'aspect-square' : 'aspect-[4/3]'
-            return (
-              <motion.div
-                key={`${img.title}-${i}`}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: Math.min(i * 0.08, 0.4) }}
-                viewport={{ once: true }}
-                className="group cursor-pointer relative overflow-hidden rounded-xl shadow-sm hover:shadow-xl tilt-hover bg-gray-100 dark:bg-gray-800"
-                onClick={() => setSelectedImage({ src: img.src, index: i })}
-              >
-                <div className={`${aspectClass} overflow-hidden`}>
-                  <img
-                    src={img.src}
-                    alt={img.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 backdrop-blur-[2px]">
-                  <div>
-                    <h4 className="text-white font-semibold text-sm">{img.title}</h4>
-                    <Badge className="bg-upisha-gold/90 text-white text-xs mt-1 border-0">{img.category}</Badge>
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-upisha-teal" />
+          </div>
+        ) : (
+          <div className="masonry-grid">
+            {visibleImages.map((img, i) => {
+              // Vary aspect ratios for masonry effect
+              const aspectClass = i % 5 === 0 ? 'aspect-[3/4]' : i % 5 === 2 ? 'aspect-[4/3]' : i % 5 === 4 ? 'aspect-square' : 'aspect-[4/3]'
+              return (
+                <motion.div
+                  key={`${img.id || img.title}-${i}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: Math.min(i * 0.08, 0.4) }}
+                  viewport={{ once: true }}
+                  className="group cursor-pointer relative overflow-hidden rounded-xl shadow-sm hover:shadow-xl tilt-hover bg-gray-100 dark:bg-gray-800"
+                  onClick={() => setSelectedImage({ src: img.src, index: i })}
+                >
+                  <div className={`${aspectClass} overflow-hidden`}>
+                    <img
+                      src={img.src}
+                      alt={img.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
                   </div>
-                </div>
-                {/* Top-right zoom icon */}
-                <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <Eye className="h-4 w-4 text-white" />
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 backdrop-blur-[2px]">
+                    <div>
+                      <h4 className="text-white font-semibold text-sm">{img.title}</h4>
+                      <Badge className="bg-upisha-gold/90 text-white text-xs mt-1 border-0">{img.category}</Badge>
+                    </div>
+                  </div>
+                  {/* Top-right zoom icon */}
+                  <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Eye className="h-4 w-4 text-white" />
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Load More / View Full Gallery */}
         <div className="text-center mt-8 space-y-3">

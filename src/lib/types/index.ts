@@ -76,9 +76,11 @@ export interface MembershipPlan {
 }
 
 export interface GalleryImage {
+  id?: string
   src: string
   title: string
   category: string
+  isActive?: boolean
 }
 
 export interface FAQ {
@@ -94,10 +96,12 @@ export interface Stat {
 }
 
 export interface Testimonial {
+  id?: string
   name: string
   role: string
   content: string
   rating: number
+  isActive?: boolean
 }
 
 export interface Partner {
@@ -310,6 +314,27 @@ export interface WebinarRegistrationDoc {
   message?: string | null
   declaration: boolean
   status?: 'pending' | 'confirmed' | 'rejected'
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface TestimonialDoc {
+  id?: string
+  name: string
+  role: string
+  content: string
+  rating: number
+  isActive?: boolean
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface GalleryImageDoc {
+  id?: string
+  src: string
+  title: string
+  category: string
+  isActive?: boolean
   createdAt?: Date
   updatedAt?: Date
 }

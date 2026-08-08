@@ -7,7 +7,7 @@ import {
   Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
   Heart, Stethoscope, GraduationCap, Globe, Facebook, Twitter, Instagram,
   Linkedin, Youtube, Send, Clock, Calendar, ArrowRight, CheckCircle2,
-  Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote,
+  Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote, Loader2,
   Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
   PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
   Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
@@ -15,20 +15,40 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
-import { testimonials } from '@/lib/static-data'
+import { Button } from '@/components/ui/button'
+import { AnimatedSection } from '@/components/sections'
 
 /* ─── Testimonials Section ─── */
 export function TestimonialsSection() {
   const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [testimonials, setTestimonials] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (isPaused) return
+    async function loadTestimonials() {
+      try {
+        const response = await fetch('/api/testimonials')
+        const data = await response.json()
+        if (data.testimonials && data.testimonials.length > 0) {
+          setTestimonials(data.testimonials)
+        }
+      } catch (error) {
+        console.error('Failed to load testimonials:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadTestimonials()
+  }, [])
+
+  useEffect(() => {
+    if (isPaused || testimonials.length === 0) return
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % testimonials.length)
     }, 6000)
     return () => clearInterval(timer)
-  }, [isPaused])
+  }, [isPaused, testimonials.length])
 
   const goNext = () => setCurrent((prev) => (prev + 1) % testimonials.length)
   const goPrev = () => setCurrent((prev) => (prev - 1 + testimonials.length) % testimonials.length)
@@ -50,11 +70,18 @@ export function TestimonialsSection() {
           </h2>
         </div>
 
-        <div
-          className="relative min-h-[260px] md:min-h-[220px]"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
+        {loading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="h-8 w-8 animate-spin text-upisha-teal" />
+          </div>
+        ) : testimonials.length === 0 ? (
+          <p className="text-center text-gray-400">No testimonials available yet.</p>
+        ) : (
+          <div
+            className="relative min-h-[260px] md:min-h-[220px]"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+          >
           {/* Nav arrows */}
           <button
             onClick={goPrev}
@@ -99,26 +126,27 @@ export function TestimonialsSection() {
               </div>
             </motion.div>
           </AnimatePresence>
-        </div>
 
-        {/* Dots + pause indicator */}
-        <div className="flex justify-center items-center gap-3 mt-8">
-          {isPaused && (
-            <span className="text-[10px] text-white/40 uppercase tracking-wider">Paused</span>
-          )}
-          <div className="flex gap-2">
-            {testimonials.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
-                  i === current ? 'w-8 bg-upisha-gold' : 'w-2.5 bg-white/30 hover:bg-white/50'
-                }`}
-                aria-label={`Go to testimonial ${i + 1}`}
-              />
-            ))}
+          {/* Dots + pause indicator */}
+          <div className="flex justify-center items-center gap-3 mt-8">
+            {isPaused && (
+              <span className="text-[10px] text-white/40 uppercase tracking-wider">Paused</span>
+            )}
+            <div className="flex gap-2">
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    i === current ? 'w-8 bg-upisha-gold' : 'w-2.5 bg-white/30 hover:bg-white/50'
+                  }`}
+                  aria-label={`Go to testimonial ${i + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
+        )}
       </div>
     </section>
   )
