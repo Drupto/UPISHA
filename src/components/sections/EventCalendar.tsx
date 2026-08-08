@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { eventsTimeline as staticEvents } from '@/lib/static-data'
 import type { TimelineEvent } from '@/lib/types'
 import { parseEventDates } from '@/lib/date-utils'
 
@@ -18,7 +17,7 @@ export function EventCalendar({ onEventClick, events }: {
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null)
   const [tooltipEvents, setTooltipEvents] = useState<TimelineEvent[]>([])
 
-  const calendarEvents = events && events.length > 0 ? events : staticEvents
+  const calendarEvents = events || []
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()

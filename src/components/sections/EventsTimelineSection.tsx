@@ -40,7 +40,8 @@ const resolveIcon = (icon: unknown): React.ComponentType<{ className?: string }>
 
 /* ─── Events Timeline Section ─── */
 export default function EventsTimelineSection() {
-  const [events, setEvents] = useState(staticEvents)
+  const [events, setEvents] = useState<typeof staticEvents>([])
+  const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<typeof staticEvents[0] | null>(null)
 
   useEffect(() => {
@@ -48,11 +49,17 @@ export default function EventsTimelineSection() {
     fetch('/api/events')
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data) => {
-        if (!cancelled && data.events?.length) {
-          setEvents(data.events)
+        if (!cancelled) {
+          // Use real data if available, otherwise fall back to static
+          setEvents(data.events?.length ? data.events : staticEvents)
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) setEvents(staticEvents)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
     return () => { cancelled = true }
   }, [])
   const { toast } = useToast()
@@ -94,7 +101,11 @@ export default function EventsTimelineSection() {
           <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-upisha-teal via-upisha-gold to-upisha-teal opacity-30 md:-translate-x-1/2" />
 
           <div className="space-y-8">
-            {events.map((event, i) => {
+            {loading && events.length === 0 ? (
+              <div className="flex justify-center py-16">
+                <div className="h-10 w-10 border-4 border-upisha-teal border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : events.map((event, i) => {
               const EventIcon = resolveIcon(event.icon)
               return (
               <motion.div
@@ -179,7 +190,7 @@ export default function EventsTimelineSection() {
 
         {/* Calendar Sidebar */}
         <div className="space-y-6">
-          <EventCalendar onEventClick={(event) => setSelectedEvent(event)} />
+          <EventCalendar events={events} onEventClick={(event) => setSelectedEvent(event)} />
 
           {/* Upcoming count */}
           <Card className="border-upisha-gold/20 dark:bg-gray-800 dark:border-gray-700">

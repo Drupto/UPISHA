@@ -23,8 +23,9 @@ interface SidebarEvent {
 
 /* ─── Announcement Section ─── */
 export function AnnouncementSection() {
-  const [announcements, setAnnouncements] = useState(staticAnnouncements)
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [sidebarEvents, setSidebarEvents] = useState<SidebarEvent[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null)
 
   useEffect(() => {
@@ -32,11 +33,17 @@ export function AnnouncementSection() {
     fetch('/api/announcements')
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data) => {
-        if (!cancelled && data.announcements?.length) {
-          setAnnouncements(data.announcements)
+        if (!cancelled) {
+          // Use real data if available, otherwise fall back to static
+          setAnnouncements(data.announcements?.length ? data.announcements : staticAnnouncements)
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) setAnnouncements(staticAnnouncements)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
     return () => { cancelled = true }
   }, [])
 
@@ -46,15 +53,9 @@ export function AnnouncementSection() {
     fetch('/api/events')
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data) => {
-        if (!cancelled && data.events?.length) {
-          setSidebarEvents(data.events.slice(0, 3).map((e: TimelineEvent) => ({
-            title: e.title,
-            date: e.date,
-            location: e.location,
-          })))
-        } else if (!cancelled) {
-          // Fallback to static events
-          setSidebarEvents(staticEvents.slice(0, 3).map((e) => ({
+        if (!cancelled) {
+          const events = data.events?.length ? data.events : staticEvents
+          setSidebarEvents(events.slice(0, 3).map((e: TimelineEvent) => ({
             title: e.title,
             date: e.date,
             location: e.location,
@@ -70,6 +71,9 @@ export function AnnouncementSection() {
           })))
         }
       })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
     return () => { cancelled = true }
   }, [])
 
@@ -84,7 +88,11 @@ export function AnnouncementSection() {
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-upisha-navy dark:text-white">Announcements</h2>
             </div>
             <div className="space-y-3">
-              {announcements.map((item, i) => (
+              {loading && announcements.length === 0 ? (
+                <div className="flex justify-center py-8">
+                  <div className="h-8 w-8 border-4 border-upisha-teal border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : announcements.map((item, i) => (
                 <motion.div
                   key={item.id || i}
                   initial={{ opacity: 0, x: -20 }}
