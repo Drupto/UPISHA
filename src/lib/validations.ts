@@ -26,6 +26,8 @@ export const joinSchema = z.object({
   qualification: z.string().min(2, 'Qualification is required').max(200),
   rciNumber: z.string().optional().nullable(),
   membershipType: z.string().min(2, 'Membership type is required'),
+  course: z.string().optional().nullable(),
+  currentYear: z.string().optional().nullable(),
   city: z.string().min(2, 'City is required').max(100),
   transactionNumber: z.string().min(2, 'Transaction number is required').max(100),
   message: z.string().max(5000).optional().nullable(),
@@ -36,6 +38,14 @@ export const joinSchema = z.object({
   declaration: z.boolean().refine((val) => val === true, {
     message: 'You must accept the declaration to submit',
   }),
+}).refine((data) => {
+  if (data.membershipType === 'student') {
+    return !!data.course && data.course.trim().length >= 2 && !!data.currentYear && data.currentYear.trim().length >= 1
+  }
+  return true
+}, {
+  message: 'Course and current year are required for student members',
+  path: ['course']
 })
 
 export const profileSchema = z.object({

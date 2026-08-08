@@ -26,6 +26,8 @@ export default function ApplyPage() {
     qualification: '',
     rciNumber: '',
     membershipType: '',
+    course: '',
+    currentYear: '',
     city: '',
     transactionNumber: '',
     message: '',
@@ -202,7 +204,7 @@ export default function ApplyPage() {
   const handleClearForm = () => {
     setFormData({
       fullName: '', email: '', password: '', phone: '', qualification: '',
-      rciNumber: '', membershipType: '', city: '', transactionNumber: '', message: '',
+      rciNumber: '', membershipType: '', course: '', currentYear: '', city: '', transactionNumber: '', message: '',
       address: '', photoUrl: '', rciCertificateUrl: '', registrationDate: '', declaration: false,
     })
     setPhotoPreview(null)
@@ -490,75 +492,115 @@ export default function ApplyPage() {
                   {joinTouched.address && joinErrors.address && <p className="text-xs text-red-500 mt-1">{joinErrors.address}</p>}
                 </div>
 
-                {/* Qualification & RCI Number */}
-                <div className="grid sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
-                      Qualification *
-                    </label>
-                    <Input
-                      required
-                      placeholder="M.Sc. (Audiology)"
-                      value={formData.qualification}
-                      onChange={(e) =>
-                        setFormData({ ...formData, qualification: e.target.value })
-                      }
-                      className="input-focus-ring"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
-                      RCI Registration No.
-                    </label>
-                    <Input
-                      placeholder="RCI Number"
-                      value={formData.rciNumber}
-                      onChange={(e) =>
-                        setFormData({ ...formData, rciNumber: e.target.value })
-                      }
-                      className="input-focus-ring"
-                    />
-                  </div>
-                </div>
-
-                {/* RCI Certificate Upload */}
+                {/* Qualification */}
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
-                    RCI Certificate
+                    Qualification *
                   </label>
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-pointer hover:border-upisha-teal transition-colors shrink-0"
-                      onClick={() => rciInputRef.current?.click()}
-                    >
-                      {rciPreview ? (
-                        <img src={rciPreview} alt="RCI Certificate" className="w-full h-full object-cover" />
-                      ) : (
-                        <FileText className="h-8 w-8 text-gray-400" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <input
-                        ref={rciInputRef}
-                        type="file"
-                        accept="image/*,.pdf"
-                        onChange={handleRciChange}
-                        className="hidden"
+                  <Input
+                    required
+                    placeholder="M.Sc. (Audiology)"
+                    value={formData.qualification}
+                    onChange={(e) =>
+                      setFormData({ ...formData, qualification: e.target.value })
+                    }
+                    className="input-focus-ring"
+                  />
+                </div>
+
+                {/* Course & Current Year - Only for students */}
+                {formData.membershipType === 'student' && (
+                  <div className="grid sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                        Course *
+                      </label>
+                      <Input
+                        required
+                        placeholder="e.g. B.Sc. Audiology"
+                        value={formData.course}
+                        onChange={(e) =>
+                          setFormData({ ...formData, course: e.target.value })
+                        }
+                        className="input-focus-ring"
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => rciInputRef.current?.click()}
-                        className="text-xs"
-                      >
-                        <Upload className="h-3.5 w-3.5 mr-1.5" />
-                        {rciPreview ? 'Change Certificate' : 'Upload Certificate'}
-                      </Button>
-                      <p className="text-[10px] text-gray-400 mt-1">Max 10MB. Image or PDF.</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                        Current Year *
+                      </label>
+                      <Input
+                        required
+                        placeholder="e.g. 2nd Year"
+                        value={formData.currentYear}
+                        onChange={(e) =>
+                          setFormData({ ...formData, currentYear: e.target.value })
+                        }
+                        className="input-focus-ring"
+                      />
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* RCI Number & Certificate - Only for non-students */}
+                {formData.membershipType !== 'student' && (
+                  <>
+                    <div className="grid sm:grid-cols-2 gap-5">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                          RCI Registration No.
+                        </label>
+                        <Input
+                          placeholder="RCI Number"
+                          value={formData.rciNumber}
+                          onChange={(e) =>
+                            setFormData({ ...formData, rciNumber: e.target.value })
+                          }
+                          className="input-focus-ring"
+                        />
+                      </div>
+                    </div>
+
+                    {/* RCI Certificate Upload */}
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+                        RCI Certificate
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-pointer hover:border-upisha-teal transition-colors shrink-0"
+                          onClick={() => rciInputRef.current?.click()}
+                        >
+                          {rciPreview ? (
+                            <img src={rciPreview} alt="RCI Certificate" className="w-full h-full object-cover" />
+                          ) : (
+                            <FileText className="h-8 w-8 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <input
+                            ref={rciInputRef}
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={handleRciChange}
+                            className="hidden"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => rciInputRef.current?.click()}
+                            className="text-xs"
+                          >
+                            <Upload className="h-3.5 w-3.5 mr-1.5" />
+                            {rciPreview ? 'Change Certificate' : 'Upload Certificate'}
+                          </Button>
+                          <p className="text-[10px] text-gray-400 mt-1">Max 10MB. Image or PDF.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Registration Date */}
                 <div>

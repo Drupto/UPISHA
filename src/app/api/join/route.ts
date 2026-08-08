@@ -118,6 +118,8 @@ export async function POST(request: NextRequest) {
       qualification: sanitizeHtml(validated.qualification),
       rciNumber: validated.rciNumber || null,
       membershipType: sanitizeHtml(validated.membershipType),
+      course: validated.course ? sanitizeHtml(validated.course) : null,
+      currentYear: validated.currentYear || null,
       city: sanitizeHtml(validated.city),
       transactionNumber: sanitizeHtml(validated.transactionNumber),
       message: validated.message ? sanitizeHtml(validated.message) : null,
