@@ -12,7 +12,22 @@ export async function GET(request: NextRequest) {
 
   try {
     const members = await getMembers()
-    return withSecurityHeaders(NextResponse.json({ members }))
+    // Convert Firestore Timestamp objects to ISO date strings so they
+    // serialize correctly through JSON and can be parsed on the client.
+    const serializedMembers = members.map((member: Record<string, unknown>) => {
+      const { createdAt, updatedAt, ...rest } = member
+      const serialize = (ts: unknown) => {
+        if (!ts) return null
+        if (ts instanceof Date) return ts.toISOString()
+        if (typeof ts === 'string') return ts
+        if (typeof ts === 'object' && 'seconds' in (ts as object) && 'nanoseconds' in (ts as object)) {
+          return new Date((ts as { seconds: number }).seconds * 1000).toISOString()
+        }
+        return null
+      }
+      return { ...rest, createdAt: serialize(createdAt), updatedAt: serialize(updatedAt) }
+    })
+    return withSecurityHeaders(NextResponse.json({ members: serializedMembers }))
   } catch (error) {
     console.error('Error fetching members:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 }))

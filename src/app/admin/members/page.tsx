@@ -34,6 +34,8 @@ interface Member {
   membershipType: string
   city: string
   status: string
+  transactionNumber?: string | null
+  createdAt?: string | Date | null
   address?: string | null
   photoUrl?: string | null
   rciCertificateUrl?: string | null
@@ -197,7 +199,7 @@ export default function AdminMembers() {
   const paginatedMembers = filteredMembers.slice(startIndex, startIndex + itemsPerPage)
 
   const exportMembersCSV = () => {
-    const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Membership Type', 'City', 'Address', 'Registration Date', 'Status']
+    const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Membership Type', 'City', 'Address', 'Registration Date', 'Txn Number', 'Entry Date', 'Status']
     const rows = filteredMembers.map(m => [
       m.id,
       m.fullName,
@@ -207,6 +209,13 @@ export default function AdminMembers() {
       m.city,
       m.address || '',
       m.registrationDate || '',
+      m.transactionNumber || '',
+      m.createdAt ? (() => {
+        try {
+          const d = new Date(m.createdAt as string | Date)
+          return isNaN(d.getTime()) ? '' : d.toLocaleDateString()
+        } catch { return '' }
+      })() : '',
       m.status || 'pending'
     ])
     const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -280,6 +289,8 @@ export default function AdminMembers() {
                   <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">City</th>
                   <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Reg. Date</th>
                   <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">RCI Cert</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Txn Number</th>
+                  <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Entry Date</th>
                   <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
                   <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
                 </tr>
@@ -322,6 +333,23 @@ export default function AdminMembers() {
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}
+                    </td>
+                    <td className="py-3 text-gray-500 whitespace-nowrap">
+                      {member.transactionNumber || '-'}
+                    </td>
+                    <td className="py-3 text-gray-500 whitespace-nowrap">
+                      {(() => {
+                        try {
+                          if (!member.createdAt) return '-'
+                          const dateStr = typeof member.createdAt === 'string' ? member.createdAt : 
+                                         member.createdAt instanceof Date ? member.createdAt.toISOString() :
+                                         String(member.createdAt)
+                          const date = new Date(dateStr)
+                          return isNaN(date.getTime()) ? '-' : date.toLocaleDateString()
+                        } catch {
+                          return '-'
+                        }
+                      })()}
                     </td>
                     <td className="py-3">
                       <Badge className={member.status === 'approved' ? 'bg-green-100 text-green-700' : member.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
