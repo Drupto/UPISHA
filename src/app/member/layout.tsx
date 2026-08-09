@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Calendar, Monitor, Megaphone, Menu, X, LogOut, Home, BookOpen } from 'lucide-react'
+import { LayoutDashboard, Calendar, Monitor, Megaphone, Menu, X, LogOut, Home, BookOpen, Award } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import MemberRoute from '@/components/auth/MemberRoute'
@@ -14,6 +14,7 @@ const memberLinks = [
   { href: '/member/webinars', label: 'Webinars', icon: Monitor },
   { href: '/member/announcements', label: 'Announcements', icon: Megaphone },
   { href: '/member/publications', label: 'Publications', icon: BookOpen },
+  { href: '/member/certificates', label: 'Certificates', icon: Award },
 ]
 
 export default function MemberLayout({ children }: { children: React.ReactNode }) {

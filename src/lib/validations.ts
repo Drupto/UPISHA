@@ -146,6 +146,36 @@ export const publicationSubmissionSchema = z.object({
   fileUrl: z.string().max(1000).optional().nullable(),
 })
 
+export const certificateTextBlockSchema = z.object({
+  id: z.string().min(1),
+  content: z.string().max(2000),
+  fontSize: z.number().min(8).max(96),
+  fontWeight: z.enum(['normal', 'bold', 'semibold']).default('normal'),
+  fontStyle: z.enum(['normal', 'italic']).default('normal'),
+  textAlign: z.enum(['left', 'center', 'right']).default('center'),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid color').default('#1e293b'),
+  marginTop: z.number().min(0).max(100).default(0),
+  marginBottom: z.number().min(0).max(100).default(0),
+})
+
+export const certificateTemplateSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(200),
+  accountType: z.enum(['life', 'annual', 'student', 'all']),
+  title: z.string().min(2, 'Title must be at least 2 characters').max(200),
+  subtitle: z.string().max(300).optional().default(''),
+  textBlocks: z.array(certificateTextBlockSchema).min(1, 'At least one text block is required'),
+  footerText: z.string().max(300).optional().default(''),
+  logoUrl: z.string().max(2000).optional().nullable(),
+  signatureUrl: z.string().max(2000).optional().nullable(),
+  stampUrl: z.string().max(2000).optional().nullable(),
+  backgroundUrl: z.string().max(2000).optional().nullable(),
+  borderColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid color').default('#0d9488'),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid color').default('#b45309'),
+  fontFamily: z.enum(['serif', 'sans-serif', 'cursive']).default('serif'),
+  isActive: z.boolean().optional().default(true),
+  isDefault: z.boolean().optional().default(false),
+})
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type ContactInput = z.infer<typeof contactSchema>
@@ -158,3 +188,4 @@ export type EventInput = z.infer<typeof eventSchema>
 export type AnnouncementInput = z.infer<typeof announcementSchema>
 export type PublicationInput = z.infer<typeof publicationSchema>
 export type PublicationSubmissionInput = z.infer<typeof publicationSubmissionSchema>
+export type CertificateTemplateInput = z.infer<typeof certificateTemplateSchema>

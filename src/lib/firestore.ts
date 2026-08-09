@@ -1,6 +1,6 @@
 import { getDb } from './firebase-admin'
 import { FieldValue } from 'firebase/firestore'
-import type { TestimonialDoc, GalleryImageDoc, PublicationDoc, PublicationSubmissionDoc } from '@/lib/types'
+import type { TestimonialDoc, GalleryImageDoc, PublicationDoc, PublicationSubmissionDoc, CertificateTemplateDoc, CertificateDoc } from '@/lib/types'
 
 const db = () => getDb()
 
@@ -146,6 +146,347 @@ import {
   where,
 } from 'firebase/firestore'
 
+// Certificate Template CRUD operations
+export async function createCertificateTemplate(data: CertificateTemplateDoc) {
+  const ref = await addDoc(collection(db(), 'certificateTemplates'), {
+    ...data,
+    isActive: data.isActive ?? true,
+    isDefault: data.isDefault ?? false,
+    logoUrl: data.logoUrl ?? null,
+    signatureUrl: data.signatureUrl ?? null,
+    stampUrl: data.stampUrl ?? null,
+    backgroundUrl: data.backgroundUrl ?? null,
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+  })
+  return { id: ref.id }
+}
+
+export async function getCertificateTemplates(): Promise<CertificateTemplateDoc[]> {
+  const snapshot = await getDocs(query(collection(db(), 'certificateTemplates'), orderBy('createdAt', 'desc')))
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as CertificateTemplateDoc)
+}
+
+export async function getCertificateTemplateById(id: string): Promise<CertificateTemplateDoc | null> {
+  const ref = doc(db(), 'certificateTemplates', id)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as CertificateTemplateDoc
+}
+
+export async function getActiveCertificateTemplateByType(accountType: string): Promise<CertificateTemplateDoc | null> {
+  const snapshot = await getDocs(
+    query(
+      collection(db(), 'certificateTemplates'),
+      where('accountType', 'in', [accountType, 'all']),
+      where('isActive', '==', true)
+    )
+  )
+  if (snapshot.empty) return null
+  // Prefer exact match over 'all'
+  const exact = snapshot.docs.find((d) => d.data().accountType === accountType)
+  const selected = exact || snapshot.docs[0]
+  return { id: selected.id, ...selected.data() } as CertificateTemplateDoc
+}
+
+export async function updateCertificateTemplate(id: string, data: Partial<CertificateTemplateDoc>) {
+  const ref = doc(db(), 'certificateTemplates', id)
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: new Date(),
+  })
+  return { id }
+}
+
+export async function deleteCertificateTemplate(id: string) {
+  const ref = doc(db(), 'certificateTemplates', id)
+  await deleteDoc(ref)
+  return { id }
+}
+
+// Certificate CRUD operations
+export async function createCertificate(data: CertificateDoc) {
+  const ref = await addDoc(collection(db(), 'certificates'), {
+    ...data,
+    status: data.status ?? 'issued',
+    qualification: data.qualification ?? null,
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+  })
+  return { id: ref.id }
+}
+
+export async function getCertificates(): Promise<CertificateDoc[]> {
+  const snapshot = await getDocs(query(collection(db(), 'certificates'), orderBy('createdAt', 'desc')))
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    } as CertificateDoc
+  })
+}
+
+export async function getCertificatesByMemberUid(memberUid: string): Promise<CertificateDoc[]> {
+  const snapshot = await getDocs(
+    query(collection(db(), 'certificates'), where('memberUid', '==', memberUid), orderBy('createdAt', 'desc'))
+  )
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    } as CertificateDoc
+  })
+}
+
+export async function getCertificatesByMemberId(memberId: string): Promise<CertificateDoc[]> {
+  const snapshot = await getDocs(
+    query(collection(db(), 'certificates'), where('memberId', '==', memberId), orderBy('createdAt', 'desc'))
+  )
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    } as CertificateDoc
+  })
+}
+
+export async function getCertificateById(id: string): Promise<CertificateDoc | null> {
+  const ref = doc(db(), 'certificates', id)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as CertificateDoc
+}
+
+export async function updateCertificate(id: string, data: Partial<CertificateDoc>) {
+  const ref = doc(db(), 'certificates', id)
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: new Date(),
+  })
+  return { id }
+}
+
+export async function deleteCertificate(id: string) {
+  const ref = doc(db(), 'certificates', id)
+  await deleteDoc(ref)
+  return { id }
+}
+
+// Default certificate template seeds
+export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 'createdAt' | 'updatedAt'>[] = [
+  {
+    name: 'Life Member Certificate',
+    accountType: 'life',
+    title: 'Certificate of Life Membership',
+    subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
+    textBlocks: [
+      {
+        id: 'intro',
+        content: 'This is to certify that',
+        fontSize: 24,
+        fontWeight: 'normal',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        color: '#374151',
+        marginTop: 12,
+        marginBottom: 0,
+      },
+      {
+        id: 'name',
+        content: '{name}',
+        fontSize: 48,
+        fontWeight: 'bold',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#0f172a',
+        marginTop: 12,
+        marginBottom: 8,
+      },
+      {
+        id: 'body',
+        content: 'has been enrolled as a Life Member of the Uttar Pradesh Indian Speech & Hearing Association (UP ISHA) bearing Membership ID {memberId}. We commend their dedication to the field of Audiology and Speech-Language Pathology and welcome them to our professional community.',
+        fontSize: 18,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#374151',
+        marginTop: 16,
+        marginBottom: 8,
+      },
+      {
+        id: 'date',
+        content: 'Issued on {date}',
+        fontSize: 16,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#6b7280',
+        marginTop: 16,
+        marginBottom: 0,
+      },
+    ],
+    footerText: 'President, UP ISHA',
+    logoUrl: null,
+    signatureUrl: null,
+    stampUrl: null,
+    backgroundUrl: null,
+    borderColor: '#b45309',
+    accentColor: '#0d9488',
+    fontFamily: 'serif',
+    isActive: true,
+    isDefault: true,
+  },
+  {
+    name: 'Annual Member Certificate',
+    accountType: 'annual',
+    title: 'Certificate of Annual Membership',
+    subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
+    textBlocks: [
+      {
+        id: 'intro',
+        content: 'This is to certify that',
+        fontSize: 22,
+        fontWeight: 'normal',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        color: '#374151',
+        marginTop: 12,
+        marginBottom: 0,
+      },
+      {
+        id: 'name',
+        content: '{name}',
+        fontSize: 44,
+        fontWeight: 'bold',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#0f172a',
+        marginTop: 12,
+        marginBottom: 8,
+      },
+      {
+        id: 'body',
+        content: 'has been enrolled as an Annual Member of the Uttar Pradesh Indian Speech & Hearing Association (UP ISHA) bearing Membership ID {memberId}. We appreciate their commitment to the advancement of Audiology and Speech-Language Pathology and welcome them to our professional community.',
+        fontSize: 17,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#374151',
+        marginTop: 16,
+        marginBottom: 8,
+      },
+      {
+        id: 'date',
+        content: 'Issued on {date}',
+        fontSize: 15,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#6b7280',
+        marginTop: 16,
+        marginBottom: 0,
+      },
+    ],
+    footerText: 'President, UP ISHA',
+    logoUrl: null,
+    signatureUrl: null,
+    stampUrl: null,
+    backgroundUrl: null,
+    borderColor: '#0d9488',
+    accentColor: '#0f766e',
+    fontFamily: 'sans-serif',
+    isActive: true,
+    isDefault: true,
+  },
+  {
+    name: 'Student Member Certificate',
+    accountType: 'student',
+    title: 'Certificate of Student Membership',
+    subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
+    textBlocks: [
+      {
+        id: 'intro',
+        content: 'This is to certify that',
+        fontSize: 22,
+        fontWeight: 'normal',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        color: '#374151',
+        marginTop: 12,
+        marginBottom: 0,
+      },
+      {
+        id: 'name',
+        content: '{name}',
+        fontSize: 44,
+        fontWeight: 'bold',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#0f172a',
+        marginTop: 12,
+        marginBottom: 8,
+      },
+      {
+        id: 'body',
+        content: 'has been enrolled as a Student Member of the Uttar Pradesh Indian Speech & Hearing Association (UP ISHA) bearing Membership ID {memberId}. We appreciate their dedication to pursuing a career in Audiology and Speech-Language Pathology and welcome them to our student community.',
+        fontSize: 17,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#374151',
+        marginTop: 16,
+        marginBottom: 8,
+      },
+      {
+        id: 'date',
+        content: 'Issued on {date}',
+        fontSize: 15,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#6b7280',
+        marginTop: 16,
+        marginBottom: 0,
+      },
+    ],
+    footerText: 'President, UP ISHA',
+    logoUrl: null,
+    signatureUrl: null,
+    stampUrl: null,
+    backgroundUrl: null,
+    borderColor: '#2563eb',
+    accentColor: '#1d4ed8',
+    fontFamily: 'sans-serif',
+    isActive: true,
+    isDefault: true,
+  },
+]
+
+export async function seedDefaultCertificateTemplates() {
+  try {
+    const existing = await getCertificateTemplates()
+    const hasDefaults = existing.some((t) => t.isDefault === true)
+    if (hasDefaults) return { seeded: false }
+
+    for (const template of DEFAULT_CERTIFICATE_TEMPLATES) {
+      await createCertificateTemplate(template)
+    }
+    return { seeded: true }
+  } catch (error) {
+    console.error('Error seeding default certificate templates:', error)
+    return { seeded: false, error }
+  }
+}
+
 // User role management (role-based access control)
 export async function createUserRecord(data: UserDoc) {
   const ref = doc(db(), 'users', data.uid)
@@ -195,6 +536,13 @@ export async function getMemberByUid(uid: string): Promise<MemberDoc | null> {
   if (snapshot.empty) return null
   const doc = snapshot.docs[0]
   return { id: doc.id, ...doc.data() } as MemberDoc
+}
+
+export async function getMemberById(id: string): Promise<MemberDoc | null> {
+  const ref = doc(db(), 'members', id)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as MemberDoc
 }
 
 export async function getMembers() {

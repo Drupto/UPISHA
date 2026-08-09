@@ -1,0 +1,329 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Loader2, Award, Search, Trash2, Plus, Ban } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+
+interface CertificateItem {
+  id: string
+  templateId: string
+  memberId: string
+  memberName: string
+  membershipType: string
+  certificateNumber: string
+  issueDate: string
+  status?: string
+}
+
+interface TemplateItem {
+  id: string
+  name: string
+  accountType: string
+  isActive?: boolean
+}
+
+interface MemberItem {
+  id: string
+  fullName: string
+  email: string
+  membershipType: string
+  status: string
+}
+
+export default function AdminCertificates() {
+  const { toast } = useToast()
+  const [certificates, setCertificates] = useState<CertificateItem[]>([])
+  const [templates, setTemplates] = useState<TemplateItem[]>([])
+  const [members, setMembers] = useState<MemberItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [issueOpen, setIssueOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState('')
+  const [selectedTemplate, setSelectedTemplate] = useState('')
+  const [issuing, setIssuing] = useState(false)
+
+  useEffect(() => {
+    fetchAll()
+  }, [])
+
+  const fetchAll = async () => {
+    setLoading(true)
+    try {
+      const [certRes, templateRes, memberRes] = await Promise.all([
+        fetch('/api/certificates'),
+        fetch('/api/certificates/templates'),
+        fetch('/api/members'),
+      ])
+
+      const certData = await certRes.json()
+      const templateData = await templateRes.json()
+      const memberData = await memberRes.json()
+
+      setCertificates(certData.certificates || [])
+      setTemplates(templateData.templates || [])
+      setMembers((memberData.members || []).filter((m: MemberItem) => m.status === 'approved'))
+    } catch {
+      toast({ title: 'Error', description: 'Failed to load data', variant: 'destructive' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleIssueCertificate = async () => {
+    if (!selectedMember || !selectedTemplate) {
+      toast({ title: 'Error', description: 'Please select a member and template', variant: 'destructive' })
+      return
+    }
+
+    setIssuing(true)
+    try {
+      const res = await fetch('/api/certificates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId: selectedMember, templateId: selectedTemplate }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to issue certificate')
+      }
+
+      toast({ title: 'Success', description: 'Certificate issued successfully' })
+      setIssueOpen(false)
+      setSelectedMember('')
+      setSelectedTemplate('')
+      fetchAll()
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to issue certificate', variant: 'destructive' })
+    } finally {
+      setIssuing(false)
+    }
+  }
+
+  const handleRevoke = async (id: string) => {
+    if (!confirm('Are you sure you want to revoke this certificate?')) return
+    try {
+      const res = await fetch(`/api/certificates/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'revoked' }),
+      })
+      if (res.ok) {
+        toast({ title: 'Certificate revoked', description: 'The certificate has been revoked.' })
+        fetchAll()
+      } else {
+        toast({ title: 'Error', description: 'Failed to revoke certificate', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this certificate?')) return
+    try {
+      const res = await fetch(`/api/certificates/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        toast({ title: 'Certificate deleted', description: 'The certificate has been removed.' })
+        fetchAll()
+      } else {
+        toast({ title: 'Error', description: 'Failed to delete certificate', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
+    }
+  }
+
+  const filteredCertificates = certificates.filter((c) => {
+    const q = searchQuery.toLowerCase()
+    return (
+      c.memberName.toLowerCase().includes(q) ||
+      c.certificateNumber.toLowerCase().includes(q) ||
+      c.membershipType.toLowerCase().includes(q) ||
+      (c.status || '').toLowerCase().includes(q)
+    )
+  })
+
+  const activeCount = certificates.filter((c) => c.status !== 'revoked').length
+  const revokedCount = certificates.length - activeCount
+
+  if (loading) {
+    return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-upisha-teal" /></div>
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-upisha-navy dark:text-white">Certificates</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {activeCount} active · {revokedCount} revoked
+          </p>
+        </div>
+        <Button
+          onClick={() => setIssueOpen(true)}
+          className="bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Issue Certificate
+        </Button>
+      </div>
+
+      <div className="flex items-center justify-between gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search certificates..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      </div>
+
+      {filteredCertificates.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Award className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500">
+              {searchQuery ? 'No certificates match your search.' : 'No certificates issued yet.'}
+            </p>
+            <p className="text-sm text-gray-400 mt-1">
+              Certificates are auto-issued when members are approved, or you can issue manually.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left">
+                <th className="pb-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Member</th>
+                <th className="pb-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Cert. Number</th>
+                <th className="pb-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Type</th>
+                <th className="pb-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Issue Date</th>
+                <th className="pb-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Status</th>
+                <th className="pb-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCertificates.map((cert) => (
+                <tr key={cert.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="py-3 pr-4 font-medium">{cert.memberName}</td>
+                  <td className="py-3 pr-4 font-mono text-xs text-gray-500">{cert.certificateNumber}</td>
+                  <td className="py-3 pr-4">
+                    <Badge variant="outline">{cert.membershipType}</Badge>
+                  </td>
+                  <td className="py-3 pr-4 text-gray-500">
+                    {new Date(cert.issueDate).toLocaleDateString()}
+                  </td>
+                  <td className="py-3 pr-4">
+                    <Badge className={cert.status === 'revoked' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}>
+                      {cert.status === 'revoked' ? 'Revoked' : 'Active'}
+                    </Badge>
+                  </td>
+                  <td className="py-3">
+                    <div className="flex gap-1">
+                      {cert.status !== 'revoked' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleRevoke(cert.id)}
+                          title="Revoke certificate"
+                        >
+                          <Ban className="h-3.5 w-3.5 text-amber-600" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleDelete(cert.id)}
+                        title="Delete certificate"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Issue Certificate Dialog */}
+      <Dialog open={issueOpen} onOpenChange={setIssueOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Issue Certificate</DialogTitle>
+            <DialogDescription>
+              Select a member and certificate template to issue.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Select Member</Label>
+              <Select value={selectedMember} onValueChange={setSelectedMember}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a member" />
+                </SelectTrigger>
+                <SelectContent>
+                  {members.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.fullName} ({m.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Select Template</Label>
+              <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates
+                    .filter((t) => t.isActive !== false)
+                    .map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name} ({t.accountType})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIssueOpen(false)} disabled={issuing}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleIssueCertificate}
+              disabled={issuing || !selectedMember || !selectedTemplate}
+              className="bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+            >
+              {issuing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Issuing...
+                </>
+              ) : (
+                'Issue Certificate'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}

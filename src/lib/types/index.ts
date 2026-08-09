@@ -376,3 +376,54 @@ export interface PublicationSubmissionDoc {
   createdAt?: Date
   updatedAt?: Date
 }
+
+// Certificate-related types
+export type CertificateAccountType = 'life' | 'annual' | 'student' | 'all'
+
+export interface CertificateTextBlock {
+  id: string
+  content: string
+  fontSize: number
+  fontWeight: 'normal' | 'bold' | 'semibold'
+  fontStyle: 'normal' | 'italic'
+  textAlign: 'left' | 'center' | 'right'
+  color: string
+  marginTop: number
+  marginBottom: number
+}
+
+export interface CertificateTemplateDoc {
+  id?: string
+  name: string
+  accountType: CertificateAccountType
+  title: string
+  subtitle: string
+  textBlocks: CertificateTextBlock[]
+  footerText: string
+  logoUrl?: string | null
+  signatureUrl?: string | null
+  stampUrl?: string | null
+  backgroundUrl?: string | null
+  borderColor: string
+  accentColor: string
+  fontFamily: 'serif' | 'sans-serif' | 'cursive'
+  isActive?: boolean
+  isDefault?: boolean
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface CertificateDoc {
+  id?: string
+  templateId: string
+  memberId: string
+  memberUid: string
+  memberName: string
+  membershipType: string
+  qualification?: string | null
+  certificateNumber: string
+  issueDate: string
+  status?: 'issued' | 'revoked'
+  createdAt?: Date
+  updatedAt?: Date
+}
