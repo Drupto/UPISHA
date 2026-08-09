@@ -13,13 +13,15 @@ import { Loader2, Plus, Trash2, Pencil } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import CertificatePreview from '@/components/certificates/CertificatePreview'
 import { sanitizeFormData } from '@/lib/sanitize'
-import type { CertificateTemplateDoc, CertificateTextBlock } from '@/lib/types'
+import type { CertificateTemplateDoc, CertificateTextBlock, CertificateHeaderFont } from '@/lib/types'
 
 interface TemplateForm {
   name: string
   accountType: string
   title: string
   subtitle: string
+  titleFont: CertificateHeaderFont
+  subtitleFont: CertificateHeaderFont
   textBlocks: CertificateTextBlock[]
   footerText: string
   logoUrl: string
@@ -44,11 +46,31 @@ const emptyBlock = (): CertificateTextBlock => ({
   marginBottom: 8,
 })
 
+const defaultTitleFont: CertificateHeaderFont = {
+  fontSize: 32,
+  fontWeight: 'bold',
+  fontStyle: 'normal',
+  textAlign: 'center',
+  color: '#b45309',
+  letterSpacing: 0.02,
+}
+
+const defaultSubtitleFont: CertificateHeaderFont = {
+  fontSize: 16,
+  fontWeight: 'normal',
+  fontStyle: 'normal',
+  textAlign: 'center',
+  color: '#6b7280',
+  letterSpacing: 0.05,
+}
+
 const emptyForm: TemplateForm = {
   name: '',
   accountType: 'life',
   title: 'Certificate of Membership',
   subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
+  titleFont: defaultTitleFont,
+  subtitleFont: defaultSubtitleFont,
   textBlocks: [emptyBlock()],
   footerText: 'President, UP ISHA',
   logoUrl: '',
@@ -155,6 +177,13 @@ export default function AdminCertificateTemplates() {
     }))
   }
 
+  const updateHeaderFont = (fontKey: 'titleFont' | 'subtitleFont', field: keyof CertificateHeaderFont, value: string | number) => {
+    setForm((prev) => ({
+      ...prev,
+      [fontKey]: { ...prev[fontKey], [field]: value },
+    }))
+  }
+
   const handleEdit = (template: CertificateTemplateDoc) => {
     setEditing(template)
     setForm({
@@ -162,6 +191,8 @@ export default function AdminCertificateTemplates() {
       accountType: template.accountType || 'life',
       title: template.title || '',
       subtitle: template.subtitle || '',
+      titleFont: template.titleFont || defaultTitleFont,
+      subtitleFont: template.subtitleFont || defaultSubtitleFont,
       textBlocks: template.textBlocks?.length ? template.textBlocks : [emptyBlock()],
       footerText: template.footerText || '',
       logoUrl: template.logoUrl || '',
@@ -242,6 +273,8 @@ export default function AdminCertificateTemplates() {
         accountType: (form.accountType as CertificateTemplateDoc['accountType']) || 'all',
         title: form.title,
         subtitle: form.subtitle,
+        titleFont: form.titleFont,
+        subtitleFont: form.subtitleFont,
         textBlocks: form.textBlocks,
         footerText: form.footerText,
         logoUrl: form.logoUrl || null,
@@ -263,6 +296,96 @@ export default function AdminCertificateTemplates() {
     '{qualification} - member qualification',
     '{certificateNumber} - certificate number',
   ]
+
+  const renderHeaderFontControls = (fontKey: 'titleFont' | 'subtitleFont', label: string) => {
+    const font = form[fontKey]
+    return (
+      <div className="border rounded-lg p-3 space-y-3">
+        <p className="text-sm font-medium text-upisha-navy dark:text-white">{label} Font</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div>
+            <Label className="text-xs">Font Size</Label>
+            <Input
+              type="number"
+              min={8}
+              max={96}
+              value={font.fontSize}
+              onChange={(e) => updateHeaderFont(fontKey, 'fontSize', Number(e.target.value))}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Weight</Label>
+            <Select
+              value={font.fontWeight}
+              onValueChange={(v) => updateHeaderFont(fontKey, 'fontWeight', v as CertificateHeaderFont['fontWeight'])}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="semibold">Semibold</SelectItem>
+                <SelectItem value="bold">Bold</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Style</Label>
+            <Select
+              value={font.fontStyle}
+              onValueChange={(v) => updateHeaderFont(fontKey, 'fontStyle', v as CertificateHeaderFont['fontStyle'])}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="italic">Italic</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Align</Label>
+            <Select
+              value={font.textAlign}
+              onValueChange={(v) => updateHeaderFont(fontKey, 'textAlign', v as CertificateHeaderFont['textAlign'])}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Color</Label>
+            <Input
+              type="color"
+              value={font.color}
+              onChange={(e) => updateHeaderFont(fontKey, 'color', e.target.value)}
+              className="mt-1 h-9 p-1"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Letter Spacing</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min={0}
+              max={10}
+              value={font.letterSpacing}
+              onChange={(e) => updateHeaderFont(fontKey, 'letterSpacing', Number(e.target.value))}
+              className="mt-1"
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-upisha-teal" /></div>
@@ -339,6 +462,10 @@ export default function AdminCertificateTemplates() {
                     className="mt-1"
                   />
                 </div>
+
+                {/* Title & Subtitle Font Controls */}
+                {renderHeaderFontControls('titleFont', 'Title')}
+                {renderHeaderFontControls('subtitleFont', 'Subtitle')}
 
                 {/* Text Blocks */}
                 <div>

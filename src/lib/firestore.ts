@@ -288,6 +288,22 @@ export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 
     accountType: 'life',
     title: 'Certificate of Life Membership',
     subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
+    titleFont: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      fontStyle: 'normal',
+      textAlign: 'center',
+      color: '#b45309',
+      letterSpacing: 0.02,
+    },
+    subtitleFont: {
+      fontSize: 16,
+      fontWeight: 'normal',
+      fontStyle: 'normal',
+      textAlign: 'center',
+      color: '#6b7280',
+      letterSpacing: 0.05,
+    },
     textBlocks: [
       {
         id: 'intro',
@@ -350,6 +366,22 @@ export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 
     accountType: 'annual',
     title: 'Certificate of Annual Membership',
     subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
+    titleFont: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      fontStyle: 'normal',
+      textAlign: 'center',
+      color: '#0f766e',
+      letterSpacing: 0.02,
+    },
+    subtitleFont: {
+      fontSize: 16,
+      fontWeight: 'normal',
+      fontStyle: 'normal',
+      textAlign: 'center',
+      color: '#6b7280',
+      letterSpacing: 0.05,
+    },
     textBlocks: [
       {
         id: 'intro',
@@ -412,6 +444,22 @@ export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 
     accountType: 'student',
     title: 'Certificate of Student Membership',
     subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
+    titleFont: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      fontStyle: 'normal',
+      textAlign: 'center',
+      color: '#1d4ed8',
+      letterSpacing: 0.02,
+    },
+    subtitleFont: {
+      fontSize: 16,
+      fontWeight: 'normal',
+      fontStyle: 'normal',
+      textAlign: 'center',
+      color: '#6b7280',
+      letterSpacing: 0.05,
+    },
     textBlocks: [
       {
         id: 'intro',

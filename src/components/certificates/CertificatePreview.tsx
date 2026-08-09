@@ -175,11 +175,14 @@ export default function CertificatePreview({
 
         {/* Title */}
         <h1
-          className="text-center font-bold mb-2"
+          className="text-center mb-2"
           style={{
-            fontSize: 32,
-            color: template.accentColor,
-            letterSpacing: '0.02em',
+            fontSize: template.titleFont?.fontSize || 32,
+            fontWeight: template.titleFont?.fontWeight === 'semibold' ? 600 : template.titleFont?.fontWeight || 'bold',
+            fontStyle: template.titleFont?.fontStyle || 'normal',
+            textAlign: template.titleFont?.textAlign || 'center',
+            color: template.titleFont?.color || template.accentColor,
+            letterSpacing: `${template.titleFont?.letterSpacing ?? 0.02}em`,
             textTransform: 'uppercase',
           }}
         >
@@ -191,9 +194,12 @@ export default function CertificatePreview({
           <p
             className="text-center mb-6"
             style={{
-              fontSize: 16,
-              color: '#6b7280',
-              letterSpacing: '0.05em',
+              fontSize: template.subtitleFont?.fontSize || 16,
+              fontWeight: template.subtitleFont?.fontWeight === 'semibold' ? 600 : template.subtitleFont?.fontWeight || 'normal',
+              fontStyle: template.subtitleFont?.fontStyle || 'normal',
+              textAlign: template.subtitleFont?.textAlign || 'center',
+              color: template.subtitleFont?.color || '#6b7280',
+              letterSpacing: `${template.subtitleFont?.letterSpacing ?? 0.05}em`,
             }}
           >
             {template.subtitle}

@@ -23,6 +23,8 @@ export async function PUT(
       accountType: validated.accountType,
       title: sanitizeHtml(validated.title),
       subtitle: validated.subtitle ? sanitizeHtml(validated.subtitle) : '',
+      titleFont: validated.titleFont,
+      subtitleFont: validated.subtitleFont,
       textBlocks: validated.textBlocks.map((block) => ({
         ...block,
         content: sanitizeHtml(block.content),

@@ -392,12 +392,23 @@ export interface CertificateTextBlock {
   marginBottom: number
 }
 
+export interface CertificateHeaderFont {
+  fontSize: number
+  fontWeight: 'normal' | 'bold' | 'semibold'
+  fontStyle: 'normal' | 'italic'
+  textAlign: 'left' | 'center' | 'right'
+  color: string
+  letterSpacing: number
+}
+
 export interface CertificateTemplateDoc {
   id?: string
   name: string
   accountType: CertificateAccountType
   title: string
   subtitle: string
+  titleFont: CertificateHeaderFont
+  subtitleFont: CertificateHeaderFont
   textBlocks: CertificateTextBlock[]
   footerText: string
   logoUrl?: string | null

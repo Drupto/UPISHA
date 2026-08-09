@@ -158,11 +158,36 @@ export const certificateTextBlockSchema = z.object({
   marginBottom: z.number().min(0).max(100).default(0),
 })
 
+export const certificateHeaderFontSchema = z.object({
+  fontSize: z.number().min(8).max(96),
+  fontWeight: z.enum(['normal', 'bold', 'semibold']).default('bold'),
+  fontStyle: z.enum(['normal', 'italic']).default('normal'),
+  textAlign: z.enum(['left', 'center', 'right']).default('center'),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid color').default('#0f172a'),
+  letterSpacing: z.number().min(0).max(10).default(0.02),
+})
+
 export const certificateTemplateSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(200),
   accountType: z.enum(['life', 'annual', 'student', 'all']),
   title: z.string().min(2, 'Title must be at least 2 characters').max(200),
   subtitle: z.string().max(300).optional().default(''),
+  titleFont: certificateHeaderFontSchema.default({
+    fontSize: 32,
+    fontWeight: 'bold',
+    fontStyle: 'normal',
+    textAlign: 'center',
+    color: '#0f172a',
+    letterSpacing: 0.02,
+  }),
+  subtitleFont: certificateHeaderFontSchema.default({
+    fontSize: 16,
+    fontWeight: 'normal',
+    fontStyle: 'normal',
+    textAlign: 'center',
+    color: '#6b7280',
+    letterSpacing: 0.05,
+  }),
   textBlocks: z.array(certificateTextBlockSchema).min(1, 'At least one text block is required'),
   footerText: z.string().max(300).optional().default(''),
   logoUrl: z.string().max(2000).optional().nullable(),

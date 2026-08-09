@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
           accountType: template.accountType,
           title: template.title,
           subtitle: template.subtitle,
+          titleFont: template.titleFont,
+          subtitleFont: template.subtitleFont,
           textBlocks: template.textBlocks,
           footerText: template.footerText,
           logoUrl: template.logoUrl,
