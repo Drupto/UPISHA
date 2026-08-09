@@ -192,7 +192,7 @@ export default function CertificatePreview({
         {/* Subtitle */}
         {template.subtitle && (
           <p
-            className="text-center mb-6"
+            className="text-center mb-3"
             style={{
               fontSize: template.subtitleFont?.fontSize || 16,
               fontWeight: template.subtitleFont?.fontWeight === 'semibold' ? 600 : template.subtitleFont?.fontWeight || 'normal',
@@ -208,7 +208,7 @@ export default function CertificatePreview({
 
         {/* Divider */}
         <div
-          className="w-2/3 h-px mx-auto mb-6"
+          className="w-2/3 h-px mx-auto mb-3"
           style={{ backgroundColor: template.borderColor }}
         />
 
