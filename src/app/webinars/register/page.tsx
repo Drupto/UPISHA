@@ -105,13 +105,19 @@ export default function WebinarRegisterPage() {
     const saved = localStorage.getItem('upisha-webinar-reg-form')
     if (saved) {
       try {
-        const parsed = JSON.parse(saved)
+        const parsed = JSON.parse(saved) as Record<string, unknown>
         if (parsed && (parsed.fullName || parsed.email)) {
           setFormData((prev) => ({
-            ...prev,
-            ...parsed,
-            webinarId: parsed.webinarId || preselectedWebinarId,
-            webinarTitle: parsed.webinarTitle || preselectedWebinarTitle,
+            fullName: typeof parsed.fullName === 'string' ? parsed.fullName : prev.fullName,
+            email: typeof parsed.email === 'string' ? parsed.email : prev.email,
+            phone: typeof parsed.phone === 'string' ? parsed.phone : prev.phone,
+            qualification: typeof parsed.qualification === 'string' ? parsed.qualification : prev.qualification,
+            city: typeof parsed.city === 'string' ? parsed.city : prev.city,
+            webinarId: typeof parsed.webinarId === 'string' ? parsed.webinarId : preselectedWebinarId,
+            webinarTitle: typeof parsed.webinarTitle === 'string' ? parsed.webinarTitle : preselectedWebinarTitle,
+            transactionNumber: typeof parsed.transactionNumber === 'string' ? parsed.transactionNumber : prev.transactionNumber,
+            message: typeof parsed.message === 'string' ? parsed.message : prev.message,
+            declaration: typeof parsed.declaration === 'boolean' ? parsed.declaration : prev.declaration,
           }))
           setShowRestored(true)
           setTimeout(() => setShowRestored(false), 6000)

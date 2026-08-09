@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Star, Plus, Edit, Trash2, Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { csrfHeaders } from '@/lib/csrf'
 
 interface Testimonial {
   id?: string
@@ -78,7 +79,7 @@ export default function AdminTestimonials() {
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(body),
       })
 
@@ -97,7 +98,7 @@ export default function AdminTestimonials() {
     try {
       const response = await fetch('/api/testimonials', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ id }),
       })
       if (!response.ok) throw new Error('Failed to delete testimonial')

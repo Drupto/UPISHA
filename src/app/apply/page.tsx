@@ -14,29 +14,32 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { membershipTypes } from '@/lib/static-data'
 import { AnimatedSection } from '@/components/sections'
+import { csrfHeaders } from '@/lib/csrf'
+
+const defaultFormData = {
+  fullName: '',
+  email: '',
+  password: '',
+  phone: '',
+  qualification: '',
+  rciNumber: '',
+  membershipType: '',
+  course: '',
+  currentYear: '',
+  city: '',
+  transactionNumber: '',
+  message: '',
+  address: '',
+  photoUrl: '',
+  rciCertificateUrl: '',
+  registrationDate: '',
+  declaration: false,
+}
 
 export default function ApplyPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    phone: '',
-    qualification: '',
-    rciNumber: '',
-    membershipType: '',
-    course: '',
-    currentYear: '',
-    city: '',
-    transactionNumber: '',
-    message: '',
-    address: '',
-    photoUrl: '',
-    rciCertificateUrl: '',
-    registrationDate: '',
-    declaration: false,
-  })
+  const [formData, setFormData] = useState(defaultFormData)
   const [joinTouched, setJoinTouched] = useState<Record<string, boolean>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -82,11 +85,19 @@ export default function ApplyPage() {
     const saved = localStorage.getItem('upisha-join-form')
     if (saved) {
       try {
-        const parsed = JSON.parse(saved)
+        const parsed = JSON.parse(saved) as Record<string, unknown>
         if (parsed && (parsed.fullName || parsed.email)) {
-          setFormData(parsed)
-          if (parsed.photoUrl) setPhotoPreview(parsed.photoUrl)
-          if (parsed.rciCertificateUrl) setRciPreview(parsed.rciCertificateUrl)
+          // Ensure every field has a defined value (filter out null/undefined from saved data)
+          const sanitized = { ...defaultFormData } as typeof defaultFormData
+          for (const key of Object.keys(defaultFormData) as (keyof typeof defaultFormData)[]) {
+            const value = parsed[key]
+            if (value !== undefined && value !== null) {
+              ;(sanitized as Record<keyof typeof defaultFormData, unknown>)[key] = value
+            }
+          }
+          setFormData(sanitized)
+          if (typeof parsed.photoUrl === 'string') setPhotoPreview(parsed.photoUrl)
+          if (typeof parsed.rciCertificateUrl === 'string') setRciPreview(parsed.rciCertificateUrl)
           setShowRestored(true)
           setTimeout(() => setShowRestored(false), 6000)
         }
@@ -171,7 +182,7 @@ export default function ApplyPage() {
     try {
       const res = await fetch('/api/join', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(formData),
       })
       if (res.ok) {
@@ -202,11 +213,7 @@ export default function ApplyPage() {
   }
 
   const handleClearForm = () => {
-    setFormData({
-      fullName: '', email: '', password: '', phone: '', qualification: '',
-      rciNumber: '', membershipType: '', course: '', currentYear: '', city: '', transactionNumber: '', message: '',
-      address: '', photoUrl: '', rciCertificateUrl: '', registrationDate: '', declaration: false,
-    })
+    setFormData(defaultFormData)
     setPhotoPreview(null)
     setRciPreview(null)
     localStorage.removeItem('upisha-join-form')

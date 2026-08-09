@@ -50,15 +50,25 @@ export function sanitizeHtml(input: string): string {
   return input.replace(/[&<>"']/g, c => map[c])
 }
 
-// Validate CSRF token (simplified; use next-csrf for production)
+// Validate CSRF token using the Double Submit Cookie pattern:
+// The token must be present in BOTH the x-csrf-token header AND the csrf-token cookie,
+// and they must match. This prevents CSRF attacks because an attacker cannot set
+// cookies on the victim's domain nor read the cookie value to forge the header.
 export function validateCsrfToken(request: Request): boolean {
   const token = request.headers.get('x-csrf-token')
-  const sessionToken = request.headers.get('x-session-token')
-  
-  if (!token || !sessionToken) return false
-  
-  // In production, validate against session store
-  return token.length > 0 && sessionToken.length > 0 && token === sessionToken
+  const cookieHeader = request.headers.get('cookie') || ''
+
+  // Extract csrf-token from cookie header
+  const csrfCookie = cookieHeader
+    .split(';')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith('csrf-token='))
+    ?.split('=')[1]
+
+  if (!token || !csrfCookie) return false
+
+  // Compare the header token with the cookie token
+  return token.length > 0 && token === csrfCookie
 }
 
 // Generate CSRF token (for use in forms)
@@ -71,7 +81,7 @@ export function withCsrfProtection(request: Request): NextResponse | null {
   // Check if request has valid CSRF token
   if (!validateCsrfToken(request)) {
     return withSecurityHeaders(NextResponse.json(
-      { error: 'Invalid or missing CSRF token' },
+      { error: 'Missing or invalid csrf token' },
       { status: 403 }
     ))
   }

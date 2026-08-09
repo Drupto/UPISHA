@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { AnimatedSection } from '@/components/sections'
+import { csrfHeaders } from '@/lib/csrf'
 
 /* ─── Contact Section ─── */
 export function ContactSection() {
@@ -62,9 +63,14 @@ export function ContactSection() {
     const saved = localStorage.getItem('upisha-contact-form')
     if (saved) {
       try {
-        const parsed = JSON.parse(saved)
+        const parsed = JSON.parse(saved) as Record<string, unknown>
         if (parsed && (parsed.name || parsed.email)) {
-          setContactForm(parsed)
+          setContactForm((prev) => ({
+            name: typeof parsed.name === 'string' ? parsed.name : prev.name,
+            email: typeof parsed.email === 'string' ? parsed.email : prev.email,
+            subject: typeof parsed.subject === 'string' ? parsed.subject : prev.subject,
+            message: typeof parsed.message === 'string' ? parsed.message : prev.message,
+          }))
         }
       } catch {}
     }
@@ -82,7 +88,7 @@ export function ContactSection() {
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(contactForm),
       })
       if (res.ok) {
