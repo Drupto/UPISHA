@@ -32,6 +32,7 @@ interface TemplateForm {
   accentColor: string
   fontFamily: string
   isActive: boolean
+  isDefault: boolean
 }
 
 const emptyBlock = (): CertificateTextBlock => ({
@@ -81,6 +82,7 @@ const emptyForm: TemplateForm = {
   accentColor: '#b45309',
   fontFamily: 'serif',
   isActive: true,
+  isDefault: false,
 }
 
 export default function AdminCertificateTemplates() {
@@ -203,6 +205,7 @@ export default function AdminCertificateTemplates() {
       accentColor: template.accentColor || '#b45309',
       fontFamily: template.fontFamily || 'serif',
       isActive: template.isActive !== false,
+      isDefault: template.isDefault || false,
     })
     setShowForm(true)
   }
@@ -285,6 +288,7 @@ export default function AdminCertificateTemplates() {
         accentColor: form.accentColor,
         fontFamily: (form.fontFamily as CertificateTemplateDoc['fontFamily']) || 'serif',
         isActive: form.isActive,
+        isDefault: form.isDefault,
       }
     : null
 
