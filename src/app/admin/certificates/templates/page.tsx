@@ -767,6 +767,7 @@ export default function AdminCertificateTemplates() {
                 memberId="a1b2c3d4e5"
                 date={new Date().toISOString()}
                 qualification="M.Sc. Audiology & Speech-Language Pathology"
+                verificationUrl={`${window.location.origin}/verify/sample`}
               />
               <p className="text-xs text-gray-500 mt-3">
                 This preview updates in real-time as you edit the form.

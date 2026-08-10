@@ -139,6 +139,7 @@ export default function MemberCertificates() {
                     date={cert.issueDate}
                     qualification={cert.qualification || undefined}
                     certificateNumber={cert.certificateNumber}
+                    verificationUrl={`${window.location.origin}/verify/${cert.id}`}
                   />
                 </div>
                 {cert.status !== 'revoked' && (

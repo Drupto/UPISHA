@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import QRCode from 'qrcode'
 import type { CertificateTextBlock, CertificateTemplateDoc } from '@/lib/types'
 
 // Base certificate dimensions (A4 landscape at 96 DPI)
@@ -16,6 +17,7 @@ interface CertificatePreviewProps {
   date?: string
   qualification?: string
   certificateNumber?: string
+  verificationUrl?: string
   scale?: number
 }
 
@@ -75,10 +77,41 @@ export default function CertificatePreview({
   date,
   qualification,
   certificateNumber,
+  verificationUrl,
   scale: externalScale,
 }: CertificatePreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [autoScale, setAutoScale] = useState(1)
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+
+  // Generate the verification QR code as a data URL so it renders as an <img>
+  // (captured correctly by html2canvas for PDF download and by the print flow).
+  useEffect(() => {
+    let cancelled = false
+    if (!verificationUrl) {
+      setQrDataUrl(null)
+      return
+    }
+    QRCode.toDataURL(verificationUrl, {
+      width: 140,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: {
+        dark: '#1f2937',
+        light: '#ffffff',
+      },
+    })
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url)
+      })
+      .catch((err) => {
+        console.error('Error generating QR code:', err)
+        if (!cancelled) setQrDataUrl(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [verificationUrl])
 
   // Auto-scale the certificate to fit its container while keeping
   // a fixed base width so proportions are identical everywhere.
@@ -266,7 +299,7 @@ export default function CertificatePreview({
             </p>
           )}
 
-          {/* Footer with signature and stamp */}
+          {/* Footer with QR verification, seal, and signature */}
           <div className="w-full flex items-end justify-between px-4 mt-auto pt-6">
             {/* Stamp */}
             <div className="flex flex-col items-center gap-1 w-32">
@@ -280,6 +313,33 @@ export default function CertificatePreview({
               <p className="text-[10px] text-gray-400 text-center uppercase tracking-wider">
                 Official Seal
               </p>
+            </div>
+
+            {/* QR Verification */}
+            <div className="flex flex-col items-center gap-1 w-36">
+              {qrDataUrl ? (
+                <a
+                  href={verificationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1 no-underline"
+                >
+                  <img
+                    src={qrDataUrl}
+                    alt="Verify this certificate"
+                    className="h-16 w-16 object-contain p-0.5 bg-white border border-gray-200 rounded"
+                  />
+                  <span className="text-[9px] text-gray-500 text-center leading-tight">
+                    Scan to Verify
+                  </span>
+                </a>
+              ) : (
+                <div className="h-16 w-16 rounded border border-dashed border-gray-300 flex items-center justify-center">
+                  <span className="text-[9px] text-gray-400 text-center leading-tight px-1">
+                    Verification QR
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Signature */}
