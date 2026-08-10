@@ -175,18 +175,34 @@ export async function getCertificateTemplateById(id: string): Promise<Certificat
 }
 
 export async function getActiveCertificateTemplateByType(accountType: string): Promise<CertificateTemplateDoc | null> {
-  const snapshot = await getDocs(
-    query(
-      collection(db(), 'certificateTemplates'),
-      where('accountType', 'in', [accountType, 'all']),
-      where('isActive', '==', true)
+  try {
+    const snapshot = await getDocs(
+      query(
+        collection(db(), 'certificateTemplates'),
+        where('accountType', 'in', [accountType, 'all']),
+        where('isActive', '==', true)
+      )
     )
-  )
-  if (snapshot.empty) return null
-  // Prefer exact match over 'all'
-  const exact = snapshot.docs.find((d) => d.data().accountType === accountType)
-  const selected = exact || snapshot.docs[0]
-  return { id: selected.id, ...selected.data() } as CertificateTemplateDoc
+    if (snapshot.empty) return null
+    // Prefer exact match over 'all'
+    const exact = snapshot.docs.find((d) => d.data().accountType === accountType)
+    const selected = exact || snapshot.docs[0]
+    return { id: selected.id, ...selected.data() } as CertificateTemplateDoc
+  } catch (error) {
+    // Fallback: fetch all templates and filter in memory (avoids composite index requirement)
+    console.error('getActiveCertificateTemplateByType query failed, falling back to in-memory filter:', error)
+    try {
+      const allTemplates = await getCertificateTemplates()
+      const active = allTemplates.filter((t) => t.isActive !== false)
+      const exact = active.find((t) => t.accountType === accountType)
+      const fallback = active.find((t) => t.accountType === 'all')
+      const selected = exact || fallback || active[0] || null
+      return selected
+    } catch (fallbackError) {
+      console.error('Fallback template lookup also failed:', fallbackError)
+      return null
+    }
+  }
 }
 
 export async function updateCertificateTemplate(id: string, data: Partial<CertificateTemplateDoc>) {
@@ -230,33 +246,69 @@ export async function getCertificates(): Promise<CertificateDoc[]> {
 }
 
 export async function getCertificatesByMemberUid(memberUid: string): Promise<CertificateDoc[]> {
-  const snapshot = await getDocs(
-    query(collection(db(), 'certificates'), where('memberUid', '==', memberUid), orderBy('createdAt', 'desc'))
-  )
-  return snapshot.docs.map((doc) => {
-    const data = doc.data()
-    return {
-      id: doc.id,
-      ...data,
-      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
-      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
-    } as CertificateDoc
-  })
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'certificates'), where('memberUid', '==', memberUid), orderBy('createdAt', 'desc'))
+    )
+    return snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+      } as CertificateDoc
+    })
+  } catch (error) {
+    // Fallback: fetch all certificates and filter in memory (avoids composite index requirement)
+    console.error('getCertificatesByMemberUid query failed, falling back to in-memory filter:', error)
+    try {
+      const allCerts = await getCertificates()
+      return allCerts
+        .filter((c) => c.memberUid === memberUid)
+        .sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return bTime - aTime
+        })
+    } catch (fallbackError) {
+      console.error('Fallback certificate lookup also failed:', fallbackError)
+      return []
+    }
+  }
 }
 
 export async function getCertificatesByMemberId(memberId: string): Promise<CertificateDoc[]> {
-  const snapshot = await getDocs(
-    query(collection(db(), 'certificates'), where('memberId', '==', memberId), orderBy('createdAt', 'desc'))
-  )
-  return snapshot.docs.map((doc) => {
-    const data = doc.data()
-    return {
-      id: doc.id,
-      ...data,
-      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
-      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
-    } as CertificateDoc
-  })
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'certificates'), where('memberId', '==', memberId), orderBy('createdAt', 'desc'))
+    )
+    return snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+      } as CertificateDoc
+    })
+  } catch (error) {
+    // Fallback: fetch all certificates and filter in memory (avoids composite index requirement)
+    console.error('getCertificatesByMemberId query failed, falling back to in-memory filter:', error)
+    try {
+      const allCerts = await getCertificates()
+      return allCerts
+        .filter((c) => c.memberId === memberId)
+        .sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return bTime - aTime
+        })
+    } catch (fallbackError) {
+      console.error('Fallback certificate lookup also failed:', fallbackError)
+      return []
+    }
+  }
 }
 
 export async function getCertificateById(id: string): Promise<CertificateDoc | null> {
