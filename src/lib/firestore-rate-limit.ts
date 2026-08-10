@@ -1,113 +1,193 @@
 /**
  * Firestore-based rate limiter for distributed systems
- * Uses Firestore client SDK to persist rate limit data across serverless instances
+ * Uses atomic transactions to prevent race-condition bypasses
+ * and works across serverless instances.
  */
 
-import { getDb } from './firebase'
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
+import { getDb } from './firebase-admin'
+import {
+  collection,
+  doc,
+  deleteDoc,
   getDocs,
-  Timestamp 
+  query,
+  runTransaction,
+  where,
+  increment,
+  Timestamp,
 } from 'firebase/firestore'
 
 interface RateLimitEntry {
-  id: string
   identifier: string
   count: number
   resetTime: number
   createdAt: Date
 }
 
-const db = getDb()
 const RATE_LIMITS_COLLECTION = 'rate_limits'
 
+// Lazy db accessor (matches firestore.ts pattern) so module import
+// during build does not fail when env vars are unavailable.
+const db = () => getDb()
+
 /**
- * Check if request is rate limited using Firestore
+ * Get the client IP from a request, taking forwarded headers into account.
+ */
+export function getClientIp(headers: Headers): string {
+  const forwarded = headers.get('x-forwarded-for')
+  const realIp = headers.get('x-real-ip')
+  return forwarded ? forwarded.split(',')[0].trim() : realIp || 'anonymous'
+}
+
+/**
+ * Check if a request is rate limited using Firestore with atomic transactions.
+ *
+ * Uses `runTransaction` + `increment()` so concurrent requests cannot
+ * both pass the limit check (no read-then-write race).
  */
 export async function checkRateLimit(
   identifier: string,
   maxRequests: number,
   windowMs: number
 ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
-  if (!db) {
-    // Fallback to allowing if Firestore not configured
-    return { allowed: true, remaining: maxRequests, resetTime: Date.now() + windowMs }
-  }
-
+  const dbInstance = db()
   const now = Date.now()
-  const resetTime = now + windowMs
-  const rateLimitRef = doc(collection(db, RATE_LIMITS_COLLECTION), identifier)
 
   try {
-    const docSnap = await getDoc(rateLimitRef)
-    
+    const rateLimitRef = doc(collection(dbInstance, RATE_LIMITS_COLLECTION), identifier)
+
+    // Atomic transaction: read + decide + write are serializable.
+    const result = await runTransaction(dbInstance, async (transaction) => {
+      const docSnap = await transaction.get(rateLimitRef)
+
+      if (!docSnap.exists()) {
+        const resetTime = now + windowMs
+        transaction.set(rateLimitRef, {
+          identifier,
+          count: 1,
+          resetTime,
+          createdAt: Timestamp.now(),
+        })
+        return { allowed: true, remaining: maxRequests - 1, resetTime }
+      }
+
+      const data = docSnap.data() as RateLimitEntry
+      const currentResetTime = typeof data.resetTime === 'number' ? data.resetTime : now + windowMs
+
+      // Window expired — reset the counter atomically.
+      if (now > currentResetTime) {
+        const resetTime = now + windowMs
+        transaction.set(rateLimitRef, {
+          identifier,
+          count: 1,
+          resetTime,
+          createdAt: Timestamp.now(),
+        })
+        return { allowed: true, remaining: maxRequests - 1, resetTime }
+      }
+
+      // Limit exceeded — deny.
+      if (data.count >= maxRequests) {
+        return {
+          allowed: false,
+          remaining: 0,
+          resetTime: currentResetTime,
+        }
+      }
+
+      // Within limit — atomic increment.
+      transaction.update(rateLimitRef, {
+        count: increment(1),
+      })
+
+      return {
+        allowed: true,
+        remaining: maxRequests - (data.count + 1),
+        resetTime: currentResetTime,
+      }
+    })
+
+    return result
+  } catch (error) {
+    console.error('Rate limit check failed:', error)
+    // Fail-open for reads/verification, but callers can choose fail-closed
+    // for admin mutations by handling the thrown error themselves.
+    return { allowed: true, remaining: maxRequests, resetTime: now + windowMs }
+  }
+}
+
+/**
+ * Fail-closed variant: rejects the request when Firestore is unavailable.
+ * Recommended for admin-only mutation endpoints where abuse protection
+ * matters more than availability.
+ */
+export async function checkRateLimitStrict(
+  identifier: string,
+  maxRequests: number,
+  windowMs: number
+): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  const dbInstance = db()
+  const now = Date.now()
+
+  const rateLimitRef = doc(collection(dbInstance, RATE_LIMITS_COLLECTION), identifier)
+
+  const result = await runTransaction(dbInstance, async (transaction) => {
+    const docSnap = await transaction.get(rateLimitRef)
+
     if (!docSnap.exists()) {
-      // First request in window - create new entry
-      await setDoc(rateLimitRef, {
+      const resetTime = now + windowMs
+      transaction.set(rateLimitRef, {
         identifier,
         count: 1,
         resetTime,
-        createdAt: new Date(),
+        createdAt: Timestamp.now(),
       })
       return { allowed: true, remaining: maxRequests - 1, resetTime }
     }
 
     const data = docSnap.data() as RateLimitEntry
-    const currentResetTime = data.resetTime
+    const currentResetTime = typeof data.resetTime === 'number' ? data.resetTime : now + windowMs
 
-    // Check if window has expired
     if (now > currentResetTime) {
-      // Reset the counter
-      await setDoc(rateLimitRef, {
+      const resetTime = now + windowMs
+      transaction.set(rateLimitRef, {
         identifier,
         count: 1,
         resetTime,
-        createdAt: new Date(),
+        createdAt: Timestamp.now(),
       })
       return { allowed: true, remaining: maxRequests - 1, resetTime }
     }
 
-    // Check if limit exceeded
     if (data.count >= maxRequests) {
-      return { 
-        allowed: false, 
-        remaining: 0, 
-        resetTime: data.resetTime 
+      return {
+        allowed: false,
+        remaining: 0,
+        resetTime: currentResetTime,
       }
     }
 
-    // Increment counter
-    await updateDoc(rateLimitRef, {
-      count: data.count + 1,
+    transaction.update(rateLimitRef, {
+      count: increment(1),
     })
 
     return {
       allowed: true,
       remaining: maxRequests - (data.count + 1),
-      resetTime: data.resetTime,
+      resetTime: currentResetTime,
     }
-  } catch (error) {
-    console.error('Rate limit check failed:', error)
-    // Allow request on error to prevent blocking legitimate users
-    return { allowed: true, remaining: maxRequests, resetTime: Date.now() + windowMs }
-  }
+  })
+
+  return result
 }
 
 /**
- * Reset rate limit for a specific identifier
+ * Reset the rate limit for a specific identifier.
  */
 export async function resetRateLimit(identifier: string): Promise<void> {
-  if (!db) return
-  
+  const dbInstance = db()
   try {
-    const rateLimitRef = doc(collection(db, RATE_LIMITS_COLLECTION), identifier)
+    const rateLimitRef = doc(collection(dbInstance, RATE_LIMITS_COLLECTION), identifier)
     await deleteDoc(rateLimitRef)
   } catch (error) {
     console.error('Failed to reset rate limit:', error)
@@ -115,23 +195,23 @@ export async function resetRateLimit(identifier: string): Promise<void> {
 }
 
 /**
- * Clean up expired rate limit entries
- * Should be run periodically (e.g., via cron job)
+ * Clean up expired rate limit entries.
+ * Should be run periodically (e.g., via a scheduled function or admin route).
  */
 export async function cleanupExpiredRateLimits(): Promise<number> {
-  if (!db) return 0
+  const dbInstance = db()
+  const now = Date.now()
 
   try {
-    const now = Date.now()
     const q = query(
-      collection(db, RATE_LIMITS_COLLECTION),
+      collection(dbInstance, RATE_LIMITS_COLLECTION),
       where('resetTime', '<', now)
     )
     const snapshot = await getDocs(q)
 
-    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref))
+    const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref))
     await Promise.all(deletePromises)
-    
+
     return snapshot.size
   } catch (error) {
     console.error('Failed to cleanup rate limits:', error)

@@ -144,6 +144,7 @@ import {
   query,
   orderBy,
   where,
+  runTransaction,
 } from 'firebase/firestore'
 
 // Certificate Template CRUD operations
@@ -207,6 +208,10 @@ export async function getActiveCertificateTemplateByType(accountType: string): P
 
 export async function updateCertificateTemplate(id: string, data: Partial<CertificateTemplateDoc>) {
   const ref = doc(db(), 'certificateTemplates', id)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) {
+    throw new Error('Template not found')
+  }
   await updateDoc(ref, {
     ...data,
     updatedAt: new Date(),
@@ -216,7 +221,48 @@ export async function updateCertificateTemplate(id: string, data: Partial<Certif
 
 export async function deleteCertificateTemplate(id: string) {
   const ref = doc(db(), 'certificateTemplates', id)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) {
+    throw new Error('Template not found')
+  }
   await deleteDoc(ref)
+  return { id }
+}
+
+/**
+ * Set a template as the default, ensuring only one default exists.
+ * Uses a transaction so concurrent updates cannot create multiple defaults.
+ */
+export async function setDefaultCertificateTemplate(id: string, adminUid?: string) {
+  const dbInstance = db()
+  const templatesRef = collection(dbInstance, 'certificateTemplates')
+  const targetRef = doc(templatesRef, id)
+
+  // Fetch current default template IDs outside the transaction
+  // (client SDK transactions only support DocumentReference reads)
+  const allSnap = await getDocs(templatesRef)
+  const otherDefaultIds = allSnap.docs
+    .filter((d) => d.id !== id && d.data().isDefault === true)
+    .map((d) => d.id)
+
+  await runTransaction(dbInstance, async (transaction) => {
+    const targetSnap = await transaction.get(targetRef)
+    if (!targetSnap.exists()) {
+      throw new Error('Template not found')
+    }
+
+    // Unset isDefault on all other templates
+    for (const otherId of otherDefaultIds) {
+      transaction.update(doc(templatesRef, otherId), { isDefault: false })
+    }
+
+    transaction.update(targetRef, {
+      isDefault: true,
+      updatedAt: new Date(),
+      ...(adminUid ? { updatedBy: adminUid } : {}),
+    })
+  })
+
   return { id }
 }
 

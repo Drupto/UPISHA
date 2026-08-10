@@ -1,19 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCertificateTemplates, createCertificateTemplate, seedDefaultCertificateTemplates } from '@/lib/firestore'
-import { certificateTemplateSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { getCertificateTemplates, createCertificateTemplate, setDefaultCertificateTemplate } from '@/lib/firestore'
+import { certificateTemplateSchema, enforceBodySizeLimit } from '@/lib/validations'
+import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { checkRateLimitStrict, getClientIp } from '@/lib/firestore-rate-limit'
+import { logApiRequest } from '@/lib/request-logger'
+
+const MAX_TEMPLATES = 50
 
 export async function GET(request: NextRequest) {
   try {
-    // Ensure default templates are seeded on first access
-    await seedDefaultCertificateTemplates()
+    // Templates are admin-only configuration; restrict access.
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) {
+      return withSecurityHeaders(auth)
+    }
 
-    const forwarded = request.headers.get('x-forwarded-for')
-    const realIp = request.headers.get('x-real-ip')
-    const ip = forwarded ? forwarded.split(',')[0].trim() : realIp || 'anonymous'
+    const ip = getClientIp(request.headers)
 
-    if (!rateLimit(`cert-templates:${ip}`, 30, 60 * 1000)) {
+    const rate = await checkRateLimitStrict(`cert-templates:get:${ip}`, 60, 60 * 1000)
+    if (!rate.allowed) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
     }
 
@@ -30,13 +36,37 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
+
+  // CSRF protection for mutating requests
+  const csrfError = withCsrfProtection(request)
+  if (csrfError) {
+    return withSecurityHeaders(csrfError)
+  }
+
+  // Reject oversized request bodies
+  if (!enforceBodySizeLimit(request.headers)) {
+    return withSecurityHeaders(NextResponse.json({ error: 'Request body too large' }, { status: 413 }))
+  }
+
+  const ip = getClientIp(request.headers)
 
   try {
+    const rate = await checkRateLimitStrict(`cert-template:create:${ip}:${admin.uid}`, 10, 60 * 60 * 1000)
+    if (!rate.allowed) {
+      return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
+    }
+
     const body = await request.json()
     const validated = certificateTemplateSchema.parse(body)
 
-    if (!rateLimit(`cert-template:create`, 10, 60 * 60 * 1000)) {
-      return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
+    // Enforce a hard cap on the number of templates to prevent storage abuse
+    const existing = await getCertificateTemplates()
+    if (existing.length >= MAX_TEMPLATES) {
+      return withSecurityHeaders(NextResponse.json(
+        { error: `Maximum of ${MAX_TEMPLATES} templates allowed` },
+        { status: 400 }
+      ))
     }
 
     const template = await createCertificateTemplate({
@@ -59,7 +89,25 @@ export async function POST(request: NextRequest) {
       accentColor: validated.accentColor,
       fontFamily: validated.fontFamily,
       isActive: validated.isActive,
-      isDefault: validated.isDefault,
+      isDefault: false, // Enforce uniqueness via setDefaultCertificateTemplate below
+      createdBy: admin.uid,
+      updatedBy: admin.uid,
+    })
+
+    // If this template should be the default, atomically unset any other defaults
+    if (validated.isDefault && template.id) {
+      await setDefaultCertificateTemplate(template.id, admin.uid)
+    }
+
+    // Audit log the creation
+    await logApiRequest({
+      endpoint: '/api/certificates/templates',
+      method: 'POST',
+      ip,
+      userId: admin.uid,
+      userAgent: request.headers.get('user-agent'),
+      status: 201,
+      timestamp: new Date(),
     })
 
     return withSecurityHeaders(NextResponse.json({

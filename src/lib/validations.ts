@@ -146,9 +146,25 @@ export const publicationSubmissionSchema = z.object({
   fileUrl: z.string().max(1000).optional().nullable(),
 })
 
+// Strict URL validation: only allow http(s) schemes to prevent
+// javascript:, data:, vbscript: injection into <img src> and CSS url().
+const safeImageUrl = z.string().max(2000).refine(
+  (url) => !url || /^https?:\/\//i.test(url),
+  'URL must use http(s) scheme'
+)
+
+// Cap request body size at 1MB for certificate template mutations
+const MAX_TEMPLATE_BODY_BYTES = 1024 * 1024 // 1MB
+
+export function enforceBodySizeLimit(headers: Headers): boolean {
+  const contentLength = headers.get('content-length')
+  if (!contentLength) return false
+  return parseInt(contentLength, 10) <= MAX_TEMPLATE_BODY_BYTES
+}
+
 export const certificateTextBlockSchema = z.object({
-  id: z.string().min(1),
-  content: z.string().max(2000),
+  id: z.string().min(1).max(100),
+  content: z.string().min(1).max(2000),
   fontSize: z.number().min(8).max(96),
   fontWeight: z.enum(['normal', 'bold', 'semibold']).default('normal'),
   fontStyle: z.enum(['normal', 'italic']).default('normal'),
@@ -188,12 +204,12 @@ export const certificateTemplateSchema = z.object({
     color: '#6b7280',
     letterSpacing: 0.05,
   }),
-  textBlocks: z.array(certificateTextBlockSchema).min(1, 'At least one text block is required'),
+  textBlocks: z.array(certificateTextBlockSchema).min(1, 'At least one text block is required').max(20, 'Maximum 20 text blocks allowed'),
   footerText: z.string().max(300).optional().default(''),
-  logoUrl: z.string().max(2000).optional().nullable(),
-  signatureUrl: z.string().max(2000).optional().nullable(),
-  stampUrl: z.string().max(2000).optional().nullable(),
-  backgroundUrl: z.string().max(2000).optional().nullable(),
+  logoUrl: safeImageUrl.optional().nullable(),
+  signatureUrl: safeImageUrl.optional().nullable(),
+  stampUrl: safeImageUrl.optional().nullable(),
+  backgroundUrl: safeImageUrl.optional().nullable(),
   borderColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid color').default('#0d9488'),
   accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid color').default('#b45309'),
   fontFamily: z.enum(['serif', 'sans-serif', 'cursive']).default('serif'),

@@ -420,6 +420,8 @@ export interface CertificateTemplateDoc {
   fontFamily: 'serif' | 'sans-serif' | 'cursive'
   isActive?: boolean
   isDefault?: boolean
+  createdBy?: string | null
+  updatedBy?: string | null
   createdAt?: Date
   updatedAt?: Date
 }

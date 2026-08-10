@@ -14,8 +14,11 @@ import {
   Timestamp 
 } from 'firebase/firestore'
 
-const db = getDb()
 const API_LOGS_COLLECTION = 'api_logs'
+
+// Lazy db accessor so module import during build does not fail
+// when env vars are not yet available.
+const db = () => getDb()
 
 export interface ApiLogEntry {
   id?: string
@@ -34,10 +37,8 @@ export interface ApiLogEntry {
  * Log an API request to Firestore
  */
 export async function logApiRequest(entry: Omit<ApiLogEntry, 'id' | 'createdAt'>): Promise<void> {
-  if (!db) return
-
   try {
-    await addDoc(collection(db, API_LOGS_COLLECTION), {
+    await addDoc(collection(db(), API_LOGS_COLLECTION), {
       ...entry,
       timestamp: Timestamp.fromDate(entry.timestamp || new Date()),
       createdAt: Timestamp.now(),
@@ -72,12 +73,10 @@ export async function logSuspiciousActivity(
  * Detect and log rapid requests (potential DoS attack)
  */
 export async function detectRapidRequests(endpoint: string, ip: string): Promise<boolean> {
-  if (!db) return false
-
   try {
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000)
     const q = query(
-      collection(db, API_LOGS_COLLECTION),
+      collection(db(), API_LOGS_COLLECTION),
       where('endpoint', '==', endpoint),
       where('ip', '==', ip),
       where('timestamp', '>=', Timestamp.fromDate(oneMinuteAgo))
@@ -103,11 +102,9 @@ export async function detectRapidRequests(endpoint: string, ip: string): Promise
  * Get recent API logs (for admin monitoring)
  */
 export async function getRecentApiLogs(limit: number = 100): Promise<ApiLogEntry[]> {
-  if (!db) return []
-
   try {
     const q = query(
-      collection(db, API_LOGS_COLLECTION),
+      collection(db(), API_LOGS_COLLECTION),
       // Note: orderBy requires an index. For demo purposes, we'll just get recent docs
       // In production, create a composite index on timestamp descending
     )
@@ -138,12 +135,10 @@ export async function getRecentApiLogs(limit: number = 100): Promise<ApiLogEntry
  * Should be run periodically
  */
 export async function cleanupOldApiLogs(): Promise<number> {
-  if (!db) return 0
-
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     const q = query(
-      collection(db, API_LOGS_COLLECTION),
+      collection(db(), API_LOGS_COLLECTION),
       where('timestamp', '<', Timestamp.fromDate(thirtyDaysAgo))
     )
     const snapshot = await getDocs(q)

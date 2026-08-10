@@ -13,6 +13,7 @@ import { Loader2, Plus, Trash2, Pencil } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import CertificatePreview from '@/components/certificates/CertificatePreview'
 import { sanitizeFormData } from '@/lib/sanitize'
+import { csrfHeaders } from '@/lib/csrf'
 import type { CertificateTemplateDoc, CertificateTextBlock, CertificateHeaderFont } from '@/lib/types'
 
 interface TemplateForm {
@@ -141,7 +142,7 @@ export default function AdminCertificateTemplates() {
 
         const response = await fetch('/api/upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: csrfHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ dataUrl, path: filename }),
         })
 
@@ -232,7 +233,7 @@ export default function AdminCertificateTemplates() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
       })
 
@@ -258,7 +259,10 @@ export default function AdminCertificateTemplates() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this template?')) return
     try {
-      const res = await fetch(`/api/certificates/templates/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/certificates/templates/${id}`, {
+        method: 'DELETE',
+        headers: csrfHeaders(),
+      })
       if (res.ok) {
         toast({ title: 'Template deleted', description: 'The template has been removed.' })
         fetchTemplates()

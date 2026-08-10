@@ -69,6 +69,12 @@ const fontFamilyMap: Record<string, string> = {
   cursive: '"Brush Script MT", "Segoe Script", cursive',
 }
 
+// Defense-in-depth: only allow http(s) URLs for images/backgrounds
+// to prevent javascript:/data: injection into <img src> and CSS url().
+function isSafeUrl(url: string | null | undefined): url is string {
+  return !!url && /^https?:\/\//i.test(url)
+}
+
 export default function CertificatePreview({
   template,
   memberName = 'Member Name',
@@ -148,6 +154,11 @@ export default function CertificatePreview({
 
   const displayDate = date ? formatDate(date) : ''
 
+  const safeLogoUrl = isSafeUrl(template.logoUrl) ? template.logoUrl : null
+  const safeSignatureUrl = isSafeUrl(template.signatureUrl) ? template.signatureUrl : null
+  const safeStampUrl = isSafeUrl(template.stampUrl) ? template.stampUrl : null
+  const safeBackgroundUrl = isSafeUrl(template.backgroundUrl) ? template.backgroundUrl : null
+
   const renderBlock = (block: CertificateTextBlock) => {
     const text = replacePlaceholders(block.content, {
       name: memberName,
@@ -196,8 +207,8 @@ export default function CertificatePreview({
           className="w-full h-full relative flex flex-col items-center justify-center px-[6%] py-[4%]"
           style={{
             fontFamily: fontFamilyMap[template.fontFamily] || fontFamilyMap.serif,
-            background: template.backgroundUrl
-              ? `url(${template.backgroundUrl}) center/cover no-repeat`
+            background: safeBackgroundUrl
+              ? `url(${safeBackgroundUrl}) center/cover no-repeat`
               : 'linear-gradient(135deg, #fdfbf7 0%, #ffffff 50%, #faf6ef 100%)',
             border: `8px solid ${template.borderColor}`,
             outline: `2px solid ${template.accentColor}`,
@@ -235,10 +246,10 @@ export default function CertificatePreview({
           />
 
           {/* Logo */}
-          {template.logoUrl && (
+          {safeLogoUrl && (
             <div className="mb-4">
               <img
-                src={template.logoUrl}
+                src={safeLogoUrl}
                 alt="UP ISHA Logo"
                 className="h-20 w-20 object-contain mx-auto"
               />
@@ -303,9 +314,9 @@ export default function CertificatePreview({
           <div className="w-full flex items-end justify-between px-4 mt-auto pt-6">
             {/* Stamp */}
             <div className="flex flex-col items-center gap-1 w-32">
-              {template.stampUrl && (
+              {safeStampUrl && (
                 <img
-                  src={template.stampUrl}
+                  src={safeStampUrl}
                   alt="Stamp"
                   className="h-16 w-16 object-contain"
                 />
@@ -344,9 +355,9 @@ export default function CertificatePreview({
 
             {/* Signature */}
             <div className="flex flex-col items-center gap-1 w-40">
-              {template.signatureUrl && (
+              {safeSignatureUrl && (
                 <img
-                  src={template.signatureUrl}
+                  src={safeSignatureUrl}
                   alt="Signature"
                   className="h-12 w-32 object-contain"
                 />
