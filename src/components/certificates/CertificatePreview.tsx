@@ -19,6 +19,7 @@ interface CertificatePreviewProps {
   certificateNumber?: string
   verificationUrl?: string
   scale?: number
+  certificateRef?: React.Ref<HTMLDivElement>
 }
 
 export function replacePlaceholders(
@@ -85,13 +86,14 @@ export default function CertificatePreview({
   certificateNumber,
   verificationUrl,
   scale: externalScale,
+  certificateRef,
 }: CertificatePreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [autoScale, setAutoScale] = useState(1)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
 
   // Generate the verification QR code as a data URL so it renders as an <img>
-  // (captured correctly by html2canvas for PDF download and by the print flow).
+  // (captured correctly by html-to-image for PDF download and by the print flow).
   useEffect(() => {
     let cancelled = false
     if (!verificationUrl) {
@@ -195,6 +197,7 @@ export default function CertificatePreview({
       style={{ aspectRatio: `${BASE_ASPECT}` }}
     >
       <div
+        ref={certificateRef}
         className="overflow-hidden rounded-lg shadow-lg bg-white"
         style={{
           transform: `scale(${scale})`,

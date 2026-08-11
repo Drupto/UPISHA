@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import html2canvas from 'html2canvas'
+import { toCanvas } from 'html-to-image'
 import { jsPDF } from 'jspdf'
 import { Button } from '@/components/ui/button'
 import { Loader2, Download, Printer } from 'lucide-react'
@@ -24,12 +24,13 @@ export default function CertificateDownload({
     if (!certificateRef.current) return
     setDownloading(true)
     try {
-      const canvas = await html2canvas(certificateRef.current, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
+      const canvas = await toCanvas(certificateRef.current, {
+        pixelRatio: 3,
         backgroundColor: '#ffffff',
-        logging: false,
+        cacheBust: true,
+        style: {
+          transform: 'none',
+        },
       })
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95)

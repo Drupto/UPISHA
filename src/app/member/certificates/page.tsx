@@ -126,11 +126,7 @@ export default function MemberCertificates() {
 
             <Card className="dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
               <CardContent className="p-4">
-                <div
-                  ref={(el) => {
-                    certRefs.current[cert.id] = el
-                  }}
-                >
+                <div>
                   <CertificatePreview
                     template={validCertificate}
                     memberName={cert.memberName}
@@ -140,6 +136,9 @@ export default function MemberCertificates() {
                     qualification={cert.qualification || undefined}
                     certificateNumber={cert.certificateNumber}
                     verificationUrl={`${window.location.origin}/verify/${cert.id}`}
+                    certificateRef={(el) => {
+                      certRefs.current[cert.id] = el
+                    }}
                   />
                 </div>
                 {cert.status !== 'revoked' && (
