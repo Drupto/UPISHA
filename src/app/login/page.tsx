@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { Ear, Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -56,8 +56,12 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-upisha-teal rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Ear className="h-8 w-8 text-white" />
+          <div className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center mx-auto mb-4 bg-white border border-gray-200 shadow-md">
+            <img
+              src="/images/mainlogo.jpeg"
+              alt="UP ISHA Logo"
+              className="h-full w-full object-contain"
+            />
           </div>
           <h1 className="text-2xl font-bold text-upisha-navy dark:text-white">UP ISHA Admin</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Sign in to manage your association</p>

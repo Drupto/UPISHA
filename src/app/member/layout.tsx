@@ -31,7 +31,16 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="lg:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-900 border-b">
-        <Link href="/member" className="font-bold text-upisha-teal text-lg">UP ISHA Member</Link>
+        <Link href="/member" className="flex items-center gap-2 font-bold text-upisha-teal text-lg">
+          <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-gray-200 shrink-0">
+            <img
+              src="/images/mainlogo.jpeg"
+              alt="UP ISHA Logo"
+              className="h-full w-full object-contain"
+            />
+          </div>
+          UP ISHA Member
+        </Link>
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
@@ -40,8 +49,19 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
       <div className="flex">
         <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-64 shrink-0 bg-white dark:bg-gray-900 border-r min-h-screen`}>
           <div className="p-6 border-b hidden lg:block">
-            <Link href="/member" className="font-bold text-upisha-teal text-xl">UP ISHA Member</Link>
-            <p className="text-xs text-gray-500 mt-1">Member Portal</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-gray-200 shrink-0">
+                <img
+                  src="/images/mainlogo.jpeg"
+                  alt="UP ISHA Logo"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div>
+                <Link href="/member" className="font-bold text-upisha-teal text-xl">UP ISHA Member</Link>
+                <p className="text-xs text-gray-500 mt-1">Member Portal</p>
+              </div>
+            </div>
           </div>
           <nav className="p-4 space-y-1">
             {memberLinks.map((link) => {

@@ -1,10 +1,18 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 export const alt = "UP ISHA - Uttar Pradesh Speech & Hearing Association";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OpenGraphImage() {
+export default async function OpenGraphImage() {
+  const logoFile = await readFile(
+    path.join(process.cwd(), "public/images/mainlogo.jpeg")
+  );
+  const logoBase64 = Buffer.from(logoFile).toString("base64");
+  const logoUrl = `data:image/jpeg;base64,${logoBase64}`;
+
   return new ImageResponse(
     (
       <div
@@ -20,25 +28,20 @@ export default function OpenGraphImage() {
           padding: 60,
         }}
       >
-        {/* Logo Badge */}
-        <div
+        {/* Logo */}
+        <img
+          src={logoUrl}
+          width={120}
+          height={120}
+          alt="UP ISHA Logo"
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 120,
-            height: 120,
+            objectFit: "contain",
             background: "white",
             borderRadius: 24,
-            fontSize: 56,
-            fontWeight: 800,
-            color: "#0d7377",
+            padding: 8,
             marginBottom: 40,
-            letterSpacing: -3,
           }}
-        >
-          UI
-        </div>
+        />
 
         {/* Main Title */}
         <div

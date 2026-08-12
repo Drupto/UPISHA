@@ -75,7 +75,7 @@ const emptyForm: TemplateForm = {
   subtitleFont: defaultSubtitleFont,
   textBlocks: [emptyBlock()],
   footerText: 'President, UP ISHA',
-  logoUrl: '',
+  logoUrl: '/images/mainlogo.jpeg',
   signatureUrl: '',
   stampUrl: '',
   backgroundUrl: '',

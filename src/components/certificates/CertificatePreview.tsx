@@ -72,8 +72,12 @@ const fontFamilyMap: Record<string, string> = {
 
 // Defense-in-depth: only allow http(s) URLs for images/backgrounds
 // to prevent javascript:/data: injection into <img src> and CSS url().
+// Also allow the app's own main logo (relative path) as a safe fallback.
+const MAIN_LOGO_URL = '/images/mainlogo.jpeg'
 function isSafeUrl(url: string | null | undefined): url is string {
-  return !!url && /^https?:\/\//i.test(url)
+  if (!url) return false
+  if (url === MAIN_LOGO_URL) return true
+  return /^https?:\/\//i.test(url)
 }
 
 export default function CertificatePreview({
@@ -156,7 +160,7 @@ export default function CertificatePreview({
 
   const displayDate = date ? formatDate(date) : ''
 
-  const safeLogoUrl = isSafeUrl(template.logoUrl) ? template.logoUrl : null
+  const safeLogoUrl = isSafeUrl(template.logoUrl) ? template.logoUrl : MAIN_LOGO_URL
   const safeSignatureUrl = isSafeUrl(template.signatureUrl) ? template.signatureUrl : null
   const safeStampUrl = isSafeUrl(template.stampUrl) ? template.stampUrl : null
   const safeBackgroundUrl = isSafeUrl(template.backgroundUrl) ? template.backgroundUrl : null
@@ -249,15 +253,13 @@ export default function CertificatePreview({
           />
 
           {/* Logo */}
-          {safeLogoUrl && (
-            <div className="mb-4">
-              <img
-                src={safeLogoUrl}
-                alt="UP ISHA Logo"
-                className="h-20 w-20 object-contain mx-auto"
-              />
-            </div>
-          )}
+          <div className="mb-4">
+            <img
+              src={safeLogoUrl}
+              alt="UP ISHA Logo"
+              className="h-20 w-20 object-contain mx-auto"
+            />
+          </div>
 
           {/* Title */}
           <h1

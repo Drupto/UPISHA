@@ -224,6 +224,13 @@ export default function ApplyPage() {
     <AnimatedSection className="py-16 md:py-20 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-3xl mx-auto px-4">
         <div className="text-center mb-12">
+          <div className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center mx-auto mb-4 bg-white border border-gray-200 shadow-md">
+            <img
+              src="/images/mainlogo.jpeg"
+              alt="UP ISHA Logo"
+              className="h-full w-full object-contain"
+            />
+          </div>
           <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">Membership</Badge>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white">Join UP ISHA</h2>
           <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">

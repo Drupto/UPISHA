@@ -1,10 +1,18 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 export const alt = "UP ISHA - Uttar Pradesh Speech & Hearing Association";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function TwitterImage() {
+export default async function TwitterImage() {
+  const logoFile = await readFile(
+    path.join(process.cwd(), "public/images/mainlogo.jpeg")
+  );
+  const logoBase64 = Buffer.from(logoFile).toString("base64");
+  const logoUrl = `data:image/jpeg;base64,${logoBase64}`;
+
   return new ImageResponse(
     (
       <div
@@ -20,25 +28,20 @@ export default function TwitterImage() {
           padding: 60,
         }}
       >
-        {/* Logo Badge */}
-        <div
+        {/* Logo */}
+        <img
+          src={logoUrl}
+          width={100}
+          height={100}
+          alt="UP ISHA Logo"
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 100,
-            height: 100,
+            objectFit: "contain",
             background: "white",
             borderRadius: 20,
-            fontSize: 48,
-            fontWeight: 800,
-            color: "#0d7377",
+            padding: 8,
             marginBottom: 36,
-            letterSpacing: -3,
           }}
-        >
-          UI
-        </div>
+        />
 
         {/* Main Title */}
         <div

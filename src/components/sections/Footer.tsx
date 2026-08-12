@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
 import {
   Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
-  Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
+  Users, BookOpen, FileText, Award, Camera, UserPlus, MessageSquare,
   Heart, Stethoscope, GraduationCap, Globe, Facebook, Twitter, Instagram,
   Linkedin, Youtube, Send, Clock, Calendar, ArrowRight, CheckCircle2,
   Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote,
@@ -43,8 +43,12 @@ export function Footer() {
             {/* Logo & About */}
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-upisha-teal rounded-lg flex items-center justify-center">
-                  <Ear className="h-6 w-6 text-white" />
+                <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-white shrink-0">
+                  <img
+                    src="/images/mainlogo.jpeg"
+                    alt="UP ISHA Logo"
+                    className="h-full w-full object-contain"
+                  />
                 </div>
                 <div>
                   <div className="font-bold text-white text-sm">UP ISHA</div>

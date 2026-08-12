@@ -38,7 +38,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="lg:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-900 border-b">
-        <Link href="/admin" className="font-bold text-upisha-teal text-lg">UP ISHA Admin</Link>
+        <Link href="/admin" className="flex items-center gap-2 font-bold text-upisha-teal text-lg">
+          <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-gray-200 shrink-0">
+            <img
+              src="/images/mainlogo.jpeg"
+              alt="UP ISHA Logo"
+              className="h-full w-full object-contain"
+            />
+          </div>
+          UP ISHA Admin
+        </Link>
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
@@ -48,9 +57,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block ${collapsed ? 'lg:w-16' : 'lg:w-64'} shrink-0 bg-white dark:bg-gray-900 border-r min-h-screen transition-all duration-300`}>
           <div className={`p-6 border-b hidden lg:flex items-center justify-between ${collapsed ? 'justify-center px-0' : ''}`}>
             {!collapsed && (
-              <div>
-                <Link href="/admin" className="font-bold text-upisha-teal text-xl">UP ISHA Admin</Link>
-                <p className="text-xs text-gray-500 mt-1">Management Panel</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-gray-200 shrink-0">
+                  <img
+                    src="/images/mainlogo.jpeg"
+                    alt="UP ISHA Logo"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <div>
+                  <Link href="/admin" className="font-bold text-upisha-teal text-xl">UP ISHA Admin</Link>
+                  <p className="text-xs text-gray-500 mt-1">Management Panel</p>
+                </div>
               </div>
             )}
             <Button
