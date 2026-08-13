@@ -85,8 +85,6 @@ export const documents: Document[] = [
 
 export const publications: Publication[] = [
   { title: 'UP Journal of Speech & Hearing', description: 'The official peer-reviewed journal of UP ISHA featuring research articles, case studies, and reviews.', type: 'Journal', icon: BookOpen },
-  { title: 'Clinical Monograph Series', description: 'Focused monographs on specialized topics in audiology and speech-language pathology.', type: 'Monograph', icon: FileText },
-  { title: 'Research in Uttar Pradesh', description: 'Directory of ongoing and completed research projects in speech and hearing across UP.', type: 'Research', icon: GraduationCap },
 ]
 
 export const professionalCategories: ProfessionalCategory[] = [

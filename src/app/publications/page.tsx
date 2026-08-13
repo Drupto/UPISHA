@@ -13,7 +13,7 @@ interface JournalIssue {
   id?: string
   title: string
   description: string
-  type: 'Journal' | 'Monograph' | 'Research'
+  type: 'Journal'
   author?: string | null
   fileUrl?: string | null
   link?: string | null

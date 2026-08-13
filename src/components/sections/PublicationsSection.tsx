@@ -31,7 +31,7 @@ interface PublicationItem {
   id?: string
   title: string
   description: string
-  type: 'Journal' | 'Monograph' | 'Research'
+  type: 'Journal'
   author?: string | null
   fileUrl?: string | null
   link?: string | null
@@ -43,7 +43,7 @@ export function PublicationsSection() {
   const [publications, setPublications] = useState<PublicationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [submitOpen, setSubmitOpen] = useState(false)
-  const [submitType, setSubmitType] = useState<'Journal' | 'Monograph' | 'Research'>('Journal')
+  const [submitType, setSubmitType] = useState<'Journal'>('Journal')
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -77,10 +77,8 @@ export function PublicationsSection() {
   }, [])
 
   const journalItems = publications.filter((p) => p.type === 'Journal')
-  const monographItems = publications.filter((p) => p.type === 'Monograph')
-  const researchItems = publications.filter((p) => p.type === 'Research')
 
-  const handleSubmitClick = (type: 'Journal' | 'Monograph' | 'Research') => {
+  const handleSubmitClick = (type: 'Journal') => {
     if (!user) {
       toast({ title: 'Login required', description: 'Please login as a member to submit your work.' })
       router.push('/login')
@@ -199,7 +197,7 @@ export function PublicationsSection() {
           <Badge className="bg-upisha-gold/10 text-upisha-gold mb-3">Research & Knowledge</Badge>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white">Publications</h2>
           <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
-            Explore our journal, monographs, and research contributions that advance the field of
+            Explore our journal contributions that advance the field of
             speech and hearing sciences.
           </p>
         </div>
@@ -211,18 +209,6 @@ export function PublicationsSection() {
               className="data-[state=active]:bg-upisha-teal data-[state=active]:text-white"
             >
               Journal
-            </TabsTrigger>
-            <TabsTrigger
-              value="monograph"
-              className="data-[state=active]:bg-upisha-teal data-[state=active]:text-white"
-            >
-              Monograph
-            </TabsTrigger>
-            <TabsTrigger
-              value="research"
-              className="data-[state=active]:bg-upisha-teal data-[state=active]:text-white"
-            >
-              Research
             </TabsTrigger>
           </TabsList>
 
@@ -331,128 +317,6 @@ export function PublicationsSection() {
                   </Card>
                 </div>
               </TabsContent>
-
-              <TabsContent value="monograph" className="mt-8">
-                <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <FileText className="h-8 w-8 text-upisha-teal" />
-                      <div>
-                        <h3 className="font-bold text-upisha-navy dark:text-white text-lg">Clinical Monograph Series</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Specialized Topic Publications</p>
-                      </div>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      Our monograph series provides in-depth coverage of specialized topics in audiology
-                      and speech-language pathology, authored by leading experts in the field.
-                    </p>
-                    <div className="space-y-3">
-                      {monographItems.length > 0 ? monographItems.map((item, i) => (
-                        <div
-                          key={item.id || i}
-                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 block truncate">{item.title}</span>
-                            {item.author && <span className="text-xs text-gray-500 dark:text-gray-400">{item.author}</span>}
-                          </div>
-                          {item.fileUrl ? (
-                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
-                              <Button variant="ghost" size="sm" className="text-upisha-teal">
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                            </a>
-                          ) : (
-                            <Button variant="ghost" size="sm" className="text-upisha-teal">
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      )) : (
-                        ['Pediatric Audiology Assessment in Hindi-Speaking Populations', 'Neurogenic Communication Disorders: Clinical Management', 'Aural Rehabilitation for Adult Cochlear Implant Users'].map((title, i) => (
-                          <div
-                            key={i}
-                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
-                          >
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{title}</span>
-                            <Button variant="ghost" size="sm" className="text-upisha-teal">
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    <div className="mt-4">
-                      <Button size="sm" variant="outline" className="border-upisha-gold text-upisha-gold" onClick={() => handleSubmitClick('Monograph')}>
-                        <Upload className="h-4 w-4 mr-1" />
-                        Propose a Monograph
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="research" className="mt-8">
-                <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <GraduationCap className="h-8 w-8 text-upisha-teal" />
-                      <div>
-                        <h3 className="font-bold text-upisha-navy dark:text-white text-lg">
-                          Research in Uttar Pradesh
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Ongoing & Completed Research</p>
-                      </div>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      Browse the directory of research projects being conducted in the field of speech
-                      and hearing across Uttar Pradesh. Submit your research for inclusion.
-                    </p>
-                    <div className="space-y-3">
-                      {researchItems.length > 0 ? researchItems.map((item, i) => (
-                        <div
-                          key={item.id || i}
-                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 block truncate">{item.title}</span>
-                            {item.author && <span className="text-xs text-gray-500 dark:text-gray-400">{item.author}</span>}
-                          </div>
-                          {item.fileUrl ? (
-                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
-                              <Button variant="ghost" size="sm" className="text-upisha-teal">
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                            </a>
-                          ) : (
-                            <Button variant="ghost" size="sm" className="text-upisha-teal">
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      )) : (
-                        ['Prevalence of Hearing Loss in School Children of Lucknow District', 'Effectiveness of Early Intervention for Speech Sound Disorders', 'Tele-Practice Feasibility Study for Rural Communities in UP'].map((title, i) => (
-                          <div
-                            key={i}
-                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-upisha-teal-light/50 dark:hover:bg-gray-600 transition-colors"
-                          >
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{title}</span>
-                            <Button variant="ghost" size="sm" className="text-upisha-teal">
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    <div className="mt-4">
-                      <Button size="sm" variant="outline" className="border-upisha-gold text-upisha-gold" onClick={() => handleSubmitClick('Research')}>
-                        <Upload className="h-4 w-4 mr-1" />
-                        Submit Your Research
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
             </>
           )}
         </Tabs>
@@ -462,7 +326,7 @@ export function PublicationsSection() {
       <Dialog open={submitOpen} onOpenChange={setSubmitOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Submit {submitType === 'Journal' ? 'Paper' : submitType === 'Monograph' ? 'Monograph Proposal' : 'Research'}</DialogTitle>
+            <DialogTitle>Submit Paper</DialogTitle>
             <DialogDescription>
               Fill in the details below to submit your work for review. Your submission will be reviewed by our editorial team.
             </DialogDescription>

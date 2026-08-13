@@ -129,7 +129,7 @@ export const announcementSchema = z.object({
 export const publicationSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters').max(200),
   description: z.string().min(10, 'Description must be at least 10 characters').max(5000),
-  type: z.enum(['Journal', 'Monograph', 'Research']),
+  type: z.enum(['Journal']),
   author: z.string().max(200).optional().nullable(),
   fileUrl: z.string().max(1000).optional().nullable(),
   link: z.string().max(1000).optional().nullable(),
@@ -139,7 +139,7 @@ export const publicationSchema = z.object({
 export const publicationSubmissionSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters').max(200),
   description: z.string().min(10, 'Description must be at least 10 characters').max(5000),
-  type: z.enum(['Journal', 'Monograph', 'Research']),
+  type: z.enum(['Journal']),
   authorName: z.string().min(2, 'Name must be at least 2 characters').max(100),
   authorEmail: z.string().email('Invalid email address'),
   abstract: z.string().max(5000).optional().nullable(),

@@ -10,7 +10,7 @@ interface SubmissionItem {
   id: string
   title: string
   description: string
-  type: 'Journal' | 'Monograph' | 'Research'
+  type: 'Journal'
   authorName: string
   authorEmail: string
   abstract?: string | null

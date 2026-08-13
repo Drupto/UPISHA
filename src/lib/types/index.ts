@@ -354,7 +354,7 @@ export interface PublicationDoc {
   id?: string
   title: string
   description: string
-  type: 'Journal' | 'Monograph' | 'Research'
+  type: 'Journal'
   author?: string | null
   fileUrl?: string | null
   link?: string | null
@@ -367,7 +367,7 @@ export interface PublicationSubmissionDoc {
   id?: string
   title: string
   description: string
-  type: 'Journal' | 'Monograph' | 'Research'
+  type: 'Journal'
   authorName: string
   authorEmail: string
   abstract?: string | null

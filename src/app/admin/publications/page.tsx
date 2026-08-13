@@ -17,7 +17,7 @@ interface PublicationItem {
   id: string
   title: string
   description: string
-  type: 'Journal' | 'Monograph' | 'Research'
+  type: 'Journal'
   author?: string | null
   fileUrl?: string | null
   link?: string | null
@@ -29,7 +29,7 @@ interface SubmissionItem {
   id: string
   title: string
   description: string
-  type: 'Journal' | 'Monograph' | 'Research'
+  type: 'Journal'
   authorName: string
   authorEmail: string
   abstract?: string | null
@@ -59,7 +59,7 @@ export default function AdminPublicationsPage() {
   const [publicationForm, setPublicationForm] = useState({
     title: '',
     description: '',
-    type: 'Journal' as 'Journal' | 'Monograph' | 'Research',
+    type: 'Journal' as 'Journal',
     author: '',
     fileUrl: '',
     link: '',
@@ -352,12 +352,10 @@ export default function AdminPublicationsPage() {
                             </label>
                             <select
                               value={publicationForm.type}
-                              onChange={(e) => setPublicationForm({ ...publicationForm, type: e.target.value as 'Journal' | 'Monograph' | 'Research' })}
+                              onChange={(e) => setPublicationForm({ ...publicationForm, type: e.target.value as 'Journal' })}
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-upisha-teal dark:bg-gray-800 dark:border-gray-700"
                             >
                               <option value="Journal">Journal</option>
-                              <option value="Monograph">Monograph</option>
-                              <option value="Research">Research</option>
                             </select>
                           </div>
                           <div>
