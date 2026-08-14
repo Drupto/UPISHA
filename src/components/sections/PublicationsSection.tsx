@@ -24,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { AnimatedSection } from '@/components/sections'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { csrfHeaders } from '@/lib/csrf'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -117,7 +118,7 @@ export function PublicationsSection() {
         
         const response = await fetch('/api/upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: csrfHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ dataUrl, path: filename }),
         })
 
@@ -155,15 +156,19 @@ export function PublicationsSection() {
       toast({ title: 'Error', description: 'Please login to submit', variant: 'destructive' })
       return
     }
-    if (!formData.title || !formData.description) {
-      toast({ title: 'Validation error', description: 'Please fill all required fields', variant: 'destructive' })
+    if (!formData.title || formData.title.trim().length < 2) {
+      toast({ title: 'Validation error', description: 'Title must be at least 2 characters', variant: 'destructive' })
+      return
+    }
+    if (!formData.description || formData.description.trim().length < 10) {
+      toast({ title: 'Validation error', description: 'Description must be at least 10 characters', variant: 'destructive' })
       return
     }
     setSubmitting(true)
     try {
       const response = await fetch('/api/publications/submissions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,

@@ -33,6 +33,11 @@ export async function POST(request: NextRequest) {
     }, { status: 201 }))
   } catch (err: unknown) {
     console.error('Error creating publication submission:', err)
+    if (typeof err === 'object' && err !== null && 'issues' in err) {
+      const issues = (err as { issues: Array<{ message: string }> }).issues
+      const message = issues?.[0]?.message || 'Invalid input data'
+      return withSecurityHeaders(NextResponse.json({ error: message }, { status: 400 }))
+    }
     if (err instanceof Error && err.name === 'ZodError') {
       return withSecurityHeaders(NextResponse.json({ error: 'Invalid input data' }, { status: 400 }))
     }
