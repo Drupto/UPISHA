@@ -47,6 +47,31 @@ const statusStyles: Record<string, { label: string; className: string }> = {
   rejected: { label: 'Rejected', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
 }
 
+// Safely parse a date from various formats (Date, ISO string, Firestore Timestamp object)
+function formatSubmissionDate(value: unknown): Date | null {
+  if (!value) return null
+
+  // Already a Date instance
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value
+  }
+
+  // Firestore Timestamp serialized as { _seconds, _nanoseconds } or { seconds, nanoseconds }
+  if (typeof value === 'object') {
+    const ts = value as { _seconds?: number; seconds?: number; _nanoseconds?: number; nanoseconds?: number }
+    const seconds = ts._seconds ?? ts.seconds
+    if (typeof seconds === 'number') {
+      const ms = seconds * 1000 + (ts._nanoseconds ?? ts.nanoseconds ?? 0) / 1_000_000
+      const d = new Date(ms)
+      return isNaN(d.getTime()) ? null : d
+    }
+  }
+
+  // String or number
+  const d = new Date(value as string | number)
+  return isNaN(d.getTime()) ? null : d
+}
+
 export default function AdminPublicationsPage() {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<Tab>('publications')
@@ -592,7 +617,7 @@ export default function AdminPublicationsPage() {
                             </span>
                           </td>
                           <td className="py-3 px-3 text-gray-500 dark:text-gray-400 text-xs">
-                            {sub.createdAt ? new Date(sub.createdAt.toString()).toLocaleDateString() : '-'}
+                            {formatSubmissionDate(sub.createdAt)?.toLocaleDateString() || '-'}
                           </td>
                           <td className="py-3 px-3">
                             <div className="flex gap-1.5">
@@ -676,12 +701,12 @@ export default function AdminPublicationsPage() {
                     <p className="text-xs text-gray-400">Email</p>
                     <p className="text-gray-700 dark:text-gray-300">{selectedSubmission.authorEmail}</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Submitted On</p>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {selectedSubmission.createdAt ? new Date(selectedSubmission.createdAt.toString()).toLocaleString() : '-'}
-                    </p>
-                  </div>
+                   <div>
+                     <p className="text-xs text-gray-400">Submitted On</p>
+                     <p className="text-gray-700 dark:text-gray-300">
+                       {formatSubmissionDate(selectedSubmission.createdAt)?.toLocaleString() || '-'}
+                     </p>
+                   </div>
                 </div>
 
                 <div>

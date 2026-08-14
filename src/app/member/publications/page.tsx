@@ -25,6 +25,29 @@ const statusStyles: Record<string, { label: string; className: string; icon: Rea
   rejected: { label: 'Rejected', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', icon: <XCircle className="h-3 w-3" /> },
 }
 
+// Safely parse a date from various formats (Date, ISO string, Firestore Timestamp object)
+function formatSubmissionDate(value: unknown): Date | null {
+  if (!value) return null
+
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value
+  }
+
+  // Firestore Timestamp serialized as { _seconds, _nanoseconds } or { seconds, nanoseconds }
+  if (typeof value === 'object') {
+    const ts = value as { _seconds?: number; seconds?: number; _nanoseconds?: number; nanoseconds?: number }
+    const seconds = ts._seconds ?? ts.seconds
+    if (typeof seconds === 'number') {
+      const ms = seconds * 1000 + (ts._nanoseconds ?? ts.nanoseconds ?? 0) / 1_000_000
+      const d = new Date(ms)
+      return isNaN(d.getTime()) ? null : d
+    }
+  }
+
+  const d = new Date(value as string | number)
+  return isNaN(d.getTime()) ? null : d
+}
+
 export default function MemberPublicationsPage() {
   const [submissions, setSubmissions] = useState<SubmissionItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -99,7 +122,7 @@ export default function MemberPublicationsPage() {
                             {sub.type}
                           </span>
                           <span>
-                            Submitted: {sub.createdAt ? new Date(sub.createdAt.toString()).toLocaleDateString() : '-'}
+                            Submitted: {formatSubmissionDate(sub.createdAt)?.toLocaleDateString() || '-'}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">

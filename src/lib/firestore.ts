@@ -1097,14 +1097,30 @@ export async function createPublicationSubmission(data: PublicationSubmissionDoc
 
 export async function getPublicationSubmissions() {
   const snapshot = await getDocs(query(collection(db(), 'publicationSubmissions'), orderBy('createdAt', 'desc')))
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    }
+  })
 }
 
 export async function getPublicationSubmissionsByEmail(email: string): Promise<PublicationSubmissionDoc[]> {
   const snapshot = await getDocs(
     query(collection(db(), 'publicationSubmissions'), where('authorEmail', '==', email.toLowerCase()), orderBy('createdAt', 'desc'))
   )
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as PublicationSubmissionDoc[]
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    } as PublicationSubmissionDoc
+  })
 }
 
 export async function updatePublicationSubmission(id: string, data: Partial<PublicationSubmissionDoc>) {
