@@ -1109,18 +1109,36 @@ export async function getPublicationSubmissions() {
 }
 
 export async function getPublicationSubmissionsByEmail(email: string): Promise<PublicationSubmissionDoc[]> {
-  const snapshot = await getDocs(
-    query(collection(db(), 'publicationSubmissions'), where('authorEmail', '==', email.toLowerCase()), orderBy('createdAt', 'desc'))
-  )
-  return snapshot.docs.map((doc) => {
-    const data = doc.data()
-    return {
-      id: doc.id,
-      ...data,
-      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
-      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
-    } as PublicationSubmissionDoc
-  })
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'publicationSubmissions'), where('authorEmail', '==', email.toLowerCase()), orderBy('createdAt', 'desc'))
+    )
+    return snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+      } as PublicationSubmissionDoc
+    })
+  } catch (error) {
+    // Fallback: fetch all submissions and filter in memory (avoids composite index requirement)
+    console.error('getPublicationSubmissionsByEmail query failed, falling back to in-memory filter:', error)
+    try {
+      const allSubmissions = (await getPublicationSubmissions()) as PublicationSubmissionDoc[]
+      return allSubmissions
+        .filter((s) => s.authorEmail?.toLowerCase() === email.toLowerCase())
+        .sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return bTime - aTime
+        })
+    } catch (fallbackError) {
+      console.error('Fallback publication submission lookup also failed:', fallbackError)
+      return []
+    }
+  }
 }
 
 export async function updatePublicationSubmission(id: string, data: Partial<PublicationSubmissionDoc>) {
