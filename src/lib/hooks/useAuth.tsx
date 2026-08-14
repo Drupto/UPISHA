@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined
+    let cancelled = false
     try {
       unsubscribe = onAuthChange(async (user) => {
         setUser(user)
@@ -49,6 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           // The session cookie is set by /api/auth/verify AFTER the auth state
           // change fires, so retry fetching the role until the cookie is available.
+          // Keep `loading` true until the role is resolved so route guards
+          // don't redirect to the landing page during a hard refresh.
           let attempts = 0
           const maxAttempts = 5
           const fetchRole = async (): Promise<void> => {
@@ -56,8 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const res = await fetch('/api/auth/me')
               if (res.ok) {
                 const data = await res.json()
-                setRole(data.role ?? 'user')
-                setMemberStatus(data.memberStatus ?? null)
+                if (!cancelled) {
+                  setRole(data.role ?? 'user')
+                  setMemberStatus(data.memberStatus ?? null)
+                }
                 return
               }
             } catch {
@@ -65,18 +70,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             attempts++
             if (attempts < maxAttempts) {
-              setTimeout(fetchRole, 500)
-            } else {
+              await new Promise((resolve) => setTimeout(resolve, 500))
+              await fetchRole()
+            } else if (!cancelled) {
               setRole(null)
               setMemberStatus(null)
             }
           }
-          fetchRole()
+          await fetchRole()
         } else {
           setRole(null)
           setMemberStatus(null)
         }
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       })
     } catch {
       // Firebase env vars may not be configured (e.g. during build or
@@ -85,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     }
     return () => {
+      cancelled = true
       if (unsubscribe) unsubscribe()
     }
   }, [])
