@@ -111,6 +111,13 @@ export const membershipTypes: MembershipPlan[] = [
   { type: 'Student Member', price: '₹500/year', description: 'For current ASLP students in UP', features: ['Student benefits', 'Mentorship program', 'Workshop access', 'Career guidance', 'Professional Support'], popular: false },
 ]
 
+// Membership fee amounts (in INR) used for auto-generating receipts
+export const membershipFees: Record<string, number> = {
+  life: 3500,
+  annual: 1000,
+  student: 500,
+}
+
 export const galleryImages: GalleryImage[] = [
   { src: '/images/hero-1.png', title: 'Annual Conference 2024', category: 'Events' },
   { src: '/images/hero-2.png', title: 'Pediatric Workshop', category: 'Workshops' },

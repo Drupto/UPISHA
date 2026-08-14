@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, User, Mail, Phone, MapPin, Award, Calendar, CreditCard, FileText } from 'lucide-react'
+import { Loader2, User, Mail, Phone, MapPin, Award, Calendar, CreditCard, FileText, Receipt } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import Link from 'next/link'
 
@@ -210,6 +210,19 @@ export default function MemberDashboard() {
               <div>
                 <p className="font-semibold text-upisha-navy dark:text-white">Announcements</p>
                 <p className="text-sm text-gray-500">Latest updates</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/member/receipts">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer dark:bg-gray-800 dark:border-gray-700">
+            <CardContent className="p-6 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-teal-100 text-teal-600">
+                <Receipt className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="font-semibold text-upisha-navy dark:text-white">Receipts</p>
+                <p className="text-sm text-gray-500">View payment receipts</p>
               </div>
             </CardContent>
           </Card>

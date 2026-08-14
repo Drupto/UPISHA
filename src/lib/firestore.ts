@@ -1,6 +1,6 @@
 import { getDb } from './firebase-admin'
 import { FieldValue } from 'firebase/firestore'
-import type { TestimonialDoc, GalleryImageDoc, PublicationDoc, PublicationSubmissionDoc, CertificateTemplateDoc, CertificateDoc } from '@/lib/types'
+import type { TestimonialDoc, GalleryImageDoc, PublicationDoc, PublicationSubmissionDoc, CertificateTemplateDoc, CertificateDoc, ReceiptDoc } from '@/lib/types'
 
 const db = () => getDb()
 
@@ -96,6 +96,7 @@ export interface WebinarDoc {
   registrationLink?: string | null
   meetingLink?: string | null
   type?: 'paid' | 'free'
+  price?: number | null
   isActive?: boolean
   maxAttendees?: number | null
   createdAt?: FieldValue | Date
@@ -375,6 +376,132 @@ export async function updateCertificate(id: string, data: Partial<CertificateDoc
 
 export async function deleteCertificate(id: string) {
   const ref = doc(db(), 'certificates', id)
+  await deleteDoc(ref)
+  return { id }
+}
+
+// Receipt CRUD operations
+export async function createReceipt(data: ReceiptDoc) {
+  const ref = await addDoc(collection(db(), 'receipts'), {
+    ...data,
+    status: data.status ?? 'paid',
+    currency: data.currency ?? 'INR',
+    transactionNumber: data.transactionNumber ?? null,
+    paymentMethod: data.paymentMethod ?? null,
+    issuedAt: data.issuedAt ?? new Date(),
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+  })
+  return { id: ref.id }
+}
+
+export async function getReceipts() {
+  const snapshot = await getDocs(query(collection(db(), 'receipts'), orderBy('createdAt', 'desc')))
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      issuedAt: data.issuedAt?.toDate ? data.issuedAt.toDate() : (data.issuedAt ? new Date(data.issuedAt) : null),
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    } as ReceiptDoc
+  })
+}
+
+export async function getReceiptsByMemberUid(memberUid: string): Promise<ReceiptDoc[]> {
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'receipts'), where('memberUid', '==', memberUid), orderBy('createdAt', 'desc'))
+    )
+    return snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        ...data,
+        issuedAt: data.issuedAt?.toDate ? data.issuedAt.toDate() : (data.issuedAt ? new Date(data.issuedAt) : null),
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+      } as ReceiptDoc
+    })
+  } catch (error) {
+    // Fallback: fetch all receipts and filter in memory (avoids composite index requirement)
+    console.error('getReceiptsByMemberUid query failed, falling back to in-memory filter:', error)
+    try {
+      const allReceipts = await getReceipts()
+      return allReceipts
+        .filter((r) => r.memberUid === memberUid)
+        .sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return bTime - aTime
+        })
+    } catch (fallbackError) {
+      console.error('Fallback receipt lookup also failed:', fallbackError)
+      return []
+    }
+  }
+}
+
+export async function getReceiptsByMemberId(memberId: string): Promise<ReceiptDoc[]> {
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'receipts'), where('memberId', '==', memberId), orderBy('createdAt', 'desc'))
+    )
+    return snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        ...data,
+        issuedAt: data.issuedAt?.toDate ? data.issuedAt.toDate() : (data.issuedAt ? new Date(data.issuedAt) : null),
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+      } as ReceiptDoc
+    })
+  } catch (error) {
+    // Fallback: fetch all receipts and filter in memory (avoids composite index requirement)
+    console.error('getReceiptsByMemberId query failed, falling back to in-memory filter:', error)
+    try {
+      const allReceipts = await getReceipts()
+      return allReceipts
+        .filter((r) => r.memberId === memberId)
+        .sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return bTime - aTime
+        })
+    } catch (fallbackError) {
+      console.error('Fallback receipt lookup also failed:', fallbackError)
+      return []
+    }
+  }
+}
+
+export async function getReceiptById(id: string): Promise<ReceiptDoc | null> {
+  const ref = doc(db(), 'receipts', id)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return null
+  const data = snap.data()
+  return {
+    id: snap.id,
+    ...data,
+    issuedAt: data.issuedAt?.toDate ? data.issuedAt.toDate() : (data.issuedAt ? new Date(data.issuedAt) : null),
+    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+    updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+  } as ReceiptDoc
+}
+
+export async function updateReceipt(id: string, data: Partial<ReceiptDoc>) {
+  const ref = doc(db(), 'receipts', id)
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: new Date(),
+  })
+  return { id }
+}
+
+export async function deleteReceipt(id: string) {
+  const ref = doc(db(), 'receipts', id)
   await deleteDoc(ref)
   return { id }
 }
@@ -890,6 +1017,7 @@ export async function createWebinar(data: WebinarDoc) {
     registrationLink: data.registrationLink ?? null,
     meetingLink: data.meetingLink ?? null,
     maxAttendees: data.maxAttendees ?? null,
+    price: data.price ?? null,
   })
   return { id: ref.id }
 }

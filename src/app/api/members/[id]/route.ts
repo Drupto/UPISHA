@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateMember, deleteMember, getMemberById as fetchMemberById } from '@/lib/firestore'
 import { getActiveCertificateTemplateByType, createCertificate, getCertificatesByMemberId, seedDefaultCertificateTemplates } from '@/lib/firestore'
+import { createReceipt, getReceiptsByMemberId } from '@/lib/firestore'
+import { membershipFees } from '@/lib/static-data'
 import { withSecurityHeaders, sanitizeHtml } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
@@ -26,7 +28,7 @@ export async function PUT(
     if (body.city) updateData.city = sanitizeHtml(body.city)
     if (body.address !== undefined) updateData.address = body.address ? sanitizeHtml(body.address) : null
 
-    // Auto-issue certificate when member is approved
+    // Auto-issue certificate and receipt when member is approved
     if (body.status === 'approved') {
       try {
         await seedDefaultCertificateTemplates()
@@ -56,10 +58,40 @@ export async function PUT(
               }
             }
           }
+
+          // Auto-generate membership receipt
+          const memberUid = (member as { uid?: string | null }).uid
+          const amount = membershipFees[membershipType] ?? 0
+          if (memberUid && amount > 0) {
+            const existingReceipts = await getReceiptsByMemberId(id)
+            const hasMembershipReceipt = existingReceipts.some((r) => r.transactionType === 'membership')
+            if (!hasMembershipReceipt) {
+              const membershipLabel: Record<string, string> = {
+                life: 'Life Membership Fee',
+                annual: 'Annual Membership Fee',
+                student: 'Student Membership Fee',
+              }
+              await createReceipt({
+                receiptNumber: `UPISHA-RCPT-${id}`,
+                memberId: id,
+                memberUid,
+                memberName: sanitizeHtml(member.fullName),
+                memberEmail: member.email,
+                transactionType: 'membership',
+                description: membershipLabel[membershipType] || 'Membership Fee',
+                amount,
+                currency: 'INR',
+                transactionNumber: member.transactionNumber || null,
+                paymentMethod: 'UPI',
+                status: 'paid',
+                issuedAt: new Date(),
+              })
+            }
+          }
         }
       } catch (certError) {
-        // Log but don't fail the member update if certificate issuance fails
-        console.error('Error auto-issuing certificate:', certError)
+        // Log but don't fail the member update if certificate/receipt issuance fails
+        console.error('Error auto-issuing certificate or receipt:', certError)
       }
     }
 

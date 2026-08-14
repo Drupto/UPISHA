@@ -290,6 +290,7 @@ export interface WebinarDoc {
   registrationLink?: string | null
   meetingLink?: string | null
   type?: WebinarType
+  price?: number | null
   isActive?: boolean
   maxAttendees?: number | null
   createdAt?: Date
@@ -437,6 +438,29 @@ export interface CertificateDoc {
   certificateNumber: string
   issueDate: string
   status?: 'issued' | 'revoked'
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+// Receipt-related types
+export type ReceiptTransactionType = 'membership' | 'webinar' | 'event' | 'other'
+export type ReceiptStatus = 'paid' | 'pending' | 'refunded'
+
+export interface ReceiptDoc {
+  id?: string
+  receiptNumber: string
+  memberId: string
+  memberUid: string
+  memberName: string
+  memberEmail: string
+  transactionType: ReceiptTransactionType
+  description: string
+  amount: number
+  currency: 'INR'
+  transactionNumber?: string | null
+  paymentMethod?: string | null
+  status: ReceiptStatus
+  issuedAt: Date
   createdAt?: Date
   updatedAt?: Date
 }
