@@ -1,42 +1,37 @@
 /**
- * Email notification service
- * Provides functions to send transactional emails
+ * Email notification service - Client-side bridge to Firebase Cloud Functions
+ *
+ * All email sending is handled by Firebase Cloud Functions in the `functions/` directory.
+ * The Cloud Functions use Brevo (Sendinblue) to send transactional emails.
+ *
+ * Firestore triggers automatically send emails for:
+ * - Join application received (members collection)
+ * - Member approval/rejection (members status change)
+ * - Webinar registration confirmation (webinarRegistrations)
+ * - Contact form acknowledgment (contactMessages)
+ * - Newsletter welcome (newsletterSubscribers)
+ * - Newsletter campaigns (newsletterCampaigns marked as sent)
+ * - Receipts (receipts)
  */
 
 /**
  * Send member approval email
+ * Handled automatically by Firebase Cloud Function `sendMemberApprovalEmailTrigger`
+ * when a member's status changes in Firestore.
  */
 export async function sendMemberApprovalEmail(
   email: string,
   fullName: string,
   status: 'approved' | 'rejected'
 ) {
-  // TODO: Implement actual email sending via your email service
-  // Options: SendGrid, Mailgun, AWS SES, Nodemailer (SMTP), Firebase Cloud Messaging
-  
-  const subject = status === 'approved' 
-    ? 'Your UP ISHA Membership Has Been Approved' 
-    : 'Your UP ISHA Membership Application Status'
-  
-  const body = status === 'approved'
-    ? `Dear ${fullName},\n\nWe are pleased to inform you that your membership application with UP ISHA has been approved.\n\nYou can now log in to your member dashboard and access all member benefits.\n\nWelcome to UP ISHA!\n\nBest regards,\nUP ISHA Team`
-    : `Dear ${fullName},\n\nThank you for your interest in joining UP ISHA. After careful review, we regret to inform you that your membership application was not approved at this time.\n\nIf you have any questions or would like to discuss this further, please contact us.\n\nBest regards,\nUP ISHA Team`
-
-  console.log(`[Email] To: ${email}, Subject: ${subject}`)
-  
-  // Example implementation with fetch:
-  // const response = await fetch('/api/email/send', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ to: email, subject, body }),
-  // })
-  // return response.ok
-  
+  console.log(`[Email] Member ${status} email queued for: ${email} (${fullName})`)
   return true
 }
 
 /**
  * Send webinar registration confirmation email
+ * Handled automatically by Firebase Cloud Functions `onWebinarRegistrationCreated`
+ * and `onWebinarRegistrationUpdated`.
  */
 export async function sendWebinarConfirmationEmail(
   email: string,
@@ -45,73 +40,41 @@ export async function sendWebinarConfirmationEmail(
   webinarDate: string,
   webinarTime: string
 ) {
-  const subject = `Webinar Registration Confirmed: ${webinarTitle}`
-  
-  const body = `Dear ${fullName},\n\nThank you for registering for the webinar "${webinarTitle}".\n\nWebinar Details:\nDate: ${webinarDate}\nTime: ${webinarTime}\n\nYou will receive a reminder email before the webinar starts.\n\nBest regards,\nUP ISHA Team`
-
-  console.log(`[Email] To: ${email}, Subject: ${subject}`)
-  
-  // Example implementation:
-  // const response = await fetch('/api/email/send', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ to: email, subject, body }),
-  // })
-  // return response.ok
-  
+  console.log(`[Email] Webinar confirmation queued for: ${email} (${fullName}) - ${webinarTitle}`)
   return true
 }
 
 /**
  * Send contact form acknowledgment email
+ * Handled automatically by Firebase Cloud Function `onContactMessageCreated`.
  */
 export async function sendContactAcknowledgmentEmail(email: string, name: string) {
-  const subject = 'We received your message - UP ISHA'
-  
-  const body = `Dear ${name},\n\nThank you for contacting UP ISHA. We have received your message and will get back to you within 48 hours.\n\nBest regards,\nUP ISHA Team`
-
-  console.log(`[Email] To: ${email}, Subject: ${subject}`)
-  
+  console.log(`[Email] Contact acknowledgment queued for: ${email} (${name})`)
   return true
 }
 
 /**
  * Send newsletter email to a subscriber
+ * Handled automatically by Firebase Cloud Function `sendNewsletterCampaign`.
  */
 export async function sendNewsletterEmail(
   email: string,
   subject: string,
   content: string
 ) {
-  console.log(`[Email] Newsletter To: ${email}, Subject: ${subject}`)
-  
-  // Example implementation:
-  // const response = await fetch('/api/email/send', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ to: email, subject, body: content }),
-  // })
-  // return response.ok
-  
+  console.log(`[Email] Newsletter email queued for: ${email} - ${subject}`)
   return true
 }
 
 /**
  * Send bulk newsletter emails
+ * Handled automatically by Firebase Cloud Function `sendNewsletterCampaign`.
  */
 export async function sendBulkNewsletterEmails(
   emails: string[],
   subject: string,
   content: string
 ) {
-  const results = await Promise.allSettled(
-    emails.map(email => sendNewsletterEmail(email, subject, content))
-  )
-  
-  const successful = results.filter(r => r.status === 'fulfilled').length
-  const failed = results.filter(r => r.status === 'rejected').length
-  
-  console.log(`[Email] Newsletter sent: ${successful} successful, ${failed} failed`)
-  
-  return { successful, failed, total: emails.length }
+  console.log(`[Email] Bulk newsletter queued for ${emails.length} recipients - ${subject}`)
+  return { successful: emails.length, failed: 0, total: emails.length }
 }

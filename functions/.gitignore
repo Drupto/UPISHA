@@ -1,0 +1,11 @@
+# Compiled output
+lib/
+
+# Dependencies
+node_modules/
+
+# Environment files (do not commit real secrets)
+.env
+
+# Logs
+*.log
