@@ -543,15 +543,22 @@ export default function ApplyPage() {
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Current Year *
                       </label>
-                      <Input
-                        required
-                        placeholder="e.g. 2nd Year"
+                      <Select
                         value={formData.currentYear}
-                        onChange={(e) =>
-                          setFormData({ ...formData, currentYear: e.target.value })
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, currentYear: value })
                         }
-                        className="input-focus-ring"
-                      />
+                      >
+                        <SelectTrigger className="w-full input-focus-ring">
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1st Year</SelectItem>
+                          <SelectItem value="2">2nd Year</SelectItem>
+                          <SelectItem value="3">3rd Year</SelectItem>
+                          <SelectItem value="4">4th Year</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 )}
