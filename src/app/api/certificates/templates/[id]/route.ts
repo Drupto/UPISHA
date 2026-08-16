@@ -48,6 +48,7 @@ export async function PUT(
     await updateCertificateTemplate(id, {
       name: sanitizeHtml(validated.name),
       accountType: validated.accountType,
+      category: validated.category,
       title: sanitizeHtml(validated.title),
       subtitle: validated.subtitle ? sanitizeHtml(validated.subtitle) : '',
       titleFont: validated.titleFont,

@@ -14,9 +14,11 @@ import { useToast } from '@/hooks/use-toast'
 interface CertificateItem {
   id: string
   templateId: string
+  type?: 'membership' | 'webinar'
   memberId: string
   memberName: string
-  membershipType: string
+  membershipType?: string | null
+  webinarTitle?: string | null
   certificateNumber: string
   issueDate: string
   status?: string
@@ -26,6 +28,7 @@ interface TemplateItem {
   id: string
   name: string
   accountType: string
+  category?: string
   isActive?: boolean
 }
 
@@ -143,10 +146,15 @@ export default function AdminCertificates() {
 
   const filteredCertificates = certificates.filter((c) => {
     const q = searchQuery.toLowerCase()
+    const typeLabel = c.type === 'webinar' ? 'webinar' : ''
+    const membershipLabel = (c.membershipType || '').toLowerCase()
+    const webinarLabel = (c.webinarTitle || '').toLowerCase()
     return (
       c.memberName.toLowerCase().includes(q) ||
       c.certificateNumber.toLowerCase().includes(q) ||
-      c.membershipType.toLowerCase().includes(q) ||
+      membershipLabel.includes(q) ||
+      typeLabel.includes(q) ||
+      webinarLabel.includes(q) ||
       (c.status || '').toLowerCase().includes(q)
     )
   })
@@ -219,7 +227,11 @@ export default function AdminCertificates() {
                   <td className="py-3 pr-4 font-medium">{cert.memberName}</td>
                   <td className="py-3 pr-4 font-mono text-xs text-gray-500">{cert.certificateNumber}</td>
                   <td className="py-3 pr-4">
-                    <Badge variant="outline">{cert.membershipType}</Badge>
+                    {cert.type === 'webinar' ? (
+                      <Badge className="bg-upisha-teal/10 text-upisha-teal">Webinar</Badge>
+                    ) : (
+                      <Badge variant="outline">{cert.membershipType || 'Membership'}</Badge>
+                    )}
                   </td>
                   <td className="py-3 pr-4 text-gray-500">
                     {new Date(cert.issueDate).toLocaleDateString()}
@@ -293,7 +305,7 @@ export default function AdminCertificates() {
                 </SelectTrigger>
                 <SelectContent>
                   {templates
-                    .filter((t) => t.isActive !== false)
+                    .filter((t) => t.isActive !== false && (t.category || 'membership') === 'membership')
                     .map((t) => (
                       <SelectItem key={t.id} value={t.id}>
                         {t.name} ({t.accountType})

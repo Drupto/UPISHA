@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Monitor, Plus, Pencil, Trash2, X, Users, Search, Calendar, Clock, User,
-  CheckCircle2, Loader2, Download, Eye, XCircle, Clock3
+  CheckCircle2, Loader2, Download, Eye, XCircle, Clock3, Award
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +13,9 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 
 interface WebinarItem {
@@ -87,6 +90,21 @@ export default function AdminWebinarsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [selectedRegistration, setSelectedRegistration] = useState<RegistrationItem | null>(null)
+
+  // Certificate issuance state
+  interface TemplateItem {
+    id: string
+    name: string
+    accountType: string
+    category?: string
+    isActive?: boolean
+  }
+  const [certIssueOpen, setCertIssueOpen] = useState(false)
+  const [certTargetRegistration, setCertTargetRegistration] = useState<RegistrationItem | null>(null)
+  const [certTemplates, setCertTemplates] = useState<TemplateItem[]>([])
+  const [certTemplatesLoading, setCertTemplatesLoading] = useState(false)
+  const [certSelectedTemplate, setCertSelectedTemplate] = useState('')
+  const [certIssuing, setCertIssuing] = useState(false)
 
   const fetchWebinars = async () => {
     try {
@@ -235,6 +253,58 @@ export default function AdminWebinarsPage() {
       }
     } catch {
       toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
+    }
+  }
+
+  const openIssueCertificate = async (reg: RegistrationItem) => {
+    setCertTargetRegistration(reg)
+    setCertSelectedTemplate('')
+    setCertIssueOpen(true)
+    setCertTemplatesLoading(true)
+    try {
+      const res = await fetch('/api/certificates/templates')
+      if (res.ok) {
+        const data = await res.json()
+        // Only show webinar templates
+        setCertTemplates((data.templates || []).filter((t: TemplateItem) => t.isActive !== false && (t.category || 'membership') === 'webinar'))
+      } else {
+        toast({ title: 'Error', description: 'Failed to load certificate templates', variant: 'destructive' })
+        setCertIssueOpen(false)
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to load certificate templates', variant: 'destructive' })
+      setCertIssueOpen(false)
+    } finally {
+      setCertTemplatesLoading(false)
+    }
+  }
+
+  const handleIssueCertificate = async () => {
+    if (!certTargetRegistration || !certSelectedTemplate) {
+      toast({ title: 'Error', description: 'Please select a certificate template', variant: 'destructive' })
+      return
+    }
+    setCertIssuing(true)
+    try {
+      const res = await fetch('/api/certificates/webinar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          registrationId: certTargetRegistration.id,
+          templateId: certSelectedTemplate,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to issue certificate')
+      }
+      toast({ title: 'Success', description: 'Webinar certificate issued. An email notification has been sent.' })
+      setCertIssueOpen(false)
+      setCertTargetRegistration(null)
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to issue certificate', variant: 'destructive' })
+    } finally {
+      setCertIssuing(false)
     }
   }
 
@@ -759,6 +829,17 @@ export default function AdminWebinarsPage() {
                               >
                                 <Eye className="h-3.5 w-3.5" />
                               </Button>
+                              {reg.status === 'confirmed' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openIssueCertificate(reg)}
+                                  className="h-8 w-8 p-0 text-upisha-teal border-upisha-teal/40 hover:bg-upisha-teal/10"
+                                  title="Issue certificate"
+                                >
+                                  <Award className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -862,6 +943,19 @@ export default function AdminWebinarsPage() {
                 )}
 
                 <div className="flex gap-2 pt-2 border-t dark:border-gray-700">
+                  {selectedRegistration.status === 'confirmed' && (
+                    <Button
+                      size="sm"
+                      className="bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+                      onClick={() => {
+                        openIssueCertificate(selectedRegistration)
+                        setSelectedRegistration(null)
+                      }}
+                    >
+                      <Award className="h-3.5 w-3.5 mr-1.5" />
+                      Issue Certificate
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     className="bg-green-600 hover:bg-green-700 text-white"
@@ -906,6 +1000,74 @@ export default function AdminWebinarsPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Issue Certificate Dialog */}
+      <Dialog open={certIssueOpen} onOpenChange={setCertIssueOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Issue Webinar Certificate</DialogTitle>
+            <DialogDescription>
+              {certTargetRegistration
+                ? `Issue a participation certificate for ${certTargetRegistration.fullName} (${certTargetRegistration.webinarTitle}). Confirm they attended before issuing.`
+                : 'Select a registered attendee to issue a certificate.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Certificate Template</Label>
+              {certTemplatesLoading ? (
+                <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading templates...
+                </div>
+              ) : certTemplates.length === 0 ? (
+                <div className="text-sm text-gray-500 border rounded-lg p-3 bg-gray-50 dark:bg-gray-900">
+                  No webinar certificate templates found. Create one in{' '}
+                  <a href="/admin/certificates/templates" className="text-upisha-teal hover:underline">
+                    Certificate Templates
+                  </a>{' '}
+                  first.
+                </div>
+              ) : (
+                <Select value={certSelectedTemplate} onValueChange={setCertSelectedTemplate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a webinar certificate template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {certTemplates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setCertIssueOpen(false)} disabled={certIssuing}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleIssueCertificate}
+              disabled={certIssuing || certTemplatesLoading || !certSelectedTemplate}
+              className="bg-upisha-teal hover:bg-upisha-teal-dark text-white"
+            >
+              {certIssuing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Issuing...
+                </>
+              ) : (
+                <>
+                  <Award className="h-4 w-4 mr-2" />
+                  Issue Certificate
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -186,6 +186,7 @@ export const certificateHeaderFontSchema = z.object({
 export const certificateTemplateSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(200),
   accountType: z.enum(['life', 'annual', 'student', 'all']),
+  category: z.enum(['membership', 'webinar']).optional().default('membership'),
   title: z.string().min(2, 'Title must be at least 2 characters').max(200),
   subtitle: z.string().max(300).optional().default(''),
   titleFont: certificateHeaderFontSchema.default({

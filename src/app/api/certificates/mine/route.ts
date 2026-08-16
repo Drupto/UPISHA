@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   getCertificatesByMemberUid,
   getCertificatesByMemberId,
+  getCertificatesByEmail,
   getCertificateTemplateById,
   getActiveCertificateTemplateByType,
   createCertificate,
@@ -26,16 +27,20 @@ export async function GET(request: NextRequest) {
     }
 
     const memberId = (member as { id?: string }).id
+    const memberEmail = member.email?.toLowerCase()
 
-    // Query by both memberUid and memberId to handle all certificate creation paths
-    const [uidCerts, idCerts] = await Promise.all([
+    // Query by memberUid, memberId, AND email (to include webinar certificates
+    // issued to the same email used at webinar registration - covers members
+    // and any certificates issued to their registered address).
+    const [uidCerts, idCerts, emailCerts] = await Promise.all([
       getCertificatesByMemberUid(decoded.uid),
       memberId ? getCertificatesByMemberId(memberId) : Promise.resolve([]),
+      memberEmail ? getCertificatesByEmail(memberEmail) : Promise.resolve([]),
     ])
 
     // Merge and deduplicate by certificate id
     const certMap = new Map<string, (typeof uidCerts)[number]>()
-    for (const cert of [...uidCerts, ...idCerts]) {
+    for (const cert of [...uidCerts, ...idCerts, ...emailCerts]) {
       if (cert.id && !certMap.has(cert.id)) {
         certMap.set(cert.id, cert)
       }

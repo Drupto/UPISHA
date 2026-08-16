@@ -20,6 +20,10 @@ interface CertificatePreviewProps {
   verificationUrl?: string
   scale?: number
   certificateRef?: React.Ref<HTMLDivElement>
+  webinarTitle?: string
+  webinarDate?: string
+  webinarSpeaker?: string
+  duration?: string
 }
 
 export function replacePlaceholders(
@@ -31,6 +35,10 @@ export function replacePlaceholders(
     date?: string
     qualification?: string
     certificateNumber?: string
+    webinarTitle?: string
+    webinarDate?: string
+    webinarSpeaker?: string
+    duration?: string
   }
 ): string {
   return content
@@ -40,6 +48,10 @@ export function replacePlaceholders(
     .replace(/\{date\}/g, data.date || '')
     .replace(/\{qualification\}/g, data.qualification || '')
     .replace(/\{certificateNumber\}/g, data.certificateNumber || '')
+    .replace(/\{webinarTitle\}/g, data.webinarTitle || '')
+    .replace(/\{webinarDate\}/g, data.webinarDate || '')
+    .replace(/\{webinarSpeaker\}/g, data.webinarSpeaker || '')
+    .replace(/\{duration\}/g, data.duration || '')
 }
 
 export function formatMembershipType(type: string): string {
@@ -91,6 +103,10 @@ export default function CertificatePreview({
   verificationUrl,
   scale: externalScale,
   certificateRef,
+  webinarTitle,
+  webinarDate,
+  webinarSpeaker,
+  duration,
 }: CertificatePreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [autoScale, setAutoScale] = useState(1)
@@ -173,6 +189,10 @@ export default function CertificatePreview({
       date: displayDate,
       qualification,
       certificateNumber,
+      webinarTitle,
+      webinarDate: webinarDate ? formatDate(webinarDate) : '',
+      webinarSpeaker,
+      duration,
     })
 
     return (

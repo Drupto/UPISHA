@@ -7,11 +7,15 @@ import { siteConfig } from '@/lib/seo'
 
 interface VerificationResult {
   id: string
+  type?: string
   memberName: string
   certificateNumber: string
   membershipType: string
   issueDate: string
   status: string
+  webinarTitle?: string | null
+  webinarDate?: string | null
+  webinarSpeaker?: string | null
 }
 
 type VerifyState =
@@ -122,26 +126,73 @@ export default function VerifyCertificatePage({ params }: { params: Promise<{ id
                     {state.data.memberName}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-gray-400">Certificate No.</p>
-                    <p className="font-mono text-sm text-upisha-navy dark:text-white">
-                      {state.data.certificateNumber}
-                    </p>
+                {state.data.type === 'webinar' ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-400">Certificate No.</p>
+                        <p className="font-mono text-sm text-upisha-navy dark:text-white">
+                          {state.data.certificateNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-400">Certificate Type</p>
+                        <p className="text-sm text-upisha-navy dark:text-white">
+                          Webinar Participation
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-gray-400">Webinar</p>
+                      <p className="text-sm font-medium text-upisha-navy dark:text-white">
+                        {state.data.webinarTitle || '-'}
+                      </p>
+                    </div>
+                    {state.data.webinarSpeaker && (
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-400">Speaker</p>
+                        <p className="text-sm text-upisha-navy dark:text-white">
+                          {state.data.webinarSpeaker}
+                        </p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-gray-400">Webinar Date</p>
+                      <p className="text-sm text-upisha-navy dark:text-white">
+                        {state.data.webinarDate ? formatDate(state.data.webinarDate) : '-'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-gray-400">Issue Date</p>
+                      <p className="text-sm text-upisha-navy dark:text-white">
+                        {formatDate(state.data.issueDate)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-gray-400">Membership Type</p>
-                    <p className="text-sm text-upisha-navy dark:text-white">
-                      {formatMembershipType(state.data.membershipType)}
-                    </p>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-400">Certificate No.</p>
+                        <p className="font-mono text-sm text-upisha-navy dark:text-white">
+                          {state.data.certificateNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-400">Membership Type</p>
+                        <p className="text-sm text-upisha-navy dark:text-white">
+                          {formatMembershipType(state.data.membershipType)}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-gray-400">Issue Date</p>
+                      <p className="text-sm text-upisha-navy dark:text-white">
+                        {formatDate(state.data.issueDate)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-gray-400">Issue Date</p>
-                  <p className="text-sm text-upisha-navy dark:text-white">
-                    {formatDate(state.data.issueDate)}
-                  </p>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -164,26 +215,59 @@ export default function VerifyCertificatePage({ params }: { params: Promise<{ id
                     {state.data.memberName}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-gray-400">Certificate No.</p>
-                    <p className="font-mono text-sm text-upisha-navy dark:text-white">
-                      {state.data.certificateNumber}
-                    </p>
+                {state.data.type === 'webinar' ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-400">Certificate No.</p>
+                        <p className="font-mono text-sm text-upisha-navy dark:text-white">
+                          {state.data.certificateNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-400">Certificate Type</p>
+                        <p className="text-sm text-upisha-navy dark:text-white">
+                          Webinar Participation
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-gray-400">Webinar</p>
+                      <p className="text-sm font-medium text-upisha-navy dark:text-white">
+                        {state.data.webinarTitle || '-'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-gray-400">Issue Date</p>
+                      <p className="text-sm text-upisha-navy dark:text-white">
+                        {formatDate(state.data.issueDate)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-gray-400">Membership Type</p>
-                    <p className="text-sm text-upisha-navy dark:text-white">
-                      {formatMembershipType(state.data.membershipType)}
-                    </p>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-400">Certificate No.</p>
+                        <p className="font-mono text-sm text-upisha-navy dark:text-white">
+                          {state.data.certificateNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-400">Membership Type</p>
+                        <p className="text-sm text-upisha-navy dark:text-white">
+                          {formatMembershipType(state.data.membershipType)}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-gray-400">Issue Date</p>
+                      <p className="text-sm text-upisha-navy dark:text-white">
+                        {formatDate(state.data.issueDate)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-gray-400">Issue Date</p>
-                  <p className="text-sm text-upisha-navy dark:text-white">
-                    {formatDate(state.data.issueDate)}
-                  </p>
-                </div>
+                )}
               </div>
             </div>
           )}

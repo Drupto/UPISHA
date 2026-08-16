@@ -14,6 +14,34 @@ export interface WebinarConfirmationTemplateData {
   amount?: number
 }
 
+export interface WebinarCertificateTemplateData {
+  fullName: string
+  webinarTitle: string
+  certificateNumber: string
+  certificateUrl?: string
+}
+
+export function renderWebinarCertificateEmail(data: WebinarCertificateTemplateData): RenderedEmail {
+  const subject = `Your UP ISHA Webinar Participation Certificate 🎓`
+  const bodyHtml = `
+    <h2>Certificate of Participation 🎓</h2>
+    <p>Dear <strong>${data.fullName}</strong>,</p>
+    <p>Congratulations! Your participation certificate for the UP ISHA webinar is now available.</p>
+    <table class="details-table">
+      <tr><td>Webinar</td><td><strong>${data.webinarTitle}</strong></td></tr>
+      <tr><td>Certificate No.</td><td><code>${data.certificateNumber}</code></td></tr>
+    </table>
+    ${data.certificateUrl ? `
+      <p style="text-align:center;"><a class="button" href="${data.certificateUrl}">View & Download Certificate</a></p>
+      <div class="info-box"><strong>Note:</strong> You can also retrieve your certificate anytime using the email you registered with on the <strong>Find My Certificate</strong> page on our website.</div>
+    ` : ''}
+    <p>We hope you enjoyed the session and look forward to seeing you at future UP ISHA webinars.</p>
+    <p>Warm regards,<br><strong>UP ISHA Team</strong></p>
+  `
+  const text = `Dear ${data.fullName},\n\nCongratulations! Your participation certificate for the UP ISHA webinar "${data.webinarTitle}" is now available.\n\nCertificate No: ${data.certificateNumber}\n\n${data.certificateUrl ? `Download your certificate here: ${data.certificateUrl}\n\n` : ''}You can also retrieve it anytime using the email you registered with on the Find My Certificate page.\n\nBest regards,\nUP ISHA Team`
+  return { subject, html: wrapTemplate(subject, bodyHtml), text }
+}
+
 export function renderWebinarConfirmationEmail(data: WebinarConfirmationTemplateData): RenderedEmail {
   const { fullName, webinarTitle, webinarDate, webinarTime, meetingLink, registrationStatus = 'confirmed' } = data
 

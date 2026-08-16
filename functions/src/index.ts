@@ -30,7 +30,9 @@ import {
 } from './email/templates.member'
 import {
   renderWebinarConfirmationEmail,
+  renderWebinarCertificateEmail,
   WebinarConfirmationTemplateData,
+  WebinarCertificateTemplateData,
 } from './email/templates.webinar'
 import {
   renderContactAcknowledgmentEmail,
@@ -384,6 +386,46 @@ export const onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async 
   }
 })
 
+// ─── Firestore Trigger: Webinar Certificate Created ───
+// When a webinar participation certificate is issued (admin action), send
+// the recipient an email with a direct link to view/download it.
+export const onWebinarCertificateCreated = onDocumentCreated('certificates/{certId}', async (event) => {
+  const cert = event.data?.data() as Record<string, unknown> | undefined
+  if (!cert) return
+
+  // Only send email for webinar certificates
+  if (String(cert.type || '') !== 'webinar') return
+
+  const email = String(cert.email || '')
+  const fullName = String(cert.memberName || '')
+  if (!email) return
+
+  const siteUrl = process.env.SITE_URL || 'https://upisha.org'
+  const certificateUrl = `${siteUrl}/verify/${event.params.certId}`
+
+  const templateData: WebinarCertificateTemplateData = {
+    fullName,
+    webinarTitle: String(cert.webinarTitle || 'Webinar'),
+    certificateNumber: String(cert.certificateNumber || ''),
+    certificateUrl,
+  }
+
+  const rendered = renderWebinarCertificateEmail(templateData)
+
+  const result = await sendSingleEmail(
+    { email, name: fullName },
+    rendered.subject,
+    rendered.html,
+    rendered.text,
+    ['webinar-certificate'],
+    { eventId: event.params.certId }
+  )
+
+  if (!result.success) {
+    functions.logger.error('Webinar certificate email failed:', result.error)
+  }
+})
+
 // ─── Callable: sendTransactionalEmail ───
 // Manually trigger a transactional email from the Next.js app (admin use).
 export const sendTransactionalEmail = onCall(async (request) => {
@@ -396,7 +438,7 @@ export const sendTransactionalEmail = onCall(async (request) => {
     to: EmailRecipient | EmailRecipient[]
     subject: string
     htmlContent?: string
-    template?: 'member-approval' | 'webinar' | 'contact' | 'newsletter-welcome'
+    template?: 'member-approval' | 'webinar' | 'contact' | 'newsletter-welcome' | 'webinar-certificate'
     templateData?: Record<string, unknown>
   }
 
@@ -429,6 +471,12 @@ export const sendTransactionalEmail = onCall(async (request) => {
       }
       case 'webinar': {
         const rendered = renderWebinarConfirmationEmail(data.templateData as unknown as WebinarConfirmationTemplateData)
+        subject = rendered.subject
+        html = rendered.html
+        break
+      }
+      case 'webinar-certificate': {
+        const rendered = renderWebinarCertificateEmail(data.templateData as unknown as WebinarCertificateTemplateData)
         subject = rendered.subject
         html = rendered.html
         break

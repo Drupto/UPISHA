@@ -38,11 +38,18 @@ export async function GET(
     // email, phone, qualification, or any other private information.
     return withSecurityHeaders(NextResponse.json({
       id: certificate.id,
+      type: certificate.type || 'membership',
       memberName: certificate.memberName,
       certificateNumber: certificate.certificateNumber,
       membershipType: certificate.membershipType,
       issueDate: certificate.issueDate,
       status: certificate.status || 'issued',
+      ...(certificate.type === 'webinar' ? {
+        webinarTitle: certificate.webinarTitle,
+        webinarDate: certificate.webinarDate,
+        webinarSpeaker: certificate.webinarSpeaker,
+        webinarDuration: certificate.webinarDuration,
+      } : {}),
     }))
   } catch (error) {
     console.error('Error verifying certificate:', error)

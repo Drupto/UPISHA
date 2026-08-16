@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCertificateTemplates, createCertificateTemplate, setDefaultCertificateTemplate } from '@/lib/firestore'
+import { getCertificateTemplates, createCertificateTemplate, setDefaultCertificateTemplate, seedDefaultCertificateTemplates } from '@/lib/firestore'
 import { certificateTemplateSchema, enforceBodySizeLimit } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
@@ -22,6 +22,10 @@ export async function GET(request: NextRequest) {
     if (!rate.allowed) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
     }
+
+    // Ensure default templates (including the webinar participation template)
+    // are seeded so admins can always issue certificates on a fresh database.
+    await seedDefaultCertificateTemplates()
 
     const templates = await getCertificateTemplates()
     return withSecurityHeaders(NextResponse.json({ templates }))
@@ -72,6 +76,7 @@ export async function POST(request: NextRequest) {
     const template = await createCertificateTemplate({
       name: sanitizeHtml(validated.name),
       accountType: validated.accountType,
+      category: validated.category,
       title: sanitizeHtml(validated.title),
       subtitle: validated.subtitle ? sanitizeHtml(validated.subtitle) : '',
       titleFont: validated.titleFont,

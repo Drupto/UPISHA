@@ -12,13 +12,18 @@ import type { CertificateTemplateDoc } from '@/lib/types'
 interface CertificateItem {
   id: string
   templateId: string
+  type?: 'membership' | 'webinar'
   memberId: string
   memberName: string
-  membershipType: string
+  membershipType?: string | null
   qualification?: string | null
   certificateNumber: string
   issueDate: string
   status?: string
+  webinarTitle?: string | null
+  webinarDate?: string | null
+  webinarSpeaker?: string | null
+  webinarDuration?: string | null
   template?: CertificateTemplateDoc | null
 }
 
@@ -114,9 +119,11 @@ export default function MemberCertificates() {
                 </div>
                 <div>
                   <h2 className="font-semibold text-upisha-navy dark:text-white">
-                    {validCertificate?.name || 'Certificate'}
+                    {validCertificate?.name || (cert.type === 'webinar' ? 'Webinar Certificate' : 'Certificate')}
                   </h2>
-                  <p className="text-sm text-gray-500">{cert.certificateNumber}</p>
+                  <p className="text-sm text-gray-500">
+                    {cert.type === 'webinar' && cert.webinarTitle ? cert.webinarTitle : cert.certificateNumber}
+                  </p>
                 </div>
               </div>
               <Badge variant={cert.status === 'revoked' ? 'destructive' : 'default'}>
@@ -130,12 +137,16 @@ export default function MemberCertificates() {
                   <CertificatePreview
                     template={validCertificate}
                     memberName={cert.memberName}
-                    membershipType={cert.membershipType}
+                    membershipType={cert.membershipType || 'life'}
                     memberId={cert.memberId}
                     date={cert.issueDate}
                     qualification={cert.qualification || undefined}
                     certificateNumber={cert.certificateNumber}
                     verificationUrl={`${window.location.origin}/verify/${cert.id}`}
+                    webinarTitle={cert.webinarTitle || undefined}
+                    webinarDate={cert.webinarDate || undefined}
+                    webinarSpeaker={cert.webinarSpeaker || undefined}
+                    duration={cert.webinarDuration || undefined}
                     certificateRef={(el) => {
                       certRefs.current[cert.id] = el
                     }}

@@ -380,6 +380,8 @@ export interface PublicationSubmissionDoc {
 
 // Certificate-related types
 export type CertificateAccountType = 'life' | 'annual' | 'student' | 'all'
+export type CertificateCategory = 'membership' | 'webinar'
+export type CertificateType = 'membership' | 'webinar'
 
 export interface CertificateTextBlock {
   id: string
@@ -406,6 +408,7 @@ export interface CertificateTemplateDoc {
   id?: string
   name: string
   accountType: CertificateAccountType
+  category?: CertificateCategory
   title: string
   subtitle: string
   titleFont: CertificateHeaderFont
@@ -430,10 +433,17 @@ export interface CertificateTemplateDoc {
 export interface CertificateDoc {
   id?: string
   templateId: string
-  memberId: string
-  memberUid: string
+  type?: CertificateType
+  memberId?: string | null
+  memberUid?: string | null
   memberName: string
-  membershipType: string
+  membershipType?: string | null
+  email?: string | null
+  webinarId?: string | null
+  webinarTitle?: string | null
+  webinarDate?: string | null
+  webinarSpeaker?: string | null
+  webinarDuration?: string | null
   qualification?: string | null
   certificateNumber: string
   issueDate: string

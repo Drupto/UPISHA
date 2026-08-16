@@ -177,28 +177,65 @@ export async function getCertificateTemplateById(id: string): Promise<Certificat
 }
 
 export async function getActiveCertificateTemplateByType(accountType: string): Promise<CertificateTemplateDoc | null> {
+  return getActiveCertificateTemplate({ accountType })
+}
+
+/**
+ * Get the active certificate template matching a category and/or account type.
+ * Webinar templates are matched by category; membership templates by account type.
+ */
+export async function getActiveCertificateTemplate(
+  opts: { accountType?: string; category?: string } = {}
+): Promise<CertificateTemplateDoc | null> {
+  const { accountType, category } = opts
   try {
-    const snapshot = await getDocs(
-      query(
-        collection(db(), 'certificateTemplates'),
-        where('accountType', 'in', [accountType, 'all']),
-        where('isActive', '==', true)
-      )
+    let q = query(
+      collection(db(), 'certificateTemplates'),
+      where('isActive', '==', true)
     )
-    if (snapshot.empty) return null
-    // Prefer exact match over 'all'
-    const exact = snapshot.docs.find((d) => d.data().accountType === accountType)
-    const selected = exact || snapshot.docs[0]
+    if (category) {
+      q = query(q, where('category', '==', category))
+    }
+    const snapshot = await getDocs(q)
+    if (snapshot.empty) {
+      // Fall back to category-less 'all' membership templates for webinar
+      if (category === 'webinar') {
+        const allSnap = await getDocs(
+          query(
+            collection(db(), 'certificateTemplates'),
+            where('accountType', 'in', ['all']),
+            where('isActive', '==', true)
+          )
+        )
+        if (allSnap.empty) return null
+        const first = allSnap.docs[0]
+        return { id: first.id, ...first.data() } as CertificateTemplateDoc
+      }
+      return null
+    }
+
+    let candidates = snapshot.docs
+    if (accountType) {
+      const exact = candidates.find((d) => d.data().accountType === accountType)
+      if (exact) return { id: exact.id, ...exact.data() } as CertificateTemplateDoc
+      const fallback = candidates.find((d) => d.data().accountType === 'all')
+      candidates = fallback ? [fallback] : candidates
+    }
+    const selected = candidates[0]
     return { id: selected.id, ...selected.data() } as CertificateTemplateDoc
   } catch (error) {
     // Fallback: fetch all templates and filter in memory (avoids composite index requirement)
-    console.error('getActiveCertificateTemplateByType query failed, falling back to in-memory filter:', error)
+    console.error('getActiveCertificateTemplate query failed, falling back to in-memory filter:', error)
     try {
       const allTemplates = await getCertificateTemplates()
-      const active = allTemplates.filter((t) => t.isActive !== false)
-      const exact = active.find((t) => t.accountType === accountType)
-      const fallback = active.find((t) => t.accountType === 'all')
-      const selected = exact || fallback || active[0] || null
+      let active = allTemplates.filter((t) => t.isActive !== false)
+      if (category) active = active.filter((t) => (t.category || 'membership') === category)
+      let selected = active[0] || null
+      if (selected && accountType) {
+        const exact = active.find((t) => t.accountType === accountType)
+        const fallback = active.find((t) => t.accountType === 'all')
+        selected = exact || fallback || selected
+      }
       return selected
     } catch (fallbackError) {
       console.error('Fallback template lookup also failed:', fallbackError)
@@ -320,6 +357,39 @@ export async function getCertificatesByMemberUid(memberUid: string): Promise<Cer
         })
     } catch (fallbackError) {
       console.error('Fallback certificate lookup also failed:', fallbackError)
+      return []
+    }
+  }
+}
+
+export async function getCertificatesByEmail(email: string): Promise<CertificateDoc[]> {
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'certificates'), where('email', '==', email.toLowerCase()), orderBy('createdAt', 'desc'))
+    )
+    return snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+      } as CertificateDoc
+    })
+  } catch (error) {
+    // Fallback: fetch all certificates and filter in memory (avoids composite index requirement)
+    console.error('getCertificatesByEmail query failed, falling back to in-memory filter:', error)
+    try {
+      const allCerts = await getCertificates()
+      return allCerts
+        .filter((c) => (c.email || '').toLowerCase() === email.toLowerCase())
+        .sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return bTime - aTime
+        })
+    } catch (fallbackError) {
+      console.error('Fallback certificate email lookup also failed:', fallbackError)
       return []
     }
   }
@@ -665,6 +735,107 @@ export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 
     isDefault: true,
   },
   {
+    name: 'Webinar Participation Certificate',
+    accountType: 'all',
+    category: 'webinar',
+    title: 'Certificate of Participation',
+    subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
+    titleFont: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      fontStyle: 'normal',
+      textAlign: 'center',
+      color: '#0d9488',
+      letterSpacing: 0.02,
+    },
+    subtitleFont: {
+      fontSize: 16,
+      fontWeight: 'normal',
+      fontStyle: 'normal',
+      textAlign: 'center',
+      color: '#6b7280',
+      letterSpacing: 0.05,
+    },
+    textBlocks: [
+      {
+        id: 'intro',
+        content: 'This is to certify that',
+        fontSize: 24,
+        fontWeight: 'normal',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        color: '#374151',
+        marginTop: 12,
+        marginBottom: 0,
+      },
+      {
+        id: 'name',
+        content: '{name}',
+        fontSize: 46,
+        fontWeight: 'bold',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#0f172a',
+        marginTop: 12,
+        marginBottom: 8,
+      },
+      {
+        id: 'body',
+        content: 'has successfully participated in the UP ISHA webinar',
+        fontSize: 20,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#374151',
+        marginTop: 16,
+        marginBottom: 4,
+      },
+      {
+        id: 'webinar',
+        content: '"{webinarTitle}"',
+        fontSize: 26,
+        fontWeight: 'bold',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        color: '#0d9488',
+        marginTop: 4,
+        marginBottom: 8,
+      },
+      {
+        id: 'speaker',
+        content: 'Speaker: {webinarSpeaker}',
+        fontSize: 16,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#6b7280',
+        marginTop: 8,
+        marginBottom: 8,
+      },
+      {
+        id: 'date',
+        content: 'Held on {webinarDate} · Duration: {duration}',
+        fontSize: 16,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'center',
+        color: '#6b7280',
+        marginTop: 8,
+        marginBottom: 0,
+      },
+    ],
+    footerText: 'President, UP ISHA',
+    logoUrl: '/images/mainlogo.jpeg',
+    signatureUrl: null,
+    stampUrl: null,
+    backgroundUrl: null,
+    borderColor: '#0d9488',
+    accentColor: '#0d9488',
+    fontFamily: 'serif',
+    isActive: true,
+    isDefault: true,
+  },
+  {
     name: 'Student Member Certificate',
     accountType: 'student',
     title: 'Certificate of Student Membership',
@@ -748,6 +919,14 @@ export async function seedDefaultCertificateTemplates() {
   try {
     const existing = await getCertificateTemplates()
     const hasDefaults = existing.some((t) => t.isDefault === true)
+
+    // Ensure the webinar participation template always exists even after initial seeding
+    const webinarTemplate = DEFAULT_CERTIFICATE_TEMPLATES.find((t) => t.category === 'webinar')
+    if (webinarTemplate && !existing.some((t) => t.name === webinarTemplate.name)) {
+      await createCertificateTemplate({ ...webinarTemplate, category: 'webinar' })
+      return { seeded: true }
+    }
+
     if (hasDefaults) return { seeded: false }
 
     for (const template of DEFAULT_CERTIFICATE_TEMPLATES) {
