@@ -114,6 +114,7 @@ export interface WebinarRegistrationDoc {
   webinarTitle: string
   webinarType?: 'paid' | 'free'
   transactionNumber?: string | null
+  registrationNumber?: string | null
   message?: string | null
   declaration: boolean
   status?: 'pending' | 'confirmed' | 'rejected'
@@ -1229,9 +1230,21 @@ export async function deleteWebinar(id: string) {
 }
 
 // Webinar Registration CRUD operations
+const REG_NUM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+function generateRegistrationNumber(): string {
+  let code = ''
+  for (let i = 0; i < 6; i++) {
+    code += REG_NUM_CHARS[Math.floor(Math.random() * REG_NUM_CHARS.length)]
+  }
+  return `UPISHA-WEB-${code}`
+}
+
 export async function createWebinarRegistration(data: WebinarRegistrationDoc) {
+  const registrationNumber = data.registrationNumber || generateRegistrationNumber()
   const ref = await addDoc(collection(db(), 'webinarRegistrations'), {
     ...data,
+    registrationNumber,
     webinarType: data.webinarType ?? 'paid',
     status: data.status ?? 'pending',
     createdAt: data.createdAt ?? new Date(),
@@ -1240,10 +1253,10 @@ export async function createWebinarRegistration(data: WebinarRegistrationDoc) {
     transactionNumber: data.transactionNumber ?? null,
     message: data.message ?? null,
   })
-  return { id: ref.id }
+  return { id: ref.id, registrationNumber }
 }
 
-export async function getWebinarRegistrations() {
+export async function getWebinarRegistrations(): Promise<WebinarRegistrationDoc[]> {
   const snapshot = await getDocs(query(collection(db(), 'webinarRegistrations'), orderBy('createdAt', 'desc')))
   return snapshot.docs.map((doc) => {
     const data = doc.data()
@@ -1252,7 +1265,7 @@ export async function getWebinarRegistrations() {
       ...data,
       createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
       updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
-    }
+    } as WebinarRegistrationDoc
   })
 }
 
@@ -1269,6 +1282,59 @@ export async function getWebinarRegistrationsByEmail(email: string): Promise<Web
       updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
     } as WebinarRegistrationDoc
   })
+}
+
+export async function getWebinarRegistrationByRegistrationNumber(regNumber: string): Promise<WebinarRegistrationDoc | null> {
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'webinarRegistrations'), where('registrationNumber', '==', regNumber))
+    )
+    if (snapshot.empty) return null
+    const doc = snapshot.docs[0]
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    } as WebinarRegistrationDoc
+  } catch (error) {
+    console.error('getWebinarRegistrationByRegistrationNumber query failed, falling back to in-memory filter:', error)
+    try {
+      const all = await getWebinarRegistrations()
+      const found = all.find((r) => r.registrationNumber === regNumber) as (WebinarRegistrationDoc & { id?: string }) | undefined
+      return found || null
+    } catch (fallbackError) {
+      console.error('Fallback webinar registration lookup also failed:', fallbackError)
+      return null
+    }
+  }
+}
+
+export async function getCertificatesByRegistrationId(regNumber: string): Promise<CertificateDoc[]> {
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'certificates'), where('registrationNumber', '==', regNumber), orderBy('createdAt', 'desc'))
+    )
+    return snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+      } as CertificateDoc
+    })
+  } catch (error) {
+    console.error('getCertificatesByRegistrationId query failed, falling back to in-memory filter:', error)
+    try {
+      const all = await getCertificates()
+      return all.filter((c) => c.registrationNumber === regNumber)
+    } catch (fallbackError) {
+      console.error('Fallback certificate lookup also failed:', fallbackError)
+      return []
+    }
+  }
 }
 
 export async function getWebinarRegistrationCount(webinarId: string) {

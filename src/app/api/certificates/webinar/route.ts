@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
       webinarSpeaker: webinar?.speaker ? sanitizeHtml(webinar.speaker) : null,
       webinarDuration: webinar?.duration ? sanitizeHtml(webinar.duration) : null,
       qualification: registration.qualification ? sanitizeHtml(registration.qualification) : null,
+      registrationNumber: registration.registrationNumber || null,
       certificateNumber: `UPISHA-WEB-${registrationId}`,
       issueDate: new Date().toISOString(),
       status: 'issued',

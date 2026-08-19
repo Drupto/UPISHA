@@ -126,6 +126,7 @@ export function Footer() {
                   { label: 'Find Professional', href: '#professionals' },
                   { label: 'Submit Paper', href: '#publications' },
                   { label: 'Contact Us', href: '#contact' },
+                  { label: 'Check Webinar Registration', href: '/webinars/lookup' },
                 ].map((item) => (
                   <li key={item.label}>
                     <a

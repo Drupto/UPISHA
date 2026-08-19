@@ -33,6 +33,7 @@ interface RegistrationItem {
   webinarId: string
   webinarTitle: string
   transactionNumber?: string | null
+  registrationNumber?: string | null
   message?: string | null
   declaration: boolean
   status?: 'pending' | 'confirmed' | 'rejected'
@@ -208,6 +209,9 @@ export default function MemberWebinarsPage() {
                           <span className="flex items-center gap-1">
                             <User className="h-3 w-3" /> {reg.fullName}
                           </span>
+                          {reg.registrationNumber && (
+                            <span className="font-mono font-semibold text-upisha-teal">Reg#: {reg.registrationNumber}</span>
+                          )}
                           {reg.transactionNumber && (
                             <span className="font-mono">Txn: {reg.transactionNumber}</span>
                           )}

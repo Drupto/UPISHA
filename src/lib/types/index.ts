@@ -320,8 +320,9 @@ export interface WebinarRegistrationDoc {
   city: string
   webinarId: string
   webinarTitle: string
-  webinarType?: WebinarType
+  webinarType?: 'paid' | 'free'
   transactionNumber?: string | null
+  registrationNumber?: string | null
   message?: string | null
   declaration: boolean
   status?: 'pending' | 'confirmed' | 'rejected'
@@ -444,6 +445,8 @@ export interface CertificateDoc {
   webinarDate?: string | null
   webinarSpeaker?: string | null
   webinarDuration?: string | null
+  registrationId?: string | null
+  registrationNumber?: string | null
   qualification?: string | null
   certificateNumber: string
   issueDate: string

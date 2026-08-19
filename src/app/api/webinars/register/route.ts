@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
     return withSecurityHeaders(NextResponse.json({
       success: true,
       id: registration.id,
+      registrationNumber: registration.registrationNumber,
       status,
       message,
     }, { status: 201 }))

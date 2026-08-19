@@ -46,6 +46,7 @@ interface RegistrationItem {
   webinarTitle: string
   webinarType?: 'paid' | 'free'
   transactionNumber?: string | null
+  registrationNumber?: string | null
   message?: string | null
   declaration: boolean
   status?: 'pending' | 'confirmed' | 'rejected'
@@ -310,7 +311,7 @@ export default function AdminWebinarsPage() {
 
   const exportRegistrationsCSV = () => {
     const rows = [
-      ['Name', 'Email', 'Phone', 'Qualification', 'City', 'Webinar', 'Transaction No', 'Status', 'Date'],
+      ['Name', 'Email', 'Phone', 'Qualification', 'City', 'Webinar', 'Reg No', 'Transaction No', 'Status', 'Date'],
       ...filteredRegistrations.map((r) => {
         const dateVal = r.createdAt && !isNaN(new Date(r.createdAt as any).getTime()) ? new Date(r.createdAt as any).toLocaleDateString() : ''
         return [
@@ -320,6 +321,7 @@ export default function AdminWebinarsPage() {
           r.qualification || '',
           r.city,
           r.webinarTitle,
+          r.registrationNumber || '',
           r.transactionNumber || '',
           r.status || 'pending',
           dateVal,
@@ -789,6 +791,7 @@ export default function AdminWebinarsPage() {
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Phone</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">City</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Webinar</th>
+                      <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Reg No.</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Txn No.</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Status</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Date</th>
@@ -806,6 +809,9 @@ export default function AdminWebinarsPage() {
                           <td className="py-3 px-3 text-gray-600 dark:text-gray-300">{reg.city}</td>
                           <td className="py-3 px-3 text-gray-600 dark:text-gray-300 max-w-[200px] truncate" title={reg.webinarTitle}>
                             {reg.webinarTitle}
+                          </td>
+                          <td className="py-3 px-3 text-upisha-teal dark:text-teal-300 text-xs font-mono font-semibold">
+                            {reg.registrationNumber || '-'}
                           </td>
                           <td className="py-3 px-3 text-gray-600 dark:text-gray-300 text-xs font-mono">
                             {reg.transactionNumber || '-'}
@@ -926,6 +932,11 @@ export default function AdminWebinarsPage() {
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Webinar</p>
                   <p className="text-sm font-medium text-upisha-navy dark:text-white">{selectedRegistration.webinarTitle}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-400 mb-1">Registration Number</p>
+                  <p className="text-sm font-mono text-upisha-teal dark:text-teal-300 font-semibold">{selectedRegistration.registrationNumber || '-'}</p>
                 </div>
 
                 <div>

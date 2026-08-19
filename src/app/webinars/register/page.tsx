@@ -43,6 +43,7 @@ export default function WebinarRegisterPage() {
   const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const [checkingRegistration, setCheckingRegistration] = useState(false)
   const [registrationStatus, setRegistrationStatus] = useState<string | null>(null)
+  const [registrationNumber, setRegistrationNumber] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchWebinars = async () => {
@@ -190,6 +191,7 @@ export default function WebinarRegisterPage() {
         localStorage.removeItem('upisha-webinar-reg-form')
         const data = await res.json().catch(() => ({}))
         setRegistrationStatus(data.status || null)
+        setRegistrationNumber(typeof data.registrationNumber === 'string' ? data.registrationNumber : null)
         toast({ title: 'Registration submitted!', description: data.message || 'Your registration is pending admin confirmation.' })
       } else {
         const errData = await res.json().catch(() => ({}))
@@ -305,6 +307,19 @@ export default function WebinarRegisterPage() {
                   <CheckCircle2 className="h-12 w-12 text-upisha-teal" />
                 </motion.div>
                 <h3 className="text-xl font-bold text-upisha-navy dark:text-white mb-2">Registration Successful!</h3>
+                {registrationNumber && (
+                  <div className="max-w-sm mx-auto mb-6 p-4 rounded-lg bg-upisha-teal/10 border-2 border-upisha-teal/40">
+                    <p className="text-xs font-medium text-upisha-teal dark:text-teal-300 uppercase tracking-wider mb-1">
+                      Your Registration Number
+                    </p>
+                    <p className="text-2xl font-bold font-mono text-upisha-navy dark:text-white tracking-wide">
+                      {registrationNumber}
+                    </p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                      Please save this number for reference. You can use it to look up your registration and certificate.
+                    </p>
+                  </div>
+                )}
                 <p className="text-gray-500 dark:text-gray-400 mb-6">
                   Thank you for registering for <strong>{formData.webinarTitle}</strong>.
                   {registrationStatus === 'confirmed'

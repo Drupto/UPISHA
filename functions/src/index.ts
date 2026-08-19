@@ -154,6 +154,7 @@ export const onWebinarRegistrationCreated = onDocumentCreated('webinarRegistrati
     webinarType: (reg.webinarType as 'paid' | 'free') || undefined,
     meetingLink,
     registrationStatus: (reg.status as 'pending' | 'confirmed' | 'rejected') || 'pending',
+    registrationNumber: reg.registrationNumber ? String(reg.registrationNumber) : undefined,
     transactionNumber: reg.transactionNumber ? String(reg.transactionNumber) : undefined,
     amount: price,
   }
@@ -220,6 +221,7 @@ export const onWebinarRegistrationUpdated = onDocumentUpdated('webinarRegistrati
     webinarType: (after.webinarType as 'paid' | 'free') || undefined,
     meetingLink,
     registrationStatus: newStatus as 'confirmed' | 'rejected',
+    registrationNumber: after.registrationNumber ? String(after.registrationNumber) : undefined,
     transactionNumber: after.transactionNumber ? String(after.transactionNumber) : undefined,
     amount: price,
   }
