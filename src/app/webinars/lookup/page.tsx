@@ -14,7 +14,6 @@ interface LookupResult {
   registration: {
     id: string
     fullName: string
-    email: string
     webinarTitle: string
     webinarType?: 'paid' | 'free'
     status?: 'pending' | 'confirmed' | 'rejected'

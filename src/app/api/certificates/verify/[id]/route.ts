@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCertificateById } from '@/lib/firestore'
+import { getCertificateById, getCertificateTemplateById } from '@/lib/firestore'
 import { withSecurityHeaders, rateLimit } from '@/lib/security'
 
 /**
@@ -36,6 +36,11 @@ export async function GET(
 
     // Only expose safe public verification data — never memberId, memberUid,
     // email, phone, qualification, or any other private information.
+    // Fetch the template so the verify page can render the actual certificate
+    const template = certificate?.templateId
+      ? await getCertificateTemplateById(certificate.templateId).catch(() => null)
+      : null
+
     return withSecurityHeaders(NextResponse.json({
       id: certificate.id,
       type: certificate.type || 'membership',
@@ -50,6 +55,7 @@ export async function GET(
         webinarSpeaker: certificate.webinarSpeaker,
         webinarDuration: certificate.webinarDuration,
       } : {}),
+      ...(template ? { template } : {}),
     }))
   } catch (error) {
     console.error('Error verifying certificate:', error)

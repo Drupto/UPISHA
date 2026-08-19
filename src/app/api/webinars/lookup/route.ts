@@ -22,11 +22,12 @@ export async function GET(request: NextRequest) {
 
     const certificates = await getCertificatesByRegistrationId(regNumber)
 
+    // Only expose safe public data — never email, phone, or any other
+    // private contact information.
     return withSecurityHeaders(NextResponse.json({
       registration: {
         id: registration.id,
         fullName: registration.fullName,
-        email: registration.email,
         webinarTitle: registration.webinarTitle,
         webinarType: registration.webinarType,
         status: registration.status,
