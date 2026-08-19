@@ -92,6 +92,54 @@ export default function AdminWebinarsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [selectedRegistration, setSelectedRegistration] = useState<RegistrationItem | null>(null)
 
+  // Receipt status for the selected (paid) registration
+  const [receiptInfo, setReceiptInfo] = useState<{ exists: boolean; receiptNumber?: string; amount?: number; issuedAt?: string | null } | null>(null)
+  const [receiptLoading, setReceiptLoading] = useState(false)
+  const [receiptGenerating, setReceiptGenerating] = useState(false)
+
+  useEffect(() => {
+    if (!selectedRegistration || selectedRegistration.webinarType !== 'paid') {
+      setReceiptInfo(null)
+      return
+    }
+    let cancelled = false
+    setReceiptLoading(true)
+    fetch(`/api/webinars/register/${selectedRegistration.id}/receipt`)
+      .then((res) => res.json())
+      .then((data) => { if (!cancelled) setReceiptInfo(data) })
+      .catch(() => { if (!cancelled) setReceiptInfo(null) })
+      .finally(() => { if (!cancelled) setReceiptLoading(false) })
+    return () => { cancelled = true }
+  }, [selectedRegistration])
+
+  const handleGenerateReceipt = async () => {
+    if (!selectedRegistration) return
+    setReceiptGenerating(true)
+    try {
+      const res = await fetch(`/api/webinars/register/${selectedRegistration.id}/receipt`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        toast({
+          title: 'Success',
+          description: data.created ? 'Payment receipt generated.' : 'Receipt already exists.',
+        })
+        setReceiptInfo({
+          exists: true,
+          receiptNumber: data.receiptNumber,
+          amount: data.amount,
+          issuedAt: data.issuedAt,
+        })
+      } else {
+        toast({ title: 'Error', description: data.error || 'Failed to generate receipt', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Network error. Please try again.', variant: 'destructive' })
+    } finally {
+      setReceiptGenerating(false)
+    }
+  }
+
+
   // Certificate issuance state
   interface TemplateItem {
     id: string
@@ -943,6 +991,47 @@ export default function AdminWebinarsPage() {
                   <p className="text-xs text-gray-400 mb-1">Transaction Number</p>
                   <p className="text-sm font-mono text-gray-700 dark:text-gray-300">{selectedRegistration.transactionNumber || '-'}</p>
                 </div>
+
+                {selectedRegistration.webinarType === 'paid' && (
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1">Payment Receipt</p>
+                    {receiptLoading ? (
+                      <p className="text-sm text-gray-500 flex items-center gap-2">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Checking…
+                      </p>
+                    ) : receiptInfo?.exists ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-mono text-upisha-teal dark:text-teal-300 font-semibold">
+                          {receiptInfo.receiptNumber}
+                        </p>
+                        <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded-full">
+                          Generated
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm text-gray-500">Not generated yet</p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-upisha-teal text-upisha-teal hover:bg-upisha-teal/10"
+                          onClick={handleGenerateReceipt}
+                          disabled={receiptGenerating}
+                        >
+                          {receiptGenerating ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                              Generating…
+                            </>
+                          ) : (
+                            'Generate Receipt'
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {selectedRegistration.message && (
                   <div>

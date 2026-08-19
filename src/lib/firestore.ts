@@ -562,6 +562,49 @@ export async function getReceiptById(id: string): Promise<ReceiptDoc | null> {
   } as ReceiptDoc
 }
 
+export async function getReceiptByReceiptNumber(receiptNumber: string): Promise<ReceiptDoc | null> {
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'receipts'), where('receiptNumber', '==', receiptNumber))
+    )
+    if (snapshot.empty) return null
+    const doc = snapshot.docs[0]
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      issuedAt: data.issuedAt?.toDate ? data.issuedAt.toDate() : (data.issuedAt ? new Date(data.issuedAt) : null),
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    } as ReceiptDoc
+  } catch (error) {
+    // Fallback: fetch all receipts and filter in memory (avoids composite index requirement)
+    console.error('getReceiptByReceiptNumber query failed, falling back to in-memory filter:', error)
+    try {
+      const allReceipts = await getReceipts()
+      return allReceipts.find((r) => r.receiptNumber === receiptNumber) || null
+    } catch (fallbackError) {
+      console.error('Fallback receipt lookup also failed:', fallbackError)
+      return null
+    }
+  }
+}
+
+/**
+ * Find the payment receipt linked to a webinar registration.
+ *
+ * Webinar receipts are stored with receiptNumber `UPISHA-RCPT-WEB-<registrationId>`
+ * where <registrationId> is the Firestore document id of the registration. This
+ * resolves the public-facing registration number (e.g. `UPISHA-WEB-AB12CD`) to its
+ * document id and returns the matching receipt, or null when none exists (e.g.
+ * registration not yet confirmed by an admin).
+ */
+export async function getReceiptByRegistrationNumber(regNumber: string): Promise<ReceiptDoc | null> {
+  const registration = await getWebinarRegistrationByRegistrationNumber(regNumber)
+  if (!registration || !registration.id) return null
+  return getReceiptByReceiptNumber(`UPISHA-RCPT-WEB-${registration.id}`)
+}
+
 export async function updateReceipt(id: string, data: Partial<ReceiptDoc>) {
   const ref = doc(db(), 'receipts', id)
   await updateDoc(ref, {
@@ -1282,6 +1325,24 @@ export async function getWebinarRegistrationsByEmail(email: string): Promise<Web
       updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
     } as WebinarRegistrationDoc
   })
+}
+
+export async function getWebinarRegistrationById(id: string): Promise<(WebinarRegistrationDoc & { id: string }) | null> {
+  try {
+    const ref = doc(db(), 'webinarRegistrations', id)
+    const snap = await getDoc(ref)
+    if (!snap.exists()) return null
+    const data = snap.data()
+    return {
+      id: snap.id,
+      ...data,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    } as (WebinarRegistrationDoc & { id: string })
+  } catch (error) {
+    console.error('getWebinarRegistrationById query failed:', error)
+    return null
+  }
 }
 
 export async function getWebinarRegistrationByRegistrationNumber(regNumber: string): Promise<WebinarRegistrationDoc | null> {

@@ -1,14 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Loader2, CheckCircle2, XCircle, Clock3, Calendar, User, Monitor, FileText } from 'lucide-react'
+import { Search, Loader2, CheckCircle2, XCircle, Clock3, Calendar, User, Monitor, FileText, Receipt as ReceiptIcon, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { AnimatedSection } from '@/components/sections'
 import Link from 'next/link'
+import ReceiptPrintable from '@/components/receipts/ReceiptPrintable'
+import ReceiptDownload from '@/components/receipts/ReceiptDownload'
+import type { ReceiptDoc } from '@/lib/types'
 
 interface LookupResult {
   registration: {
@@ -26,6 +29,16 @@ interface LookupResult {
     issueDate: string
     status?: 'issued' | 'revoked'
   }>
+  receipt: {
+    receiptNumber: string
+    amount: number
+    currency: string
+    description: string
+    paymentMethod?: string | null
+    transactionNumber?: string | null
+    status?: string
+    issuedAt?: string | null
+  } | null
 }
 
 const statusStyles: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
@@ -39,6 +52,29 @@ export default function WebinarLookupPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<LookupResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showReceipt, setShowReceipt] = useState(false)
+  const receiptRef = useRef<HTMLDivElement>(null)
+
+  // Build a PII-safe ReceiptDoc for the printable component. Public lookup must
+  // never expose email, phone, memberId, or any other private information, so we
+  // omit memberEmail and use the already-public registration number as memberId.
+  const receiptDoc: ReceiptDoc | null = result?.receipt
+    ? {
+        receiptNumber: result.receipt.receiptNumber,
+        memberName: result.registration.fullName,
+        memberEmail: '',
+        memberUid: '',
+        memberId: result.registration.registrationNumber || '',
+        transactionType: 'webinar',
+        description: result.receipt.description,
+        amount: result.receipt.amount,
+        currency: (result.receipt.currency as ReceiptDoc['currency']) || 'INR',
+        transactionNumber: result.receipt.transactionNumber,
+        paymentMethod: result.receipt.paymentMethod,
+        status: (result.receipt.status as ReceiptDoc['status']) || 'paid',
+        issuedAt: result.receipt.issuedAt ? new Date(result.receipt.issuedAt) : new Date(),
+      }
+    : null
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -165,11 +201,48 @@ export default function WebinarLookupPage() {
                             </Button>
                           </Link>
                         </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
+                  )}
+
+                  <div>
+                    {receiptDoc ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setShowReceipt((v) => !v)}
+                          className="w-full flex items-center justify-between p-3 rounded-lg bg-upisha-teal/5 border border-upisha-teal/20 text-upisha-navy dark:text-white hover:bg-upisha-teal/10 transition-colors"
+                        >
+                          <span className="flex items-center gap-2 font-semibold">
+                            <ReceiptIcon className="h-4 w-4 text-upisha-teal" />
+                            Payment Receipt
+                          </span>
+                          <ChevronDown className={`h-4 w-4 text-upisha-teal transition-transform ${showReceipt ? 'rotate-180' : ''}`} />
+                        </button>
+                        {showReceipt && (
+                          <div className="mt-3 space-y-3">
+                            <ReceiptPrintable ref={receiptRef} receipt={receiptDoc} />
+                            <div className="flex justify-center">
+                              <ReceiptDownload
+                                receiptRef={receiptRef}
+                                fileName={`upisha-webinar-receipt-${receiptDoc.receiptNumber}`}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
+                        {result.registration.webinarType === 'free'
+                          ? 'This is a free webinar — no payment receipt is required.'
+                          : result.registration.status === 'confirmed'
+                            ? 'Receipt has not been generated yet. Please contact the administrator.'
+                            : 'Receipt will be generated after admin confirmation.'}
+                      </div>
+                    )}
                   </div>
-                )}
-              </motion.div>
+                </motion.div>
             )}
           </CardContent>
         </Card>

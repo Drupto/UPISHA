@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getWebinarRegistrationByRegistrationNumber, getCertificatesByRegistrationId } from '@/lib/firestore'
+import { getWebinarRegistrationByRegistrationNumber, getCertificatesByRegistrationId, getReceiptByRegistrationNumber } from '@/lib/firestore'
 import { withSecurityHeaders, rateLimit } from '@/lib/security'
+
+/**
+ * Mask a transaction reference so only the owner (who knows the full value)
+ * can recognize it, while still exposing enough digits for the registrant to
+ * confirm it is their own payment. No raw PII is returned to the public endpoint.
+ */
+function maskTransactionNumber(value?: string | null): string | null {
+  if (!value) return null
+  const v = String(value).trim()
+  if (v.length <= 6) return '••••••'
+  const first = v.slice(0, 2)
+  const last = v.slice(-4)
+  const masked = '•'.repeat(Math.max(v.length - 6, 4))
+  return `${first}${masked}${last}`
+}
 
 export async function GET(request: NextRequest) {
   const regNumber = request.nextUrl.searchParams.get('regNumber') || ''
@@ -21,6 +36,23 @@ export async function GET(request: NextRequest) {
     }
 
     const certificates = await getCertificatesByRegistrationId(regNumber)
+    const receiptDoc = await getReceiptByRegistrationNumber(regNumber)
+
+    // Build a PII-safe receipt block. Never include email, phone, memberId,
+    // memberUid, qualification, or the full transaction number. Only expose
+    // transaction-safe fields plus a masked transaction reference.
+    const receipt = receiptDoc
+      ? {
+          receiptNumber: receiptDoc.receiptNumber,
+          amount: receiptDoc.amount,
+          currency: receiptDoc.currency,
+          description: receiptDoc.description,
+          paymentMethod: receiptDoc.paymentMethod,
+          transactionNumber: maskTransactionNumber(receiptDoc.transactionNumber),
+          status: receiptDoc.status,
+          issuedAt: receiptDoc.issuedAt,
+        }
+      : null
 
     // Only expose safe public data — never email, phone, or any other
     // private contact information.
@@ -40,6 +72,7 @@ export async function GET(request: NextRequest) {
         issueDate: c.issueDate,
         status: c.status,
       })),
+      receipt,
     }))
   } catch (error) {
     console.error('Error looking up webinar registration:', error)
