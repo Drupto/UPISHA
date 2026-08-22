@@ -14,9 +14,13 @@ export async function POST(request: NextRequest) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
 
-    const subscriber = await upsertNewsletterSubscriber(validated.email.toLowerCase())
+    // This is a public, unauthenticated form — no CSRF protection needed
+    // (there is no authenticated session to protect). CSRF protection is
+    // applied to authenticated/admin state-changing routes instead.
+    await upsertNewsletterSubscriber(validated.email.toLowerCase())
 
-    return withSecurityHeaders(NextResponse.json({ success: true, id: subscriber.id }, { status: 201 }))
+    // Do not return the subscriber's email as the ID (L2).
+    return withSecurityHeaders(NextResponse.json({ success: true }, { status: 201 }))
   } catch (err: unknown) {
     console.error('Error subscribing to newsletter:', err)
     if (err instanceof Error && err.name === 'ZodError') {

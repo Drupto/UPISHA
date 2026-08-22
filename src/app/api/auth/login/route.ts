@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server'
 import { loginUser } from '@/lib/auth'
 import { loginSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, rateLimit, getClientIp } from '@/lib/security'
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     const validated = loginSchema.parse(body)
     
-    // Rate limiting
-    const clientId = validated.email
+    // Rate limiting — use IP + email to prevent bypass via email change (H3)
+    const clientIp = getClientIp(request)
+    const clientId = `${clientIp}:${validated.email}`
     if (!rateLimit(`login:${clientId}`, 5, 15 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
 
-    const { user, token } = await loginUser(validated.email, validated.password)
+    const { user } = await loginUser(validated.email, validated.password)
+    // Do NOT return the token in the response body (H2).
+    // The client calls /api/auth/verify with the token to establish the
+    // httpOnly session cookie.
     const response = withSecurityHeaders(NextResponse.json({ 
       user: { uid: user.uid, email: user.email, displayName: user.displayName }, 
-      token 
     }))
     return response
   } catch (err: unknown) {

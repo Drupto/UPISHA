@@ -17,10 +17,10 @@ export async function POST(request: Request) {
     const csrfError = withCsrfProtection(request)
     if (csrfError) return csrfError
 
-    const { user, token } = await registerUser(validated.email, validated.password, validated.displayName)
+    const { user } = await registerUser(validated.email, validated.password, validated.displayName)
+    // Do NOT return the token in the response body (H2).
     const response = withSecurityHeaders(NextResponse.json({ 
       user: { uid: user.uid, email: user.email, displayName: user.displayName }, 
-      token 
     }))
     return response
   } catch (err: unknown) {
@@ -28,9 +28,8 @@ export async function POST(request: Request) {
       return withSecurityHeaders(NextResponse.json({ error: 'Invalid input data' }, { status: 400 }))
     }
     const error = err as { code?: string; message?: string }
-    if (error.code === 'auth/email-already-in-use') {
-      return withSecurityHeaders(NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 }))
-    }
+    // Return a generic message to prevent email enumeration (H5).
+    // Do not reveal whether the email is already registered.
     return withSecurityHeaders(NextResponse.json({ error: 'Registration failed' }, { status: 500 }))
   }
 }

@@ -4,6 +4,86 @@ import type { TestimonialDoc, GalleryImageDoc, PublicationDoc, PublicationSubmis
 
 const db = () => getDb()
 
+/**
+ * Pick only the allowed fields from a partial update object.
+ * Prevents mass assignment / arbitrary-field injection (H1).
+ */
+function pickFields<T extends object>(data: Partial<T>, allowed: readonly (keyof T)[]): Partial<T> {
+  const result: Partial<T> = {}
+  for (const key of allowed) {
+    if (key in data && data[key] !== undefined) {
+      ;(result as Record<string, unknown>)[key as string] = data[key]
+    }
+  }
+  return result
+}
+
+const MEMBER_UPDATE_FIELDS = [
+  'fullName', 'email', 'phone', 'qualification', 'rciNumber', 'membershipType',
+  'course', 'currentYear', 'city', 'transactionNumber', 'message', 'address',
+  'photoUrl', 'rciCertificateUrl', 'registrationDate', 'status',
+] as const
+
+const CERT_TEMPLATE_UPDATE_FIELDS = [
+  'name', 'accountType', 'category', 'title', 'subtitle', 'titleFont', 'subtitleFont',
+  'textBlocks', 'footerText', 'logoUrl', 'signatureUrl', 'stampUrl', 'backgroundUrl',
+  'borderColor', 'accentColor', 'fontFamily', 'isActive', 'isDefault',
+] as const
+
+const CERT_UPDATE_FIELDS = [
+  'templateId', 'type', 'memberId', 'memberUid', 'memberName', 'membershipType',
+  'email', 'webinarId', 'webinarTitle', 'webinarDate', 'webinarSpeaker', 'webinarDuration',
+  'registrationId', 'registrationNumber', 'qualification', 'certificateNumber', 'issueDate', 'status',
+] as const
+
+const RECEIPT_UPDATE_FIELDS = [
+  'receiptNumber', 'memberId', 'memberUid', 'memberName', 'memberEmail', 'transactionType',
+  'description', 'amount', 'currency', 'transactionNumber', 'paymentMethod', 'status', 'issuedAt',
+] as const
+
+const CONTACT_UPDATE_FIELDS = [
+  'name', 'email', 'subject', 'message', 'isRead',
+] as const
+
+const ANNOUNCEMENT_UPDATE_FIELDS = [
+  'title', 'date', 'type', 'content', 'isActive',
+] as const
+
+const EVENT_UPDATE_FIELDS = [
+  'title', 'date', 'location', 'description',
+  'isActive', 'countdownEnabled', 'countdownDate', 'badgeLabel', 'registrationLink', 'registrationLabel',
+] as const
+
+const CAMPAIGN_UPDATE_FIELDS = [
+  'title', 'subject', 'content', 'status', 'sentAt',
+] as const
+
+const WEBINAR_UPDATE_FIELDS = [
+  'title', 'date', 'time', 'speaker', 'duration', 'description', 'registrationLink',
+  'meetingLink', 'type', 'price', 'isActive', 'maxAttendees',
+] as const
+
+const WEBINAR_REG_UPDATE_FIELDS = [
+  'fullName', 'email', 'phone', 'qualification', 'city', 'webinarId', 'webinarTitle',
+  'webinarType', 'transactionNumber', 'registrationNumber', 'message', 'status',
+] as const
+
+const TESTIMONIAL_UPDATE_FIELDS = [
+  'name', 'role', 'content', 'rating', 'isActive',
+] as const
+
+const GALLERY_UPDATE_FIELDS = [
+  'src', 'title', 'category', 'isActive',
+] as const
+
+const PUBLICATION_UPDATE_FIELDS = [
+  'title', 'description', 'type', 'author', 'fileUrl', 'link', 'isActive',
+] as const
+
+const PUB_SUBMISSION_UPDATE_FIELDS = [
+  'title', 'description', 'type', 'authorName', 'authorEmail', 'abstract', 'fileUrl', 'status',
+] as const
+
 export interface MemberDoc {
   id?: string
   uid?: string | null
@@ -252,7 +332,7 @@ export async function updateCertificateTemplate(id: string, data: Partial<Certif
     throw new Error('Template not found')
   }
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, CERT_TEMPLATE_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -439,7 +519,7 @@ export async function getCertificateById(id: string): Promise<CertificateDoc | n
 export async function updateCertificate(id: string, data: Partial<CertificateDoc>) {
   const ref = doc(db(), 'certificates', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, CERT_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -608,7 +688,7 @@ export async function getReceiptByRegistrationNumber(regNumber: string): Promise
 export async function updateReceipt(id: string, data: Partial<ReceiptDoc>) {
   const ref = doc(db(), 'receipts', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, RECEIPT_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1049,7 +1129,7 @@ export async function getMembers() {
 export async function updateMember(id: string, data: Partial<MemberDoc>) {
   const ref = doc(db(), 'members', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, MEMBER_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1079,7 +1159,7 @@ export async function getContactMessages() {
 export async function updateContactMessage(id: string, data: Partial<ContactMessageDoc>) {
   const ref = doc(db(), 'contactMessages', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, CONTACT_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1110,7 +1190,7 @@ export async function getAnnouncements() {
 export async function updateAnnouncement(id: string, data: Partial<AnnouncementDoc>) {
   const ref = doc(db(), 'announcements', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, ANNOUNCEMENT_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1146,7 +1226,7 @@ export async function getEvents() {
 export async function updateEvent(id: string, data: Partial<EventDoc>) {
   const ref = doc(db(), 'events', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, EVENT_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1216,7 +1296,7 @@ export async function getNewsletterCampaigns() {
 export async function updateNewsletterCampaign(id: string, data: Partial<NewsletterCampaignDoc>) {
   const ref = doc(db(), 'newsletterCampaigns', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, CAMPAIGN_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1260,7 +1340,7 @@ export async function getWebinarById(id: string) {
 export async function updateWebinar(id: string, data: Partial<WebinarDoc>) {
   const ref = doc(db(), 'webinars', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, WEBINAR_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1408,7 +1488,7 @@ export async function getWebinarRegistrationCount(webinarId: string) {
 export async function updateWebinarRegistration(id: string, data: Partial<WebinarRegistrationDoc>) {
   const ref = doc(db(), 'webinarRegistrations', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, WEBINAR_REG_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1439,7 +1519,7 @@ export async function getTestimonials() {
 export async function updateTestimonial(id: string, data: Partial<TestimonialDoc>) {
   const ref = doc(db(), 'testimonials', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, TESTIMONIAL_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1470,7 +1550,7 @@ export async function getGalleryImages() {
 export async function updateGalleryImage(id: string, data: Partial<GalleryImageDoc>) {
   const ref = doc(db(), 'galleryImages', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, GALLERY_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1504,7 +1584,7 @@ export async function getPublications() {
 export async function updatePublication(id: string, data: Partial<PublicationDoc>) {
   const ref = doc(db(), 'publications', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, PUBLICATION_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }
@@ -1578,7 +1658,7 @@ export async function getPublicationSubmissionsByEmail(email: string): Promise<P
 export async function updatePublicationSubmission(id: string, data: Partial<PublicationSubmissionDoc>) {
   const ref = doc(db(), 'publicationSubmissions', id)
   await updateDoc(ref, {
-    ...data,
+    ...pickFields(data, PUB_SUBMISSION_UPDATE_FIELDS),
     updatedAt: new Date(),
   })
   return { id }

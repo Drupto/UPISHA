@@ -1,7 +1,17 @@
 import type { NextConfig } from "next";
 
+// In production, use a strict CSP without unsafe-eval/unsafe-inline.
+// In development, Next.js requires 'unsafe-eval'/'unsafe-inline' for HMR
+// and inline bootstrap scripts — a strict CSP would break the page.
+const isProduction = process.env.NODE_ENV === "production";
+
+const strictCsp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.googleapis.com wss://firestore.googleapis.com wss://*.firebaseio.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';";
+
+const devCsp = "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.googleapis.com wss://firestore.googleapis.com wss://*.firebaseio.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';";
+
 const nextConfig: NextConfig = {
   /* config options here */
+  poweredByHeader: false,
   turbopack: {
     root: import.meta.dirname,
   },
@@ -10,6 +20,10 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains; preload",
+          },
           {
             key: "X-Frame-Options",
             value: "DENY",
@@ -32,7 +46,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.googleapis.com wss://firestore.googleapis.com wss://*.firebaseio.com;",
+            value: isProduction ? strictCsp : devCsp,
           },
         ],
       },

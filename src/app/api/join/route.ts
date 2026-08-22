@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createMember, getMembers, createUserRecord } from '@/lib/firestore'
 import { joinSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection, getClientIp } from '@/lib/security'
 import { uploadDataUrl } from '@/lib/storage'
 
 async function createFirebaseAuthUser(email: string, password: string, displayName: string) {
@@ -63,13 +63,16 @@ async function maybeUploadToStorage(value: string | null | undefined, path: stri
 }
 
 export async function POST(request: NextRequest) {
+  // (C3) This endpoint only accepts POST requests; there is no GET handler,
+  // so unauthenticated GET is not applicable.
   let authUser: { localId: string; email: string } | null = null
   try {
     const body = await request.json()
     const validated = joinSchema.parse(body)
 
-    // Rate limiting
-    if (!rateLimit(`join:${validated.email}`, 3, 60 * 60 * 1000)) {
+    // Rate limiting — use IP + email to prevent bypass via email change (H3)
+    const clientIp = getClientIp(request)
+    if (!rateLimit(`join:${clientIp}:${validated.email}`, 3, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
 
@@ -156,9 +159,7 @@ export async function POST(request: NextRequest) {
       return withSecurityHeaders(NextResponse.json({ error: 'Invalid input data' }, { status: 400 }))
     }
     const error = err as Error
-    if (error.message === 'An account with this email already exists') {
-      return withSecurityHeaders(NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 }))
-    }
+    // Return a generic message to prevent email enumeration (H5).
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to submit application' }, { status: 500 }))
   }
 }

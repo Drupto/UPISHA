@@ -95,9 +95,6 @@ export default function LoginPage() {
               <div>
                 Not a member yet? <Link href="/apply" className="text-upisha-teal hover:underline font-medium">Join UP ISHA</Link>
               </div>
-              <div>
-                Admin? <Link href="/register" className="text-upisha-teal hover:underline">Create admin account</Link>
-              </div>
             </div>
           </CardContent>
         </Card>

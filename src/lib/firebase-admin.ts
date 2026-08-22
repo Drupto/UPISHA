@@ -45,6 +45,13 @@ export { FieldValue }
 /**
  * Verify a Firebase ID token using the Firebase Auth REST API (admin SDK alternative).
  * Uses only NEXT_PUBLIC_* env vars — no service account needed.
+ *
+ * NOTE: The identitytoolkit lookup endpoint does NOT return custom claims.
+ * Role-based access control is enforced via the Firestore `users` collection
+ * (see requireAdmin()/requireVerifiedMember() in auth-helpers.ts) and the
+ * Firestore security rules. For full custom-claims support, install
+ * `firebase-admin` and initialize it with a service account, then use
+ * `admin.auth().verifyIdToken()`.
  */
 export async function verifyToken(token: string) {
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID

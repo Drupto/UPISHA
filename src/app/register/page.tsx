@@ -30,11 +30,12 @@ export default function RegisterPage() {
     try {
       const { token } = await register(email, password, name)
       await fetch('/api/auth/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
-      router.push('/admin')
-    } catch (err: unknown) {
-      const error = err as { code?: string; message?: string }
-      if (error.code === 'auth/email-already-in-use') setError('An account with this email already exists')
-      else setError(error.message || 'Failed to create account')
+      // New registrations are not admins — redirect to home. Admin access requires
+      // an existing user record with role 'admin' (set by an existing admin).
+      router.push('/')
+    } catch {
+      // Generic error message to prevent email enumeration (H5)
+      setError('Registration failed. Please try again.')
     } finally { setLoading(false) }
   }
 

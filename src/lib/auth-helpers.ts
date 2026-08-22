@@ -94,6 +94,9 @@ export async function requireAdmin(request: NextRequest) {
 }
 
 export function createErrorResponse(error: unknown, defaultMessage: string, status: number = 500) {
-  console.error(defaultMessage, error)
+  // Don't log full error objects/stack traces in production (M5).
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(defaultMessage, error)
+  }
   return NextResponse.json({ error: defaultMessage }, { status })
 }

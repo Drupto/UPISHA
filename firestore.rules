@@ -37,9 +37,13 @@ service cloud.firestore {
     }
 
     // Newsletter subscribers
+    // Public upsert: allow create always, and allow update only when the
+    // document ID matches the email being subscribed (prevents overwriting
+    // other subscribers' data). Read/delete remain admin-only.
     match /newsletterSubscribers/{subId} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow update: if request.resource.data.email == subId;
+      allow read, delete: if isAdmin();
     }
 
     // Newsletter campaigns
