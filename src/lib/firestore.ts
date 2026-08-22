@@ -1153,7 +1153,15 @@ export async function createContactMessage(data: ContactMessageDoc) {
 
 export async function getContactMessages() {
   const snapshot = await getDocs(query(collection(db(), 'contactMessages'), orderBy('createdAt', 'desc')))
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    }
+  })
 }
 
 export async function updateContactMessage(id: string, data: Partial<ContactMessageDoc>) {
