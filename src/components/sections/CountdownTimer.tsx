@@ -122,6 +122,11 @@ export function CountdownTimer() {
     )
   }
 
+  // If no active countdown event is configured, hide the section entirely
+  if (!countdownEvent) {
+    return null
+  }
+
   return (
     <section className="py-12 md:py-16 bg-gradient-to-r from-upisha-teal to-upisha-teal-dark dark:from-gray-800 dark:to-gray-900 relative overflow-hidden border-t-2 border-t-upisha-gold/20">
       {/* Decorative elements */}
