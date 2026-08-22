@@ -1,4 +1,4 @@
-import { announcements as staticAnnouncements, eventsTimeline as staticEvents, sampleProfessionals as staticProfessionals, upcomingWebinars as staticWebinars, testimonials as staticTestimonials, galleryImages as staticGalleryImages, publications as staticPublications } from '@/lib/static-data'
+import { announcements as staticAnnouncements, eventsTimeline as staticEvents, sampleProfessionals as staticProfessionals, upcomingWebinars as staticWebinars, galleryImages as staticGalleryImages, publications as staticPublications } from '@/lib/static-data'
 import type { Announcement, TimelineEvent, Professional, MemberDoc, ContactMessageDoc, NewsletterSubscriberDoc, Webinar, WebinarRegistrationDoc, Testimonial, GalleryImage, Publication } from '@/lib/types'
 
 // Check if Firebase is configured (using NEXT_PUBLIC_* env vars)
@@ -87,14 +87,14 @@ export async function getWebinarRegistrations(): Promise<WebinarRegistrationDoc[
 }
 
 export async function getTestimonials(): Promise<Testimonial[]> {
-  if (!isFirebaseConfigured()) return staticTestimonials
+  if (!isFirebaseConfigured()) return []
   try {
     const { getTestimonials: fbGetTestimonials } = await import('@/lib/firestore')
     const docs = await fbGetTestimonials()
-    if (docs && docs.length > 0) return docs as unknown as Testimonial[]
-    return staticTestimonials
-  } catch {
-    return staticTestimonials
+    return (docs || []) as unknown as Testimonial[]
+  } catch (error) {
+    console.error('Failed to fetch testimonials from Firestore:', error)
+    return []
   }
 }
 

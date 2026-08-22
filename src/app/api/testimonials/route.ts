@@ -4,6 +4,8 @@ import { createTestimonial, updateTestimonial, deleteTestimonial } from '@/lib/f
 import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const forwarded = request.headers.get('x-forwarded-for')
@@ -15,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const testimonials = await fetchTestimonials()
-    return withSecurityHeaders(NextResponse.json({ testimonials }))
+    return withSecurityHeaders(NextResponse.json({ testimonials }, { headers: { 'Cache-Control': 'no-store, max-age=0' } }))
   } catch (error) {
     console.error('Error fetching testimonials:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch testimonials' }, { status: 500 }))

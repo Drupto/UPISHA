@@ -28,10 +28,12 @@ export function TestimonialsSection() {
   useEffect(() => {
     async function loadTestimonials() {
       try {
-        const response = await fetch('/api/testimonials')
+        const response = await fetch('/api/testimonials', { cache: 'no-store' })
         const data = await response.json()
         if (data.testimonials && data.testimonials.length > 0) {
-          setTestimonials(data.testimonials)
+          // Only show active testimonials on the landing page
+          const active = data.testimonials.filter((t: any) => t.isActive !== false)
+          setTestimonials(active)
         }
       } catch (error) {
         console.error('Failed to load testimonials:', error)

@@ -1520,8 +1520,14 @@ export async function createTestimonial(data: TestimonialDoc) {
 }
 
 export async function getTestimonials() {
-  const snapshot = await getDocs(query(collection(db(), 'testimonials'), orderBy('createdAt', 'desc')))
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  try {
+    const snapshot = await getDocs(query(collection(db(), 'testimonials'), orderBy('createdAt', 'desc')))
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  } catch {
+    // Fallback: query without ordering in case createdAt is missing on some docs
+    const snapshot = await getDocs(collection(db(), 'testimonials'))
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  }
 }
 
 export async function updateTestimonial(id: string, data: Partial<TestimonialDoc>) {
