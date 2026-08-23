@@ -1,0 +1,131 @@
+rules_version = '2';
+
+// ---------------------------------------------------------------------------
+// UP ISHA - Firebase Storage Security Rules      (project: upisha)
+// ---------------------------------------------------------------------------
+//
+// Storage paths currently used by the app (src/lib/storage.ts,
+// src/app/api/upload/route.ts, src/app/api/join/route.ts):
+//
+//   certificate-templates/  admin-managed certificate assets (background,
+//                           logo, signature, stamp) - rendered by the public
+//                           certificate-verify page -> public read
+//   gallery/                admin-managed gallery images  -> public
+//   testimonials/           admin-managed testimonial avatars -> public
+//   webinars/               admin-managed webinar artwork -> public
+//   publications/           member-uploaded papers/journals -> public
+//   members/{uid}/...       member photos + RCI cert (private, owner/admin)
+//
+// ACCESS MODEL
+//   * Public site assets & publications               -> world-readable
+//   * Member private files (members/{uid})            -> owner or admin
+//   * Writes:
+//       - admin-managed folders                       -> admin only
+//       - publications/   -> users with role 'member' or 'admin'
+//       - members/{uid}/  -> admin only (moderated join/upload flow)
+//   * Deletes (request.method == 'delete'):
+//       request.resource is NULL on delete, so the content-type/size checks
+//       below are skipped for deletes; role/ownership still applies.
+//
+// Like the Firestore rules, the Next.js API routes currently upload through
+// the Web SDK, so those requests are evaluated against these rules. Use the
+// Firebase **Admin SDK** for server-side work that must bypass them.
+// ---------------------------------------------------------------------------
+
+service firebase.storage {
+  // ============ Helpers (shared by all match blocks) ============
+
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  // Cross-service lookup: reads users/{uid} from Firestore. This is only
+  // evaluated when the caller is signed in (short-circuit), so it never
+  // causes an error for unauthenticated uploads.
+  function isAdmin() {
+    return isSignedIn() &&
+      firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+  }
+
+  function hasRole(allowedRoles) {
+    return isSignedIn() &&
+      firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in allowedRoles;
+  }
+
+  function isOwn(userId) {
+    return isSignedIn() && request.auth.uid == userId;
+  }
+
+  // ---- File-shape validation (create/update only) ----
+  // NOTE: request.resource is null on DELETE, so every check guards it.
+  function isImageFile() {
+    return request.resource != null && request.resource.contentType.matches('image/.*');
+  }
+
+  function isPdfFile() {
+    return request.resource != null && request.resource.contentType == 'application/pdf';
+  }
+
+  function underMax(bytes) {
+    return request.resource != null && request.resource.size <= bytes;
+  }
+
+  // ============ Rules ============
+
+  match /b/{bucket}/o {
+
+    // ---- 1. Public, admin-managed site assets ----
+
+    // Gallery images - public read, admin write (image only, <=5 MB)
+    match /gallery/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.method == 'delete' ? isAdmin()
+                   : (isAdmin() && isImageFile() && underMax(5 * 1024 * 1024));
+    }
+
+    // Certificate template assets (public read needed by verify page)
+    match /certificate-templates/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.method == 'delete' ? isAdmin()
+                   : (isAdmin() && isImageFile() && underMax(5 * 1024 * 1024));
+    }
+
+    // Testimonial avatars
+    match /testimonials/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.method == 'delete' ? isAdmin()
+                   : (isAdmin() && isImageFile() && underMax(5 * 1024 * 1024));
+    }
+
+    // Webinar artwork
+    match /webinars/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.method == 'delete' ? isAdmin()
+                   : (isAdmin() && isImageFile() && underMax(5 * 1024 * 1024));
+    }
+
+    // ---- 2. Member-uploaded publications (public directory) ----
+    // Any signed-in 'member' or 'admin' may upload; admin-only for deletes.
+    match /publications/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.method == 'delete' ? isAdmin()
+                   : (hasRole(['admin', 'member']) &&
+                      (isPdfFile() || isImageFile()) &&
+                      underMax(10 * 1024 * 1024));
+    }
+
+    // ---- 3. Member private files (photos + RCI certificates) ----
+    // Readable only by the owning member or admin. Deletes: admin or owner.
+    match /members/{userId}/{allPaths=**} {
+      allow read: if isAdmin() || isOwn(userId);
+      allow write: if request.method == 'delete' ? (isAdmin() || isOwn(userId))
+                   : (isAdmin() && (isImageFile() || isPdfFile()) &&
+                      underMax(10 * 1024 * 1024));
+    }
+
+    // ---- 4. Explicit fallback: deny everything else ----
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
