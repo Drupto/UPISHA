@@ -1,494 +1,235 @@
 # 🔒 Security Audit Report — UP ISHA (UPISHA) Codebase
 
-**Audit Date:** July 31, 2026  
-**Auditor:** Automated Security Review  
-**Scope:** Full codebase (`src/`, config files, deployment files)  
-**Commit:** `745987329532b6a43f967a5c015e07626cff68d3`
+**Audit Date:** August 28, 2026 (re-audit; supersedes the July 31, 2026 report)
+**Auditor:** Automated Security Review
+**Scope:** Full codebase (`src/`, `functions/`, config files, deployment files)
+**Branch / Commit:** `FirebaseIntegration` / `f91d4c73bf5e13389737403c18126f8768b059ee`
 
 ---
 
-## Summary
+## Re-Audit Summary
 
-| Severity | Count |
-|----------|-------|
-| 🔴 Critical | 7 |
-| 🟠 High | 5 |
-| 🟡 Medium | 5 |
-| 🟢 Low | 3 |
-| **Total** | **20** |
+The previous audit (commit `7459873…`) reported **20 findings** (7 Critical / 5 High / 5 Medium / 3 Low). This re-audit re-verified every one of them against the current code and added **10 new findings**.
 
-The most severe issues stem from a **complete absence of role-based access control (RBAC)**. The application uses Firebase client SDK for both client and server-side operations, with no actual Firebase Admin SDK. Any authenticated user (and in some cases, unauthenticated users) can access admin functionality and sensitive PII.
+### Status of Previous Findings
+
+| ID | Previous Finding | Status |
+|----|------------------|--------|
+| C1 | SSRF via Caddyfile port query | ✅ **FIXED** — handler removed; proxy is now `localhost:3000` only |
+| C2 | No admin role checks on API routes | ✅ **FIXED** — `requireAdmin()` / `requireVerifiedMember()` applied to all admin endpoints (53 call sites) |
+| C3 | Unauthenticated PII exposure via `GET /api/join` | ✅ **FIXED** — GET handler removed |
+| C4 | Open registration grants admin access | ✅ **FIXED** — register redirects to `/`; login redirects by role; no auto-admin |
+| C5 | Client-side only route protection | ⚠️ **PARTIALLY FIXED** — `middleware.ts` added, but only checks cookie *presence* (see N6) |
+| C6 | Web SDK masquerading as Admin SDK | ❌ **STILL OPEN** (severity reduced — see details) |
+| C7 | No Firestore/Storage security rules | ✅ **FIXED** — `firestore.rules` + `storage.rules` added and deployed — **but see new N1** |
+| H1 | Mass assignment in update operations | ✅ **FIXED** — `pickFields()` whitelisting on every update function |
+| H2 | Token in response body | ✅ **FIXED** — no tokens returned; httpOnly session cookie only |
+| H3 | Bypassable rate limiting | ⚠️ **PARTIALLY FIXED** — IP+email keys on login/join; email-only keys remain elsewhere; still in-memory except `checkRateLimitStrict` |
+| H4 | No CSRF protection | ⚠️ **PARTIALLY FIXED** — double-submit pattern on 12 call sites; ~39 mutating handlers still lack it (mitigated by `SameSite=Strict` session cookie — see details) |
+| H5 | Email enumeration | ✅ **FIXED** — generic error messages on register and join |
+| M1 | Weak CSP | ⚠️ **PARTIALLY FIXED** — strict CSP in production; `'unsafe-eval'/'unsafe-inline'` retained in dev only (required for HMR, documented) |
+| M2 | Missing HSTS | ✅ **FIXED** — set in `next.config.ts` and `withSecurityHeaders()` |
+| M3 | `X-Powered-By` header | ✅ **FIXED** — `poweredByHeader: false` |
+| M4 | Unvalidated URL fields | ✅ **FIXED** — `z.string().url()` + server-side data-URL upload flow + `safeImageUrl` |
+| M5 | Sensitive error logging | ✅ **FIXED** — `createErrorResponse` logs only outside production |
+| L1 | Session cookie = raw ID token | ❌ **STILL OPEN — escalated** (cookie now outlives the token; see N3) |
+| L2 | Newsletter email leaked in response | ✅ **FIXED** — ID no longer returned |
+| L3 | Weak password policy | ✅ **FIXED** — upper/lower/digit complexity enforced |
+
+### New Findings (this audit)
+
+| ID | Finding | Severity |
+|----|---------|----------|
+| N1 | Deployed security rules break all server-side Web SDK operations | 🔴 CRITICAL |
+| N2 | Webinar receipts store email in `memberUid` — invisible to members | 🟠 HIGH |
+| N3 | Session cookie outlives ID token (2 h cookie / 1 h token) | 🟠 HIGH (escalated from L1) |
+| N4 | `sendTransactionalEmail` callable open to any signed-in user | 🟠 HIGH |
+| N5 | Missing composite indexes → silent full-collection scans | 🟡 MEDIUM |
+| N6 | `middleware.ts` validates cookie presence only | 🟡 MEDIUM |
+| N7 | Dead `request-signing.ts` with hardcoded default secret | 🟡 MEDIUM |
+| N8 | `/api/upload` member path skips role check; public 10 MB PDFs | 🟢 LOW |
+| N9 | Orphaned Firebase Auth accounts in join flow | 🟢 LOW |
+| N10 | Unbounded `getRecentApiLogs()` read | 🟢 LOW |
+
+### Current Counts (open items)
+
+| Severity | Open |
+|----------|------|
+| 🔴 Critical | 2 (C6, N1) |
+| 🟠 High | 3 (N2, N3, N4) |
+| 🟡 Medium | 5 (H3-partial, H4-partial, N5, N6, N7) |
+| 🟢 Low | 3 (N8, N9, N10) |
+| **Total open** | **13** |
+
+## 🟠 HIGH (carried over, severity reduced)
+
+### C6. "firebase-admin.ts" Uses the Client SDK — No Custom Claims, REST-Based Token Verification
+**File:** `src/lib/firebase-admin.ts`
+**Severity:** HIGH (was CRITICAL — RBAC is now enforced via the Firestore `users` collection, mitigating the original "no RBAC possible" impact)
+
+Despite the filename, the file imports `firebase/app` / `firebase/firestore` / `firebase/storage` — the **Web SDK**. Token verification calls the public `identitytoolkit` `accounts:lookup` REST endpoint with the public API key:
+
+- No custom-claim support (`admin.auth().verifyIdToken()` unavailable)
+- No revocation / disabled-account check
+- **Every** authenticated API call performs an external HTTPS round-trip to Google (latency + quota)
+- Firestore/Storage operations are subject to security rules (which is exactly what triggers N1)
+
+RBAC is implemented by reading `users/{uid}` from Firestore (`requireAdmin()` in `auth-helpers.ts`). Functionally sound, but it depends on the deployed Firestore rules permitting those server reads — which, per N1, they currently do not.
+
+**Fix:** Install `firebase-admin` with a service account; use `admin.auth().verifyIdToken(token, true)` and `admin.firestore()` for all server-side access. This also resolves N1.
 
 ---
 
-## 🔴 CRITICAL Vulnerabilities
+## 🔴 CRITICAL (new)
 
-### C1. Server-Side Request Forgery (SSRF) via Caddyfile
-**File:** `Caddyfile` (lines 2–13)  
-**Severity:** CRITICAL  
+### N1. Security Rules Contradict the Server Implementation — Deployed Rules Break the Application
+**Files:** `firestore.rules`, `storage.rules`, `firebase.json`, `src/lib/firestore.ts`, `src/lib/storage.ts`, `src/lib/request-logger.ts`, `src/lib/firestore-rate-limit.ts`
+**Severity:** CRITICAL
 
-The Caddy reverse proxy configuration allows an attacker to proxy requests to **any port on localhost** via a query parameter:
+`firebase.json` deploys the strict `firestore.rules` / `storage.rules`, but **all** server-side API routes use the **unauthenticated Web SDK** (no Admin SDK, no service account). Under the deployed rules, server requests are evaluated as anonymous and **denied**:
 
-```caddy
-@transform_port_query {
-    query XTransformPort=*
-}
-handle @transform_port_query {
-    reverse_proxy localhost:{query.XTransformPort} { ... }
-}
-```
+| Broken flow | Reason |
+|---|---|
+| `/api/auth/verify` (session establishment) | `users/{uid}` read requires `isOwner/isAdmin` → denied → 401 for all users |
+| Join-flow role record (`createUserRecord` role `member`) | `users` rule is `allow create: if isAdmin()` → denied (silently swallowed as "non-fatal") → **no user ever receives the `member` role** |
+| All admin CRUD (announcements, events, gallery, testimonials, publications, webinars, certificates, receipts, members, campaigns) | Writes require `isAdmin()`; server has no `request.auth` → 500 on every admin mutation |
+| Public certificate verify (`/api/certificates/verify/[id]`) and webinar lookup | Reads of `certificates` / `receipts` / `webinarRegistrations` denied → QR-verification feature fails |
+| `/api/upload` | `checkRateLimitStrict()` writes to `rate_limits` where `allow write: if false` → transaction throws → **every upload returns 500** |
+| Audit logging (`request-logger.ts`) | `api_logs` writes denied → audit trail silently never written |
+| Join-flow file uploads to `members/{uid}/…` | Storage rule requires `isAdmin()` → denied → fallback stores **raw base64 data URLs inside Firestore member documents** |
 
-**Impact:** An attacker can send `?XTransformPort=3306` to access MySQL, `?XTransformPort=6379` for Redis, `?XTransformPort=8080` for internal admin panels, etc. This enables internal port scanning, access to internal services, databases, and metadata endpoints.
+The rules header itself states "use the Firebase **Admin SDK** for server-side work" — but no Admin SDK exists anywhere in the web app. As deployed, the codebase is non-functional; if the rules are instead left undeployed/test-mode, the database is effectively open to the public (the exact condition C7 was raised for).
 
-**Fix:** Remove the `@transform_port_query` handler entirely, or restrict it to a hardcoded allowlist of ports.
+**Fix (Admin SDK recommended):**
+1. Install `firebase-admin` with a service account for all server-side Firestore/Storage access — the rules then become correct and safe; **or**
+2. Rewrite the rules to allow the server's Web-SDK access patterns (significantly less secure; not recommended).
 
----
+## 🟠 HIGH (new / escalated)
 
-### C2. Broken Access Control — No Admin Role Checks Anywhere
-**Files:** `src/lib/auth-helpers.ts` (lines 5–19), all API routes  
-**Severity:** CRITICAL  
-
-The `requireAuth()` helper only verifies that a Firebase token is valid — it **never checks whether the user has an admin role**:
+### N2. Webinar Receipts Store the Registrant's *Email* in `memberUid`
+**File:** `src/lib/webinar-receipts.ts` (lines 50–51)
+**Severity:** HIGH
 
 ```ts
-export async function requireAuth(request: NextRequest) {
-  const sessionToken = request.headers.get('authorization')?.replace('Bearer ', '') ||
-                       request.cookies.get('session')?.value
-  if (!sessionToken) {
-    return NextResponse.json({ authenticated: false, error: 'Unauthorized' }, { status: 401 })
-  }
-  try {
-    const decodedToken = await verifyToken(sessionToken)
-    return decodedToken  // ← No role check!
-  } catch {
-    return NextResponse.json({ authenticated: false, error: 'Invalid token' }, { status: 401 })
-  }
-}
+memberId: registration.email,
+memberUid: registration.email,   // ❌ should be the Firebase auth UID
 ```
 
-**Impact:** Every admin-only API endpoint (GET/POST/PUT/DELETE for members, webinars, events, announcements, contact messages, newsletter subscribers, webinar registrations) is accessible to **any authenticated user**, not just admins. Any registered user can:
-- Read all members' PII (phone, email, address, etc.)
-- Create, update, delete webinars, events, announcements
-- Read all contact messages and newsletter subscribers
-- Delete any record
+`/api/receipts/mine` queries `getReceiptsByMemberUid(decoded.uid)`, so **webinar receipts never appear** in a member's receipt list. The Firestore owner-read rule (`resource.data.memberUid == request.auth.uid`) can also never match, blocking direct reads.
 
-**Fix:** Implement proper RBAC. Use Firebase Admin SDK to set custom claims (`admin: true`) on authorized users, then check those claims in `requireAuth()`. Create a `requireAdmin()` helper.
+**Fix:** Resolve the member by `registration.email` when creating the receipt and store the real auth UID in `memberUid` (and the member doc ID in `memberId`).
+
+### N3. Session Cookie Outlives the ID Token
+**File:** `src/app/api/auth/verify/route.ts` (line 39)
+**Severity:** HIGH (escalated from L1)
+
+The session cookie holds the raw Firebase ID token with `maxAge: 2h`, but Firebase ID tokens expire after **1 hour**. During the second hour, every `requireAuth` / `/api/auth/me` call fails with 401 while the client still shows the user as signed in — a confusing forced-relogin state (and with N6, `middleware.ts` still admits the user to `/admin` pages whose data calls then all fail).
+
+**Fix:** Use the Admin SDK's `createSessionCookie()` (also fixes C6), or refresh the token client-side before expiry.
+
+### N4. `sendTransactionalEmail` Callable Open to Any Authenticated User
+**File:** `functions/src/index.ts` (line 433)
+**Severity:** HIGH
+
+The callable checks only `request.auth` — any signed-in user (including freshly registered ones) can send arbitrary emails to arbitrary recipients through the project's Brevo account (spam/phishing vector, quota and sender-reputation drain).
+
+**Fix:** Read `users/{uid}.role` inside the callable and require `'admin'` before sending.
+
+## 🟡 MEDIUM (open / new)
+
+### H3 (partial). Remaining Rate-Limit Weaknesses
+**Files:** `src/app/api/contact/route.ts`, `newsletter/route.ts`, `publications/submissions/route.ts`, `webinars/register/route.ts`, `auth/register/route.ts`, `src/lib/security.ts`
+**Status:** Partially fixed — login/join now key on `IP + email`, public reads key on IP, and the upload endpoint uses the transactional Firestore limiter (`checkRateLimitStrict`). Remaining gaps:
+
+1. **In-memory `Map`** for most endpoints — resets on serverless cold start, no cross-instance state.
+2. **Email-only keys** remain: `contact:${email}`, `newsletter:${email}`, `pub-sub:${email}`, `webinar-reg:${email}`, `register:${email}` — rotating email bypasses the limit.
+3. `SimpleCache` / `rateLimitStore` grow unboundedly between cleanups.
+
+**Fix:** Migrate to Redis/Vercel KV (or extend the Firestore transactional limiter) and derive keys from IP (+ uid) everywhere.
+
+### H4 (partial). CSRF Coverage Incomplete Across Mutating Endpoints
+**Files:** 9 route files protected; 26 route files with mutating handlers unprotected
+**Status:** Partially fixed
+
+The double-submit cookie pattern (`validateCsrfToken` + `withCsrfProtection` + client `csrfHeaders()`) is correctly implemented and applied at **12 call sites**: `auth/register`, `join`, `contact`, `announcements` POST, `events` POST, `testimonials` POST/PUT/DELETE, `certificates/templates` POST/PUT (incl. `[id]`), and `upload`.
+
+However, **~39 mutating handlers across 26 route files still perform no CSRF check**, including admin-only CRUD that relies solely on the session cookie: `gallery`, `members` (+`[id]`), `publications` (+`[id]`), `receipts` (+`[id]`), `webinars` (+`[id]`, `register/[id]`, `register/[id]/receipt`), `newsletter` (+`[id]`, campaigns), `certificates` (+`[id]`, `webinar`), `contact/[id]`, `events/[id]`, `announcements/[id]`, plus `webinars/register` and `publications/submissions` POST.
+
+**Impact:** Reduced — the `session` cookie is set with `SameSite=Strict`, which blocks the classic cross-site CSRF vector. Residual exposure: same-site/subdomain attackers, and no defense-in-depth if cookie policy is ever relaxed.
+
+**Fix:** Apply `withCsrfProtection()` to the remaining admin mutating endpoints (login/logout/verify and the public unauthenticated form endpoints may reasonably remain exempt).
+
+### N5. Missing Composite Indexes — Queries Silently Degrade to Full Collection Scans
+**Files:** `firestore.indexes.json` (empty), `src/lib/firestore.ts`
+**Severity:** MEDIUM
+
+Composite queries with no matching index throw `failed-precondition`; the code then falls back to broad scans:
+- `getCertificatesByRegistrationId` (`registrationNumber ==` + `orderBy createdAt`) → falls back to **fetching every certificate** (firestore.ts:1477-1486).
+- `detectRapidRequests` (`endpoint ==` + `ip ==` + `timestamp >=`) → always throws → DoS detection **never fires**.
+
+**Fix:** Add the composite indexes to `firestore.indexes.json` and deploy, or restructure the queries.
+
+### N6. `middleware.ts` Validates Cookie Presence Only
+**File:** `middleware.ts`
+**Severity:** MEDIUM (residual of C5)
+
+The middleware checks only that a `session` cookie exists — it does not verify the token or role. `/admin` page shells render for anyone who can set a cookie; real authorization rests on the API routes (correct), but this is the only functioning page-level gate given N1/N3.
+
+**Fix:** Verify the session token and role in middleware via the Admin SDK, or explicitly document API-layer enforcement as the security boundary.
+
+### N7. Dead Code With Hardcoded Fallback Secret
+**File:** `src/lib/request-signing.ts`
+**Severity:** MEDIUM
+
+Never imported anywhere, but contains a hardcoded fallback secret (`'your-secret-key-change-in-production'`, line 8), `Math.random()` nonces (line 83), and rejects future timestamps instead of tolerating clock skew. A footgun if ever imported.
+
+**Fix:** Delete the file.
 
 ---
 
-### C3. Unauthenticated PII Exposure via `GET /api/join`
-**File:** `src/app/api/join/route.ts` (lines 109–116)  
-**Severity:** CRITICAL  
+## 🟢 LOW (new)
 
-The `GET /api/join` endpoint has **NO authentication check at all**:
+### N8. `/api/upload` Member Path Skips Role Check
+**File:** `src/app/api/upload/route.ts` (lines 88–95)
+Any authenticated user (role `user`, unapproved) may upload 10 MB PDFs to world-readable `publications/`. **Fix:** require the `member`/`admin` role for member paths (matches the storage-rule intent).
 
-```ts
-export async function GET() {
-  try {
-    const members = await getMembers()  // ← No auth check!
-    return withSecurityHeaders(NextResponse.json({ members }))
-  } catch (error) { ... }
-}
-```
+### N9. Orphaned Auth Accounts in Join Flow
+**File:** `src/app/api/join/route.ts` (lines 84–134)
+If `createMember` fails after `accounts:signUp` succeeded, the Firebase Auth account exists with no member doc; retrying yields `EMAIL_EXISTS`, masked as a generic 500. Consider compensating deletion or an idempotent retry path.
 
-**Impact:** Anyone (no login required) can fetch all member data including full names, emails, phone numbers, addresses, qualifications, RCI numbers, transaction numbers, and photos. This is a severe PII breach.
+### N10. Unbounded Log Read
+**File:** `src/lib/request-logger.ts` (lines 104–131)
+`getRecentApiLogs()` fetches the **entire** `api_logs` collection into memory before sorting/slicing; `cleanupOldApiLogs` has no scheduler wired up. Add `limit()` and a scheduled cleanup.
 
-**Fix:** Add `requireAuth` (and `requireAdmin`) to this endpoint, or remove the GET handler entirely.
+## ✅ Resolved in This Cycle (details verified)
 
----
-
-### C4. Open Registration Grants Admin Panel Access
-**Files:** `src/app/api/auth/register/route.ts`, `src/app/login/page.tsx` (line 79), `src/app/admin/layout.tsx`  
-**Severity:** CRITICAL  
-
-Registration is completely open to the public. After registering, users are redirected to `/admin`:
-
-```tsx
-// login/page.tsx line 79
-<Link href="/register" className="text-upisha-teal hover:underline">Create an account</Link>
-
-// register/page.tsx — redirects to /admin after registration
-router.push('/admin')
-```
-
-Combined with C2 (no role checks) and C5 (client-side only protection), **anyone can register and immediately access the full admin panel**.
-
-**Fix:** Remove the registration link from the login page. Implement an admin invitation/approval workflow. Only pre-approved admins should be able to log in.
+- **C1** — `Caddyfile` now contains a single `reverse_proxy localhost:3000` handler; the `XTransformPort` query-param handler is gone.
+- **C2/C3** — `requireAdmin()` / `requireVerifiedMember()` (role read from the Firestore `users` collection) guard every admin endpoint (53 call sites verified); `GET /api/join` removed entirely (documented at join/route.ts:66).
+- **C4** — `/register` redirects new users to `/` (register/page.tsx:33-35); `/login` routes by role (`admin` → `/admin`, `member` → member area).
+- **C7** — `firestore.rules` and `storage.rules` exist with per-collection rules, field allowlists (`hasOnly` / `changesOnly`), `isAdmin()` helpers, and deny-all fallbacks; deployed via `firebase.json`. (Their conflict with the server implementation is tracked as N1.)
+- **C5 (partial)** — `middleware.ts` now guards `/admin/*` and `/member/*` server-side (cookie presence; see N6), and `ProtectedRoute` checks `role === 'admin'`.
+- **H1** — all `update*` functions in `firestore.ts` pass through `pickFields()` with per-collection field whitelists.
+- **H2** — login/register return no token (documented "Do NOT return the token (H2)"); the httpOnly `session` cookie is set by `/api/auth/verify`.
+- **H4 (partial)** — `validateCsrfToken()` implements the double-submit cookie pattern (header token must equal the `csrf-token` cookie) and is invoked at 12 call sites; the client generates the token via `crypto.getRandomValues` (`src/lib/csrf.ts`). Coverage gaps remain — see the H4 section above.
+- **H5** — register and join return generic errors; the `EMAIL_EXISTS` detail is never surfaced.
+- **M1** — strict CSP in production via both `next.config.ts` headers and `withSecurityHeaders()`; dev-only relaxations documented.
+- **M2/M3** — HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` set in `next.config.ts` and `withSecurityHeaders()`; `poweredByHeader: false`.
+- **M4** — `photoUrl` / `rciCertificateUrl` validated with `z.string().url()`; data URLs are uploaded server-side to Storage; certificate template images use `safeImageUrl` with content-length guards.
+- **M5** — `createErrorResponse` logs error details only outside production.
+- **L2** — newsletter subscription no longer returns the email-derived document ID.
+- **L3** — password complexity (uppercase, lowercase, digit, min 8) enforced in `registerSchema` and `joinSchema`.
 
 ---
 
-### C5. Client-Side Only Admin Route Protection (No Server Middleware)
-**Files:** `src/app/admin/layout.tsx`, `src/components/auth/ProtectedRoute.tsx`  
-**Severity:** CRITICAL  
+## 🛠️ Recommended Priority Fixes (updated)
 
-There is **no `middleware.ts` file** in the project. Admin pages are protected only by a client-side React component:
-
-```tsx
-// ProtectedRoute.tsx
-export default function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
-  useEffect(() => {
-    if (!loading && !user) router.push('/login')  // Client-side redirect only
-  }, [user, loading, router])
-  if (loading) return <Loader />
-  if (!user) return null
-  return <>{children}</>
-}
-```
-
-**Impact:**
-1. Admin page HTML/content is sent to the browser before the redirect executes
-2. Disabling JavaScript bypasses the protection entirely
-3. The check only verifies `!user` (logged in or not), **not** whether the user is an admin
-4. Server-side rendering may expose admin page content in the initial HTML payload
-
-**Fix:** Create a `middleware.ts` file that checks the session cookie on all `/admin/*` and `/api/*` routes, verifying admin claims server-side before rendering.
+1. **Immediate:** Resolve **N1** — migrate server-side data access to the Firebase Admin SDK with a service account. This single change unblocks the deployed rules and fixes the verify flow, admin CRUD, uploads, public verification, and rate limiting in one move (it also enables C6/N3 fixes).
+2. **Immediate:** Fix webinar receipt `memberUid` (N2 — two-line change) and add the missing composite indexes (N5).
+3. **High:** Restrict `sendTransactionalEmail` to admins (N4); adopt `createSessionCookie()` for sessions (N3 + C6).
+4. **High:** Move remaining rate limiting to a distributed store; replace email-only keys (H3). Close the CSRF coverage gaps on admin CRUD endpoints (H4).
+5. **Medium:** Strengthen `middleware.ts` to verify session + role server-side (N6); delete `request-signing.ts` (N7).
+6. **Low:** Role-check member upload paths (N8), handle join-flow orphaned accounts (N9), bound log reads and schedule cleanup (N10).
 
 ---
 
-### C6. Fake Firebase Admin SDK — Token Verification Doesn't Check Roles
-**File:** `src/lib/firebase-admin.ts` (lines 1–2, 30–62)  
-**Severity:** CRITICAL  
-
-Despite the filename `firebase-admin.ts`, this file uses the **client SDK** (`firebase/app`, `firebase/firestore`), not the Firebase Admin SDK (`firebase-admin`):
-
-```ts
-import { initializeApp, getApps, getApp } from 'firebase/app'  // ← Client SDK!
-import { getFirestore, Firestore, FieldValue } from 'firebase/firestore'  // ← Client SDK!
-```
-
-Token verification uses the public `identitytoolkit` REST endpoint, which only checks token validity — **it does not verify custom claims or admin roles**:
-
-```ts
-export async function verifyToken(token: string) {
-  const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: token }) }
-  )
-  // Returns only uid, email, name — NO custom claims
-  return { uid: user.localId, email: user.email, name: user.displayName }
-}
-```
-
-**Impact:**
-1. No server-side admin authentication is possible with this setup
-2. Firestore operations use client SDK security rules (not admin SDK which bypasses rules)
-3. Custom claims (like `admin: true`) are never checked
-4. The public API key is used for server-side operations, which is not its intended purpose
-
-**Fix:** Install `firebase-admin` package, initialize it with a service account, and use `admin.auth().verifyIdToken()` which returns custom claims. Use `admin.firestore()` for server-side database access.
-
----
-
-### C7. Missing Firestore Security Rules — Direct Client-Side Database Access
-**File:** `src/lib/firebase.ts` (lines 1–16), no `firestore.rules` file in repo  
-**Severity:** CRITICAL  
-
-The project exports a client-side Firestore instance (`db`) that is accessible from the browser:
-
-```ts
-// src/lib/firebase.ts
-import { initializeApp, getApps } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-export const db = getFirestore(app)  // ← Client-side Firestore, exposed to browser
-```
-
-There is **no `firestore.rules` file** in the repository. The Firebase config (API key, project ID, etc.) is in `NEXT_PUBLIC_*` environment variables, which are embedded in the client bundle and visible to anyone.
-
-**Impact:** If the Firestore security rules in the Firebase console are set to test mode (common during development) or are misconfigured, anyone with the public Firebase config can directly read/write/delete all data in the database — members, contact messages, newsletter subscribers, webinar registrations — bypassing all API-level authentication entirely.
-
-**Fix:** 
-1. Create and deploy a `firestore.rules` file with strict rules (e.g., deny all reads/writes except for the specific collections that public forms need to write to)
-2. Remove the client-side `db` export and use the Firebase Admin SDK server-side only
-3. Ensure Firestore rules enforce role-based access using custom claims
-
----
-
-## 🟠 HIGH Vulnerabilities
-
-### H1. Mass Assignment in Firestore Update Operations
-**File:** `src/lib/firestore.ts` (lines 134–141, 180–187, 211–218, 266–273)  
-**Severity:** HIGH  
-
-All `update*` functions spread user-supplied data directly into Firestore updates:
-
-```ts
-export async function updateMember(id: string, data: Partial<MemberDoc>) {
-  const ref = doc(db(), 'members', id)
-  await updateDoc(ref, {
-    ...data,              // ← Mass assignment! Arbitrary fields
-    updatedAt: new Date(),
-  })
-  return { id }
-}
-```
-
-**Impact:** An attacker could inject arbitrary fields like `role`, `status: 'approved'`, `createdAt` override, or any other field. The `createMember` function (line 112) also uses `...data` spread.
-
-**Fix:** Explicitly destructure only allowed fields. Never spread raw user input. Use a whitelist of updatable fields.
-
----
-
-### H2. Insecure Token Storage — Token in localStorage and Response Body
-**Files:** `src/app/api/auth/login/route.ts` (lines 17–22), `src/app/api/auth/register/route.ts` (lines 16–21), `src/lib/auth.ts`  
-**Severity:** HIGH  
-
-Auth tokens are returned in the JSON response body and stored by the Firebase client SDK in `localStorage`:
-
-```ts
-// login/route.ts — token in response body
-const { user, token } = await loginUser(validated.email, validated.password)
-const response = withSecurityHeaders(NextResponse.json({
-  user: { uid: user.uid, email: user.email, displayName: user.displayName },
-  token  // ← Token in response body, accessible via XSS
-}))
-```
-
-The Firebase client SDK (`firebase/auth`) stores the ID token in `localStorage` by default, making it accessible to any XSS attack.
-
-**Impact:** If an XSS vulnerability exists (even in a third-party library), the attacker can steal the auth token and impersonate the user.
-
-**Fix:** Use httpOnly cookies exclusively for token storage. Don't return the token in the response body. Consider using Firebase's session cookie pattern with `createSessionCookie()` from the Admin SDK.
-
----
-
-### H3. Bypassable Rate Limiting
-**File:** `src/lib/security.ts` (lines 3–21), all API routes  
-**Severity:** HIGH  
-
-Rate limiting has multiple flaws:
-
-1. **In-memory only** — Uses a `Map` that resets on every serverless function cold start and doesn't share state across instances:
-```ts
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
-```
-
-2. **User-controlled rate limit keys** — Uses email (user input) as the key:
-```ts
-rateLimit(`contact:${validated.email}`, 3, 60 * 60 * 1000)  // Change email = bypass
-rateLimit(`login:${clientId}`, 5, 15 * 60 * 1000)           // clientId = email
-```
-
-3. **Static keys** — Some endpoints use static keys shared across all users:
-```ts
-rateLimit(`webinar:create`, 10, 60 * 60 * 1000)  // Shared across ALL users
-```
-
-**Fix:** Use Redis or Vercel KV for distributed rate limiting. Use IP address + user ID as the rate limit key, not user-controlled email.
-
----
-
-### H4. No CSRF Protection on State-Changing Endpoints
-**Files:** All API routes with POST/PUT/DELETE, `src/lib/security.ts` (lines 48–57)  
-**Severity:** HIGH  
-
-The CSRF protection function exists but is **non-functional** — it only checks that two client-supplied headers are equal to each other, with no server-side session validation:
-
-```ts
-export function validateCsrfToken(request: Request): boolean {
-  const token = request.headers.get('x-csrf-token')
-  const sessionToken = request.headers.get('x-session-token')
-  if (!token || !sessionToken) return false
-  return token.length > 0 && sessionToken.length > 0 && token === sessionToken
-  // ↑ Tautology: client sends both, just makes them equal
-}
-```
-
-Furthermore, **this function is never called** in any API route. All POST/PUT/DELETE endpoints accept requests without CSRF verification.
-
-**Impact:** An attacker can craft a malicious page that submits forms to the API endpoints (e.g., creating webinars, deleting records) while the user is authenticated via their session cookie.
-
-**Fix:** Implement proper CSRF protection using synchronizer tokens or double-submit cookies. Use a library like `next-csrf` or implement server-side session-based CSRF tokens.
-
----
-
-### H5. Email Enumeration via Registration
-**File:** `src/app/api/auth/register/route.ts` (lines 27–29), `src/app/api/join/route.ts` (lines 29–33)  
-**Severity:** HIGH  
-
-Registration endpoints reveal whether an email is already registered:
-
-```ts
-// register/route.ts
-if (error.code === 'auth/email-already-in-use') {
-  return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 })
-}
-```
-
-**Impact:** Attackers can enumerate valid email addresses by attempting registration, enabling targeted phishing or credential stuffing.
-
-**Fix:** Return a generic message like "Check your email to complete registration" regardless of whether the account exists.
-
----
-
-## 🟡 MEDIUM Vulnerabilities
-
-### M1. Weak Content Security Policy
-**Files:** `next.config.ts` (line 35), `src/lib/security.ts` (line 30)  
-**Severity:** MEDIUM  
-
-The CSP allows `'unsafe-eval'` and `'unsafe-inline'` for scripts:
-
-```
-Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; ...
-```
-
-**Impact:** These directives significantly weaken XSS protection, allowing inline script injection and `eval()` usage.
-
-**Fix:** Remove `'unsafe-eval'` and `'unsafe-inline'` from `script-src`. Use nonces or hashes for inline scripts. Configure Next.js CSP nonce support.
-
----
-
-### M2. Missing HSTS Header
-**File:** `next.config.ts`  
-**Severity:** MEDIUM  
-
-No `Strict-Transport-Security` header is set in `next.config.ts` or the `Caddyfile`.
-
-**Impact:** Without HSTS, a man-in-the-middle attack could downgrade HTTPS to HTTP on the first visit.
-
-**Fix:** Add `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` to both `next.config.ts` headers and the Caddyfile.
-
----
-
-### M3. Missing `poweredByHeader: false` Configuration
-**File:** `next.config.ts`  
-**Severity:** MEDIUM  
-
-The Next.js config doesn't set `poweredByHeader: false`, so the `X-Powered-By: Next.js` header is sent by default, revealing the server technology.
-
-**Fix:** Add `poweredByHeader: false` to the Next.js config.
-
----
-
-### M4. Unvalidated URL Fields (SSRF/XSS Risk)
-**File:** `src/app/api/join/route.ts` (lines 84–85), `src/lib/validations.ts`  
-**Severity:** MEDIUM  
-
-The `photoUrl` and `rciCertificateUrl` fields are stored without URL validation:
-
-```ts
-photoUrl: validated.photoUrl || null,
-rciCertificateUrl: validated.rciCertificateUrl || null,
-```
-
-The Zod schema marks them as `optional().nullable()` but doesn't validate them as URLs:
-
-```ts
-photoUrl: z.string().optional().nullable(),        // No URL validation
-rciCertificateUrl: z.string().optional().nullable(), // No URL validation
-```
-
-**Impact:** If these URLs are ever fetched server-side (e.g., for file processing), they could enable SSRF. If rendered as `src` attributes without sanitization, they could enable XSS via `javascript:` URLs.
-
-**Fix:** Use `z.string().url()` for URL fields. Validate against an allowlist of domains (e.g., only allow Firebase Storage URLs).
-
----
-
-### M5. Sensitive Error Logging to Console
-**Files:** Multiple API routes, `src/lib/auth-helpers.ts` (line 22)  
-**Severity:** MEDIUM  
-
-Error details are logged to `console.error` in production:
-
-```ts
-// auth-helpers.ts
-export function createErrorResponse(error: unknown, defaultMessage: string, status: number = 500) {
-  console.error(defaultMessage, error)  // ← Logs full error including stack traces
-  return NextResponse.json({ error: defaultMessage }, { status })
-}
-```
-
-**Impact:** In serverless platforms, console logs may be accessible to operators or leaked in error pages, potentially exposing internal paths, database structure, or secrets.
-
-**Fix:** Use a structured logging library with log levels. Don't log full error objects in production. Sanitize error messages before logging.
-
----
-
-## 🟢 LOW Vulnerabilities
-
-### L1. Session Cookie Contains Raw Firebase ID Token
-**File:** `src/app/api/auth/verify/route.ts` (lines 14–20)  
-**Severity:** LOW  
-
-The session cookie stores the raw Firebase ID token directly:
-
-```ts
-response.cookies.set('session', token, { ... })
-```
-
-**Impact:** The Firebase ID token has a fixed 1-hour expiry. The cookie is set for 2 hours. After the token expires, the cookie still contains an invalid token, but there's no server-side session refresh mechanism. This isn't a direct vulnerability but indicates missing session management.
-
-**Fix:** Use Firebase Admin SDK's `createSessionCookie()` to create a proper session cookie with configurable expiry, separate from the ID token.
-
----
-
-### L2. Newsletter Subscriber Email Leaked in Response
-**File:** `src/app/api/newsletter/route.ts` (line 19)  
-**Severity:** LOW  
-
-The newsletter subscription endpoint returns the subscriber's email as the `id`:
-
-```ts
-return withSecurityHeaders(NextResponse.json({ success: true, id: subscriber.id }, { status: 201 }))
-```
-
-Since `upsertNewsletterSubscriber` uses the email as the document ID, this leaks the email back in the response.
-
-**Fix:** Don't return the ID in the response, or use a generated ID instead of the email.
-
----
-
-### L3. Weak Password Policy
-**File:** `src/lib/validations.ts` (lines 5, 10, 24)  
-**Severity:** LOW  
-
-Password validation only requires a minimum of 8 characters with no complexity requirements:
-
-```ts
-password: z.string().min(8, 'Password must be at least 8 characters')
-```
-
-**Impact:** Users can use weak passwords like `password` or `12345678`.
-
-**Fix:** Add complexity requirements (uppercase, lowercase, number, special character) or integrate with a password strength checker like `zxcvbn`.
-
----
-
-## 📋 Summary of Affected Files
-
-| File | Vulnerabilities |
-|------|----------------|
-| `Caddyfile` | C1 (SSRF) |
-| `src/lib/auth-helpers.ts` | C2 (No role checks), M5 (Error logging) |
-| `src/app/api/join/route.ts` | C3 (No auth on GET), H5 (Email enumeration), M4 (Unvalidated URLs) |
-| `src/app/api/auth/register/route.ts` | C4 (Open registration), H2 (Token in body), H5 (Email enumeration) |
-| `src/app/api/auth/login/route.ts` | H2 (Token in body) |
-| `src/app/admin/layout.tsx` | C4, C5 (Client-side only protection) |
-| `src/components/auth/ProtectedRoute.tsx` | C5 (Client-side only, no role check) |
-| `src/lib/firebase-admin.ts` | C6 (Fake admin SDK, no claim verification) |
-| `src/lib/firebase.ts` | C7 (Missing Firestore rules, client DB access) |
-| `src/lib/firestore.ts` | H1 (Mass assignment) |
-| `src/lib/security.ts` | H3 (Rate limiting), H4 (CSRF), M1 (CSP) |
-| `next.config.ts` | M1 (CSP), M2 (HSTS), M3 (poweredByHeader) |
-| All API routes | C2, H4 (No CSRF) |
-| `src/app/api/newsletter/route.ts` | L2 (Email leak) |
-| `src/lib/validations.ts` | L3 (Weak password), M4 (No URL validation) |
-
----
-
-## 🛠️ Recommended Priority Fixes
-
-1. **Immediate:** Remove the SSRF handler from the `Caddyfile`
-2. **Immediate:** Add authentication to `GET /api/join` (or remove it)
-3. **Immediate:** Install `firebase-admin` and implement proper token verification with custom claims
-4. **Immediate:** Create `middleware.ts` for server-side admin route protection
-5. **Immediate:** Remove open registration / add admin approval workflow
-6. **High:** Implement `requireAdmin()` helper and apply to all admin API routes
-7. **High:** Fix mass assignment by whitelisting fields in update operations
-8. **High:** Implement proper CSRF protection
-9. **High:** Move to Redis-based distributed rate limiting
-10. **Medium:** Strengthen CSP, add HSTS, disable poweredByHeader
+*Methodology: manual code review cross-checked with static analysis — `npx tsc --noEmit` (0 errors), `npx eslint src` (7 React Compiler errors, non-security), and a scripted audit of all 47 API route files counting `requireAdmin`/`withCsrfProtection` coverage per mutating handler. Every finding above was verified against the current source at commit `f91d4c73`.*
