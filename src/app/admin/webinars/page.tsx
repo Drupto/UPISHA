@@ -210,6 +210,8 @@ export default function AdminWebinarsPage() {
       const payload = {
         ...webinarForm,
         maxAttendees: webinarForm.maxAttendees ? Number(webinarForm.maxAttendees) : null,
+        registrationLink: webinarForm.registrationLink || null,
+        meetingLink: webinarForm.meetingLink || null,
       }
 
       const res = await fetch(url, {

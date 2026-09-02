@@ -127,12 +127,6 @@ const ReceiptPrintable = forwardRef<HTMLDivElement, ReceiptPrintableProps>(
               <span className="font-mono text-upisha-navy ml-2">{receipt.transactionNumber}</span>
             </div>
           )}
-          {receipt.paymentMethod && (
-            <div className="flex justify-between sm:block sm:text-right">
-              <span className="text-gray-500 text-xs">Payment Method:</span>
-              <span className="text-upisha-navy ml-2">{receipt.paymentMethod}</span>
-            </div>
-          )}
         </div>
 
         {/* Footer */}

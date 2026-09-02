@@ -101,10 +101,6 @@ export default function ReceiptCard({ receipt }: ReceiptCardProps) {
                 <p className="text-xs text-gray-500 dark:text-gray-400">Transaction Ref</p>
                 <p className="font-mono text-upisha-navy dark:text-white">{receipt.transactionNumber || 'N/A'}</p>
               </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Payment Method</p>
-                <p className="text-upisha-navy dark:text-white">{receipt.paymentMethod || 'N/A'}</p>
-              </div>
             </div>
 
             <div className="mb-4">

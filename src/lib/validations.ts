@@ -95,6 +95,22 @@ export const webinarRegistrationSchema = z.object({
   }),
 })
 
+/**
+ * Accepts an optional URL. The admin forms submit empty strings ("") for blank
+ * optional inputs, but a bare `z.string().url().optional().nullable()` schema
+ * rejects "" (it only tolerates `undefined`/`null`), which silently breaks
+ * saving. This normalizes blank/whitespace-only input to `null` while still
+ * validating real values as URLs.
+ */
+const optionalUrl = () =>
+  z
+    .string()
+    .trim()
+    .nullish()
+    .transform((v) => (v === '' || v === null || v === undefined ? null : v))
+    .pipe(z.string().url('Invalid URL').nullable())
+
+
 export const webinarSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters').max(200),
   date: z.string().min(1, 'Date is required'),
@@ -102,8 +118,8 @@ export const webinarSchema = z.object({
   speaker: z.string().min(2, 'Speaker name must be at least 2 characters').max(100),
   duration: z.string().min(1, 'Duration is required'),
   description: z.string().max(2000).optional().nullable(),
-  registrationLink: z.string().url('Invalid URL').optional().nullable(),
-  meetingLink: z.string().url('Invalid URL').optional().nullable(),
+  registrationLink: optionalUrl(),
+  meetingLink: optionalUrl(),
   type: z.enum(['paid', 'free']).optional().default('paid'),
   isActive: z.boolean().optional().default(true),
   maxAttendees: z.number().int().positive().optional().nullable(),
