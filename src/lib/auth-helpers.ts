@@ -1,6 +1,19 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { verifyToken } from './firebase-admin'
 import { getUserByUid, getMemberByUid } from './firestore'
+import { validateCsrfToken } from './security'
+
+// Mutating requests through any requireAuth*-protected route must carry a
+// valid double-submit CSRF token (H4). GET/HEAD/OPTIONS are exempt.
+function csrfGuard(request: NextRequest): NextResponse | null {
+  const method = request.method.toUpperCase()
+  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return null
+  if (validateCsrfToken(request)) return null
+  return NextResponse.json(
+    { error: 'Missing or invalid csrf token' },
+    { status: 403 }
+  )
+}
 
 export async function requireAuth(request: NextRequest) {
   const sessionToken = request.headers.get('authorization')?.replace('Bearer ', '') || 
@@ -12,6 +25,9 @@ export async function requireAuth(request: NextRequest) {
 
   try {
     const decodedToken = await verifyToken(sessionToken)
+    // H4: enforce CSRF on mutating requests once the caller is authenticated
+    const csrfError = csrfGuard(request)
+    if (csrfError) return csrfError
     return decodedToken
   } catch {
     return NextResponse.json({ authenticated: false, error: 'Invalid token' }, { status: 401 })

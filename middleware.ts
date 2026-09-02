@@ -12,11 +12,32 @@ function isPathProtected(pathname: string): boolean {
 }
 
 /**
- * Server-side route protection for admin and member pages.
- * Verifies the presence of the httpOnly session cookie. Full role
- * verification (admin vs member) is enforced by the API routes via
- * requireAdmin()/requireVerifiedMember() and the Firestore rules.
+ * Verify a Firebase ID token via the identitytoolkit REST API.
+ * Edge-runtime safe: uses fetch only, no Firebase SDK imports, so this can
+ * run inside middleware without pulling the client SDK into the Edge bundle.
  */
+async function isValidSession(token: string): Promise<boolean> {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+  if (!apiKey || !token) return false
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: token }),
+        cache: 'no-store',
+      }
+    )
+    if (!res.ok) return false
+    const data = await res.json()
+    return Boolean(data?.users?.[0]?.localId)
+  } catch {
+    // Fail closed: if verification is unavailable, deny the protected page.
+    return false
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -26,15 +47,24 @@ export async function middleware(request: NextRequest) {
 
   const sessionToken = request.cookies.get('session')?.value
 
-  // No session cookie — redirect to login
-  if (!sessionToken) {
+  // No session cookie, or the token no longer verifies — redirect to login (N6)
+  if (!sessionToken || !(await isValidSession(sessionToken))) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+    const response = NextResponse.redirect(loginUrl)
+    if (sessionToken) {
+      // Clear the stale session cookie so the client stops sending it
+      response.cookies.set('session', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 0,
+        path: '/',
+      })
+    }
+    return response
   }
 
-  // Session cookie present — allow the request through.
-  // The API routes and Firestore rules enforce the actual role.
   return NextResponse.next()
 }
 

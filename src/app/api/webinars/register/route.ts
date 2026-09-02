@@ -7,7 +7,7 @@ import {
   getWebinarRegistrationCount,
 } from '@/lib/firestore'
 import { webinarRegistrationSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, resetRateLimit } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, resetRateLimit, getClientIp } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
@@ -16,8 +16,10 @@ export async function POST(request: NextRequest) {
     const validated = webinarRegistrationSchema.parse(body)
     const email = validated.email.toLowerCase()
 
-    // Rate limiting - 10 attempts per hour per email (generous to avoid blocking legit users)
-    if (!rateLimit(`webinar-reg:${email}`, 10, 60 * 60 * 1000)) {
+    // Rate limiting - 10 attempts per hour (generous to avoid blocking legit
+    // users), keyed on IP + email so rotating email cannot bypass (H3)
+    const rateKey = `webinar-reg:${getClientIp(request)}:${email}`
+    if (!rateLimit(rateKey, 10, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
 
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Reset rate limit on success so a user can register for multiple webinars
-    resetRateLimit(`webinar-reg:${email}`)
+    resetRateLimit(rateKey)
 
     const message = isFree
       ? 'Registration successful! You are now registered for this free webinar. You will receive the webinar link via email.'

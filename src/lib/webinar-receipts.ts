@@ -3,6 +3,7 @@ import {
   getWebinarById,
   getReceiptByReceiptNumber,
   createReceipt,
+  getMemberByEmail,
 } from '@/lib/firestore'
 import { sanitizeHtml } from '@/lib/security'
 import type { ReceiptDoc } from '@/lib/types'
@@ -45,10 +46,16 @@ export async function ensureWebinarReceipt(
   const webinar = registration.webinarId ? await getWebinarById(registration.webinarId) : null
   const amount = webinar?.price ?? 0
 
+  // Resolve the real member record so memberUid/memberId carry the auth UID
+  // and Firestore document ID (NOT the email) — otherwise the receipt can
+  // never match the owner queries in /api/receipts/mine or the Firestore
+  // owner-read rule (N2).
+  const member = await getMemberByEmail(registration.email)
+
   await createReceipt({
     receiptNumber,
-    memberId: registration.email,
-    memberUid: registration.email,
+    memberId: member?.id ?? registration.email,
+    memberUid: member?.uid ?? registration.email,
     memberName: sanitizeHtml(registration.fullName),
     memberEmail: registration.email,
     transactionType: 'webinar',

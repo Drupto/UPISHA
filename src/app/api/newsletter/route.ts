@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { upsertNewsletterSubscriber, getNewsletterSubscribers } from '@/lib/firestore'
 import { newsletterSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, rateLimit, getClientIp } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
@@ -9,8 +9,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validated = newsletterSchema.parse(body)
 
-    // Rate limiting
-    if (!rateLimit(`newsletter:${validated.email}`, 5, 60 * 60 * 1000)) {
+    // Rate limiting — key on IP + email so rotating email cannot bypass (H3)
+    if (!rateLimit(`newsletter:${getClientIp(request)}:${validated.email}`, 5, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
 

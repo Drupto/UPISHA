@@ -1114,6 +1114,24 @@ export async function getMemberByUid(uid: string): Promise<MemberDoc | null> {
   return { id: doc.id, ...doc.data() } as MemberDoc
 }
 
+/**
+ * Resolve a member document by the account email. Used e.g. to link
+ * webinar receipts back to the member's auth UID (N2).
+ */
+export async function getMemberByEmail(email: string): Promise<MemberDoc | null> {
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'members'), where('email', '==', email.toLowerCase()))
+    )
+    if (snapshot.empty) return null
+    const doc = snapshot.docs[0]
+    return { id: doc.id, ...doc.data() } as MemberDoc
+  } catch (error) {
+    console.error('getMemberByEmail lookup failed:', error)
+    return null
+  }
+}
+
 export async function getMemberById(id: string): Promise<MemberDoc | null> {
   const ref = doc(db(), 'members', id)
   const snap = await getDoc(ref)

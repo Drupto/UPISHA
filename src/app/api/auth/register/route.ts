@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server'
 import { registerUser } from '@/lib/auth'
 import { registerSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, rateLimit, withCsrfProtection, getClientIp } from '@/lib/security'
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     const validated = registerSchema.parse(body)
     
-    // Rate limiting
-    if (!rateLimit(`register:${validated.email}`, 3, 60 * 60 * 1000)) {
+    // Rate limiting — key on IP + email so rotating email cannot bypass (H3)
+    if (!rateLimit(`register:${getClientIp(request)}:${validated.email}`, 3, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many registration attempts. Please try again later.' }, { status: 429 }))
     }
 

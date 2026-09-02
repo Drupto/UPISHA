@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { csrfHeaders } from '@/lib/csrf'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, Trash2, Search, Loader2, Mail, Download, Plus, Pencil, Send, Users
@@ -89,7 +90,7 @@ export default function AdminNewsletterPage() {
   const handleDeleteSubscriber = async (id: string) => {
     if (!confirm('Are you sure you want to remove this subscriber?')) return
     try {
-      const res = await fetch(`/api/newsletter/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/newsletter/${id}`, { method: 'DELETE', headers: csrfHeaders() })
       if (res.ok) {
         toast({ title: 'Subscriber removed', description: 'The subscriber has been removed.' })
         fetchSubscribers()
@@ -114,7 +115,7 @@ export default function AdminNewsletterPage() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(campaignForm),
       })
 
@@ -152,7 +153,7 @@ export default function AdminNewsletterPage() {
   const handleDeleteCampaign = async (id: string) => {
     if (!confirm('Are you sure you want to delete this campaign?')) return
     try {
-      const res = await fetch(`/api/newsletter/campaigns/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/newsletter/campaigns/${id}`, { method: 'DELETE', headers: csrfHeaders() })
       if (res.ok) {
         toast({ title: 'Campaign deleted', description: 'The campaign has been removed.' })
         fetchCampaigns()
@@ -168,7 +169,7 @@ export default function AdminNewsletterPage() {
     try {
       const res = await fetch(`/api/newsletter/campaigns/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ status: 'sent' }),
       })
       if (res.ok) {

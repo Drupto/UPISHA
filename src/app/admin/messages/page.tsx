@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { csrfHeaders } from '@/lib/csrf'
 import { Mail, Trash2, Search, Loader2, MailOpen, CheckCheck, Eye, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,7 +48,7 @@ export default function AdminMessagesPage() {
     try {
       const res = await fetch(`/api/contact/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ isRead: !isRead }),
       })
       if (res.ok) {
@@ -64,7 +65,7 @@ export default function AdminMessagesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this message?')) return
     try {
-      const res = await fetch(`/api/contact/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/contact/${id}`, { method: 'DELETE', headers: csrfHeaders() })
       if (res.ok) {
         toast({ title: 'Message deleted', description: 'The message has been removed.' })
         setSelectedMessage(null)

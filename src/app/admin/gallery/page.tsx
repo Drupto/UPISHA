@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { csrfHeaders } from '@/lib/csrf'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -65,7 +66,7 @@ export default function AdminGallery() {
         
         const response = await fetch('/api/upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: csrfHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ dataUrl, path: filename }),
         })
 
@@ -144,7 +145,7 @@ export default function AdminGallery() {
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(body),
       })
 
@@ -163,7 +164,7 @@ export default function AdminGallery() {
     try {
       const response = await fetch('/api/gallery', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ id }),
       })
       if (!response.ok) throw new Error('Failed to delete gallery image')

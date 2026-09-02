@@ -50,7 +50,27 @@ async function createFirebaseAuthUser(email: string, password: string, displayNa
     console.error('Failed to send verification email')
   }
 
-  return { localId: signUpData.localId, email: signUpData.email }
+  return { localId: signUpData.localId, email: signUpData.email, idToken: signUpData.idToken as string }
+}
+
+/**
+ * Delete a just-created Firebase Auth account via the REST API using its
+ * idToken. Used as compensating cleanup (N9) when a later step of the join
+ * flow fails, so we don't leave orphaned auth accounts behind.
+ */
+async function deleteFirebaseAuthUser(idToken: string): Promise<void> {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+  if (!apiKey) return
+  try {
+    await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    })
+  } catch (cleanupErr) {
+    // Best-effort: log but never mask the original error
+    console.error('Failed to clean up orphaned auth account:', cleanupErr)
+  }
 }
 
 /**
@@ -65,7 +85,8 @@ async function maybeUploadToStorage(value: string | null | undefined, path: stri
 export async function POST(request: NextRequest) {
   // (C3) This endpoint only accepts POST requests; there is no GET handler,
   // so unauthenticated GET is not applicable.
-  let authUser: { localId: string; email: string } | null = null
+  let authUser: { localId: string; email: string; idToken: string } | null = null
+  let memberCreated = false
   try {
     const body = await request.json()
     const validated = joinSchema.parse(body)
@@ -132,6 +153,7 @@ export async function POST(request: NextRequest) {
       registrationDate: validated.registrationDate || null,
       declaration: validated.declaration,
     })
+    memberCreated = true
 
     // 4. Create a users record with role 'member' so the user is recognized after login
     try {
@@ -154,6 +176,12 @@ export async function POST(request: NextRequest) {
       message: 'Account created! Please check your email to verify your account.',
     }, { status: 201 }))
   } catch (err: unknown) {
+    // N9: if the auth account was created but the member document never made
+    // it, delete the just-created auth account so the applicant can retry
+    // without hitting a permanent EMAIL_EXISTS dead-end.
+    if (authUser && !memberCreated && authUser.idToken) {
+      await deleteFirebaseAuthUser(authUser.idToken)
+    }
     console.error('Error creating member:', err)
     if (err instanceof Error && err.name === 'ZodError') {
       return withSecurityHeaders(NextResponse.json({ error: 'Invalid input data' }, { status: 400 }))

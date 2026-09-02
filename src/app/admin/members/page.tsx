@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { csrfHeaders } from '@/lib/csrf'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -100,7 +101,7 @@ export default function AdminMembers() {
     try {
       const res = await fetch(`/api/members/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ status }),
       })
       if (res.ok) {
@@ -124,7 +125,7 @@ export default function AdminMembers() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this member?')) return
     try {
-      const res = await fetch(`/api/members/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/members/${id}`, { method: 'DELETE', headers: csrfHeaders() })
       if (res.ok) {
         toast({ title: 'Member deleted', description: 'The member has been removed.' })
         fetchMembers()
@@ -155,7 +156,7 @@ export default function AdminMembers() {
     try {
       const res = await fetch(`/api/members/${editingMember.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           fullName: editForm.fullName,
           email: editForm.email,

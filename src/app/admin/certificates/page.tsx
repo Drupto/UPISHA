@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { csrfHeaders } from '@/lib/csrf'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -89,7 +90,7 @@ export default function AdminCertificates() {
     try {
       const res = await fetch('/api/certificates', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ memberId: selectedMember, templateId: selectedTemplate }),
       })
 
@@ -115,7 +116,7 @@ export default function AdminCertificates() {
     try {
       const res = await fetch(`/api/certificates/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ status: 'revoked' }),
       })
       if (res.ok) {
@@ -132,7 +133,7 @@ export default function AdminCertificates() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this certificate?')) return
     try {
-      const res = await fetch(`/api/certificates/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/certificates/${id}`, { method: 'DELETE', headers: csrfHeaders() })
       if (res.ok) {
         toast({ title: 'Certificate deleted', description: 'The certificate has been removed.' })
         fetchAll()

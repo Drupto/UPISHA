@@ -11,6 +11,7 @@ import {
   where, 
   getDocs,
   deleteDoc,
+  limit,
   Timestamp 
 } from 'firebase/firestore'
 
@@ -79,7 +80,9 @@ export async function detectRapidRequests(endpoint: string, ip: string): Promise
       collection(db(), API_LOGS_COLLECTION),
       where('endpoint', '==', endpoint),
       where('ip', '==', ip),
-      where('timestamp', '>=', Timestamp.fromDate(oneMinuteAgo))
+      where('timestamp', '>=', Timestamp.fromDate(oneMinuteAgo)),
+      // Only the count matters (threshold 10) — bound the read (N10)
+      limit(11)
     )
     const snapshot = await getDocs(q)
 
@@ -101,12 +104,13 @@ export async function detectRapidRequests(endpoint: string, ip: string): Promise
 /**
  * Get recent API logs (for admin monitoring)
  */
-export async function getRecentApiLogs(limit: number = 100): Promise<ApiLogEntry[]> {
+export async function getRecentApiLogs(maxEntries: number = 100): Promise<ApiLogEntry[]> {
   try {
     const q = query(
       collection(db(), API_LOGS_COLLECTION),
-      // Note: orderBy requires an index. For demo purposes, we'll just get recent docs
-      // In production, create a composite index on timestamp descending
+      // Bound the read so we never pull the whole collection into memory
+      // (N10). Without orderBy the newest-first sort happens in memory below.
+      limit(Math.min(maxEntries, 500))
     )
     const snapshot = await getDocs(q)
 
@@ -123,7 +127,7 @@ export async function getRecentApiLogs(limit: number = 100): Promise<ApiLogEntry
     // Sort by timestamp descending and limit
     return logs
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-      .slice(0, limit)
+      .slice(0, maxEntries)
   } catch (error) {
     console.error('Failed to get API logs:', error)
     return []
@@ -139,7 +143,9 @@ export async function cleanupOldApiLogs(): Promise<number> {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     const q = query(
       collection(db(), API_LOGS_COLLECTION),
-      where('timestamp', '<', Timestamp.fromDate(thirtyDaysAgo))
+      where('timestamp', '<', Timestamp.fromDate(thirtyDaysAgo)),
+      // Bound each cleanup run (N10); call periodically until it returns 0
+      limit(1000)
     )
     const snapshot = await getDocs(q)
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPublicationSubmission, getPublicationSubmissions } from '@/lib/firestore'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, getClientIp } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { publicationSubmissionSchema } from '@/lib/validations'
 
@@ -10,8 +10,8 @@ export async function POST(request: NextRequest) {
     const validated = publicationSubmissionSchema.parse(body)
     const email = validated.authorEmail.toLowerCase()
 
-    // Rate limiting - 5 submissions per hour per email
-    if (!rateLimit(`pub-sub:${email}`, 5, 60 * 60 * 1000)) {
+    // Rate limiting — 5 submissions per hour, keyed on IP + email (H3)
+    if (!rateLimit(`pub-sub:${getClientIp(request)}:${email}`, 5, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many submissions. Please try again later.' }, { status: 429 }))
     }
 

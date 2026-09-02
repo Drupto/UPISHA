@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let unsubscribe: (() => void) | undefined
     let cancelled = false
+    let reverifyInterval: ReturnType<typeof setInterval> | undefined
     try {
       unsubscribe = onAuthChange(async (user) => {
         setUser(user)
@@ -78,6 +79,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           }
           await fetchRole()
+
+          // N3: keep the session cookie fresh. The cookie holds the raw ID
+          // token (1h TTL) — re-verify every 45 minutes with a fresh token so
+          // actively-used tabs are never logged out mid-session.
+          if (reverifyInterval) clearInterval(reverifyInterval)
+          reverifyInterval = setInterval(async () => {
+            if (cancelled) return
+            try {
+              const freshToken = await user.getIdToken(true)
+              await fetch('/api/auth/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: freshToken }),
+                cache: 'no-store',
+              })
+            } catch {
+              // Non-fatal: the next navigation/auth-state change will retry
+            }
+          }, 45 * 60 * 1000)
         } else {
           setRole(null)
           setMemberStatus(null)
@@ -92,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return () => {
       cancelled = true
+      if (reverifyInterval) clearInterval(reverifyInterval)
       if (unsubscribe) unsubscribe()
     }
   }, [])

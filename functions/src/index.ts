@@ -436,6 +436,13 @@ export const sendTransactionalEmail = onCall(async (request) => {
     throw new HttpsError('unauthenticated', 'You must be signed in to send emails.')
   }
 
+  // N4: only admins may send emails — otherwise any signed-in user could
+  // abuse the project's Brevo account to send arbitrary emails.
+  const callerDoc = await db.collection('users').doc(request.auth.uid).get()
+  if (!callerDoc.exists || callerDoc.data()?.role !== 'admin') {
+    throw new HttpsError('permission-denied', 'Only admins can send transactional emails.')
+  }
+
   const data = request.data as {
     to: EmailRecipient | EmailRecipient[]
     subject: string
