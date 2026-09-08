@@ -99,13 +99,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fallback to static messages if no real data
-    if (notifications.length === 0) {
-      notifications.push(
-        { icon: 'users', text: 'Join our growing community', emoji: '🎉' },
-        { icon: 'calendar', text: 'Check out our upcoming events', emoji: '📅' },
-      )
-    }
+    // No real data available - return an empty list rather than fake notifications
 
     // Cache the results
     cache.set(cacheKey, notifications)
@@ -121,10 +115,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Social proof API error:', error)
     return NextResponse.json(
-      [
-        { icon: 'users', text: 'Join our growing community', emoji: '🎉' },
-        { icon: 'calendar', text: 'Check out our upcoming events', emoji: '📅' },
-      ],
+      [],
       {
         status: 200,
         headers: {

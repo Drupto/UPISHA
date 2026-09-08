@@ -4,14 +4,13 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  Calendar, ArrowRight, MapPin, X,
+  Calendar, ArrowRight, MapPin, X, Megaphone,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { announcements as staticAnnouncements, eventsTimeline as staticEvents } from '@/lib/static-data'
 import type { Announcement, TimelineEvent } from '@/lib/types'
 import { formatShortDate, formatEventDate } from '@/lib/date-utils'
 
@@ -34,12 +33,11 @@ export function AnnouncementSection() {
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data) => {
         if (!cancelled) {
-          // Use real data if available, otherwise fall back to static
-          setAnnouncements(data.announcements?.length ? data.announcements : staticAnnouncements)
+          setAnnouncements(data.announcements || [])
         }
       })
       .catch(() => {
-        if (!cancelled) setAnnouncements(staticAnnouncements)
+        if (!cancelled) setAnnouncements([])
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -54,7 +52,7 @@ export function AnnouncementSection() {
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data) => {
         if (!cancelled) {
-          const events = data.events?.length ? data.events : staticEvents
+          const events = data.events || []
           setSidebarEvents(events.slice(0, 3).map((e: TimelineEvent) => ({
             title: e.title,
             date: e.date,
@@ -63,13 +61,7 @@ export function AnnouncementSection() {
         }
       })
       .catch(() => {
-        if (!cancelled) {
-          setSidebarEvents(staticEvents.slice(0, 3).map((e) => ({
-            title: e.title,
-            date: e.date,
-            location: e.location,
-          })))
-        }
+        if (!cancelled) setSidebarEvents([])
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -91,6 +83,11 @@ export function AnnouncementSection() {
               {loading && announcements.length === 0 ? (
                 <div className="flex justify-center py-8">
                   <div className="h-8 w-8 border-4 border-upisha-teal border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : announcements.length === 0 ? (
+                <div className="flex items-center justify-center gap-2 py-8 text-sm text-gray-500 dark:text-gray-400">
+                  <Megaphone className="h-4 w-4" />
+                  No announcements at this time.
                 </div>
               ) : announcements.map((item, i) => (
                 <motion.div

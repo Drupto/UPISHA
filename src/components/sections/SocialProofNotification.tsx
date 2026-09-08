@@ -22,13 +22,9 @@ export function SocialProofNotification() {
 
         const data = await response.json()
         setNotifications(data)
-      } catch (error) {
-        console.error('Failed to load social proof data:', error)
-        // Fallback notifications on error
-        setNotifications([
-          { icon: 'users', text: 'Join our growing community', emoji: '🎉' },
-          { icon: 'calendar', text: 'Check out our upcoming events', emoji: '📅' },
-        ])
+      } catch {
+        // No real data available - stay silent rather than showing fake notifications
+        setNotifications([])
       }
     }
 

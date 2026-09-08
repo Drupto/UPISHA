@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { eventsTimeline as staticEvents } from '@/lib/static-data'
+import type { TimelineEvent } from '@/lib/types'
 import { AnimatedSection } from '@/components/sections/AnimatedSection'
 import { SectionHeading } from '@/components/sections/SectionHeading'
 import { EventCalendar } from '@/components/sections/EventCalendar'
@@ -40,9 +40,9 @@ const resolveIcon = (icon: unknown): React.ComponentType<{ className?: string }>
 
 /* ─── Events Timeline Section ─── */
 export default function EventsTimelineSection() {
-  const [events, setEvents] = useState<typeof staticEvents>([])
+  const [events, setEvents] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedEvent, setSelectedEvent] = useState<typeof staticEvents[0] | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -50,12 +50,11 @@ export default function EventsTimelineSection() {
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data) => {
         if (!cancelled) {
-          // Use real data if available, otherwise fall back to static
-          setEvents(data.events?.length ? data.events : staticEvents)
+          setEvents(data.events || [])
         }
       })
       .catch(() => {
-        if (!cancelled) setEvents(staticEvents)
+        if (!cancelled) setEvents([])
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -71,7 +70,7 @@ export default function EventsTimelineSection() {
   }
 
 
-  const handleShareEvent = (event: typeof staticEvents[0]) => {
+  const handleShareEvent = (event: TimelineEvent) => {
     if (navigator.share) {
       navigator.share({
         title: event.title,
@@ -104,6 +103,11 @@ export default function EventsTimelineSection() {
             {loading && events.length === 0 ? (
               <div className="flex justify-center py-16">
                 <div className="h-10 w-10 border-4 border-upisha-teal border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : events.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-gray-400">No upcoming events scheduled. Check back soon.</p>
               </div>
             ) : events.map((event, i) => {
               const EventIcon = resolveIcon(event.icon)

@@ -152,6 +152,11 @@ export function GallerySection() {
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-upisha-teal" />
           </div>
+        ) : galleryImages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Camera className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400">Photos coming soon.</p>
+          </div>
         ) : (
           <div className="masonry-grid">
             {visibleImages.map((img, i) => {

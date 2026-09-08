@@ -1,4 +1,4 @@
-import { announcements as staticAnnouncements, eventsTimeline as staticEvents, sampleProfessionals as staticProfessionals, upcomingWebinars as staticWebinars, galleryImages as staticGalleryImages } from '@/lib/static-data'
+import { sampleProfessionals as staticProfessionals } from '@/lib/static-data'
 import type { Announcement, TimelineEvent, Professional, MemberDoc, ContactMessageDoc, NewsletterSubscriberDoc, Webinar, WebinarRegistrationDoc, Testimonial, GalleryImage, Publication } from '@/lib/types'
 
 // Check if Firebase is configured (using NEXT_PUBLIC_* env vars)
@@ -7,26 +7,26 @@ function isFirebaseConfigured(): boolean {
 }
 
 export async function getAnnouncements(): Promise<Announcement[]> {
-  if (!isFirebaseConfigured()) return staticAnnouncements
+  if (!isFirebaseConfigured()) return []
   try {
     const { getAnnouncements: fbGetAnnouncements } = await import('@/lib/firestore')
     const docs = await fbGetAnnouncements()
     if (docs && docs.length > 0) return docs as Announcement[]
-    return staticAnnouncements
+    return []
   } catch {
-    return staticAnnouncements
+    return []
   }
 }
 
 export async function getEvents(): Promise<TimelineEvent[]> {
-  if (!isFirebaseConfigured()) return staticEvents
+  if (!isFirebaseConfigured()) return []
   try {
     const { getEvents: fbGetEvents } = await import('@/lib/firestore')
     const docs = await fbGetEvents()
     if (docs && docs.length > 0) return docs as TimelineEvent[]
-    return staticEvents
+    return []
   } catch {
-    return staticEvents
+    return []
   }
 }
 
@@ -65,14 +65,14 @@ export async function getNewsletterSubscribers(): Promise<{ subscribers: Newslet
 }
 
 export async function getWebinars(): Promise<Webinar[]> {
-  if (!isFirebaseConfigured()) return staticWebinars
+  if (!isFirebaseConfigured()) return []
   try {
     const { getWebinars: fbGetWebinars } = await import('@/lib/firestore')
     const docs = await fbGetWebinars()
     if (docs && docs.length > 0) return docs as Webinar[]
-    return staticWebinars
+    return []
   } catch {
-    return staticWebinars
+    return []
   }
 }
 
@@ -99,14 +99,14 @@ export async function getTestimonials(): Promise<Testimonial[]> {
 }
 
 export async function getGalleryImages(): Promise<GalleryImage[]> {
-  if (!isFirebaseConfigured()) return staticGalleryImages
+  if (!isFirebaseConfigured()) return []
   try {
     const { getGalleryImages: fbGetGalleryImages } = await import('@/lib/firestore')
     const docs = await fbGetGalleryImages()
     if (docs && docs.length > 0) return docs as unknown as GalleryImage[]
-    return staticGalleryImages
+    return []
   } catch {
-    return staticGalleryImages
+    return []
   }
 }
 

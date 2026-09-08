@@ -21,15 +21,6 @@ interface JournalIssue {
   createdAt?: Date
 }
 
-// Fallback static journal issues when API returns empty
-const fallbackIssues: JournalIssue[] = [
-  { id: 'current-issue', title: 'UP Journal of Speech & Hearing - Vol 12, Issue 1', description: 'Effectiveness of Tele-Audiology in Rural UP, Language Development in Hindi-Speaking Children, Cochlear Implant Outcomes: A 5-Year Review', type: 'Journal', isActive: true },
-  { id: 'issue-11', title: 'UP Journal of Speech & Hearing - Vol 11, Issue 2', description: 'Auditory Processing Disorders in School-Aged Children, Voice Therapy Outcomes in Teachers, Stuttering Assessment in Bilingual Populations', type: 'Journal', isActive: true },
-  { id: 'issue-10', title: 'UP Journal of Speech & Hearing - Vol 11, Issue 1', description: 'Newborn Hearing Screening in Uttar Pradesh, Language Intervention in Autism Spectrum Disorder, Hearing Aid Fitting in Elderly Populations', type: 'Journal', isActive: true },
-  { id: 'issue-9', title: 'UP Journal of Speech & Hearing - Vol 10, Issue 2', description: 'Tinnitus Management: Evidence-Based Approaches, Craniofacial Anomalies and Speech, Early Childhood Aural Rehabilitation', type: 'Journal', isActive: true },
-  { id: 'issue-8', title: 'UP Journal of Speech & Hearing - Vol 10, Issue 1', description: 'Cochlear Implant Rehabilitation Protocols, Dysphagia Management in Stroke Patients, Speech Therapy in Rural Communities', type: 'Journal', isActive: true },
-]
-
 export default function PublicationsPage() {
   const [issues, setIssues] = useState<JournalIssue[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,12 +33,12 @@ export default function PublicationsPage() {
         if (res.ok) {
           const data = await res.json()
           const journalIssues = (data.publications || []).filter((p: JournalIssue) => p.type === 'Journal' && p.isActive !== false)
-          setIssues(journalIssues.length > 0 ? journalIssues : fallbackIssues)
+          setIssues(journalIssues)
         } else {
           setError('Failed to load publications')
         }
       } catch {
-        setIssues(fallbackIssues)
+        setError('Failed to load publications. Please try again later.')
       } finally {
         setLoading(false)
       }
@@ -83,6 +74,12 @@ export default function PublicationsPage() {
             <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
               Try Again
             </Button>
+          </div>
+        ) : issues.length === 0 ? (
+          <div className="max-w-md mx-auto py-16 text-center">
+            <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-upisha-navy dark:text-white mb-2">No Journal Issues Published</h3>
+            <p className="text-gray-500 dark:text-gray-400">There are no journal issues available at this time. Please check back later.</p>
           </div>
         ) : (
           <div className="space-y-12">
