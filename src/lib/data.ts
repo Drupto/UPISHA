@@ -1,4 +1,4 @@
-import { announcements as staticAnnouncements, eventsTimeline as staticEvents, sampleProfessionals as staticProfessionals, upcomingWebinars as staticWebinars, galleryImages as staticGalleryImages, publications as staticPublications } from '@/lib/static-data'
+import { announcements as staticAnnouncements, eventsTimeline as staticEvents, sampleProfessionals as staticProfessionals, upcomingWebinars as staticWebinars, galleryImages as staticGalleryImages } from '@/lib/static-data'
 import type { Announcement, TimelineEvent, Professional, MemberDoc, ContactMessageDoc, NewsletterSubscriberDoc, Webinar, WebinarRegistrationDoc, Testimonial, GalleryImage, Publication } from '@/lib/types'
 
 // Check if Firebase is configured (using NEXT_PUBLIC_* env vars)
@@ -111,13 +111,13 @@ export async function getGalleryImages(): Promise<GalleryImage[]> {
 }
 
 export async function getPublications(): Promise<Publication[]> {
-  if (!isFirebaseConfigured()) return staticPublications
+  if (!isFirebaseConfigured()) return []
   try {
     const { getPublications: fbGetPublications } = await import('@/lib/firestore')
     const docs = await fbGetPublications()
     if (docs && docs.length > 0) return docs as unknown as Publication[]
-    return staticPublications
+    return []
   } catch {
-    return staticPublications
+    return []
   }
 }

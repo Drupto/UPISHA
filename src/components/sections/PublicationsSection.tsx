@@ -241,9 +241,9 @@ export function PublicationsSection() {
                         UP ISHA, featuring original research, case studies, clinical reports, and review
                         articles in audiology and speech-language pathology.
                       </p>
-                      <div className="space-y-2 mb-4">
-                        <h4 className="font-semibold text-upisha-navy dark:text-white text-sm">Current Issue Highlights:</h4>
-                        {journalItems.length > 0 ? (
+                      {journalItems.length > 0 && (
+                        <div className="space-y-2 mb-4">
+                          <h4 className="font-semibold text-upisha-navy dark:text-white text-sm">Current Issue Highlights:</h4>
                           <ul className="space-y-1.5">
                             {journalItems.map((item, i) => (
                               <li key={item.id || i} className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
@@ -255,23 +255,8 @@ export function PublicationsSection() {
                               </li>
                             ))}
                           </ul>
-                        ) : (
-                          <ul className="space-y-1.5">
-                            <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
-                              <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
-                              Effectiveness of Tele-Audiology in Rural UP
-                            </li>
-                            <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
-                              <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
-                              Language Development in Hindi-Speaking Children
-                            </li>
-                            <li className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
-                              <ChevronRight className="h-4 w-4 text-upisha-teal shrink-0 mt-0.5" />
-                              Cochlear Implant Outcomes: A 5-Year Review
-                            </li>
-                          </ul>
-                        )}
-                      </div>
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-3">
                         <Link href="/publications">
                           <Button size="sm" className="bg-upisha-teal hover:bg-upisha-teal-dark text-white">
