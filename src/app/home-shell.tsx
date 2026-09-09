@@ -16,12 +16,10 @@ import {
   DocumentsSection,
   PublicationsSection,
   WebinarsSection,
-  MemberSpotlightSection,
   JoinSection,
   TestimonialsSection,
   GallerySection,
   NewsletterSection,
-  PartnersSection,
   ContactSection,
   Footer,
   BackToTop,
@@ -193,13 +191,11 @@ export function HomeShell({
         <DocumentsSection />
         <PublicationsSection initialPublications={publications} />
         <WebinarsSection initialWebinars={webinars} />
-        <MemberSpotlightSection />
         <JoinSection />
         <TestimonialsSection initialTestimonials={testimonials} />
         <GallerySection initialImages={galleryImages} />
         <WaveDivider color="#0d7377" />
         <NewsletterSection />
-        <PartnersSection />
         <ContactSection />
       </main>
       <Footer />

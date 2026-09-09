@@ -61,7 +61,10 @@ export function CookieConsent() {
               <Shield className="h-3.5 w-3.5 text-upisha-teal" />
             </div>
             <p className="flex-1 text-[11px] text-gray-700 dark:text-gray-200 leading-tight">
-              We use cookies to enhance your experience.
+              We use cookies to enhance your experience.{' '}
+              <a href="/cookie-policy" className="text-upisha-teal hover:underline font-medium">
+                Learn more
+              </a>
             </p>
             <button
               onClick={decline}

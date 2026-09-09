@@ -182,12 +182,24 @@ export function Footer() {
               © {new Date().getFullYear()} Uttar Pradesh Speech & Hearing Association. All rights
               reserved.
             </p>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <a href="#" className="hover:text-upisha-teal transition-colors">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+              <a href="/privacy-policy" className="hover:text-upisha-teal transition-colors">
                 Privacy Policy
               </a>
-              <a href="#" className="hover:text-upisha-teal transition-colors">
+              <a href="/terms-of-service" className="hover:text-upisha-teal transition-colors">
                 Terms of Service
+              </a>
+              <a href="/refund-policy" className="hover:text-upisha-teal transition-colors">
+                Refund Policy
+              </a>
+              <a href="/cookie-policy" className="hover:text-upisha-teal transition-colors">
+                Cookie Policy
+              </a>
+              <a href="/disclaimer" className="hover:text-upisha-teal transition-colors">
+                Disclaimer
+              </a>
+              <a href="/accessibility" className="hover:text-upisha-teal transition-colors">
+                Accessibility
               </a>
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}

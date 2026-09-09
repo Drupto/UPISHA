@@ -66,9 +66,9 @@ export const features: Feature[] = [
 
 export const executiveCouncil: ExecutiveMember[] = [
   { name: 'Mr. Bhupendra Kumar Mishra', role: 'President', image: '/images/President.jpeg', speciality: 'Audiology' },
+  { name: 'Mr. Priyaveer Chauhan', role: 'Secretary', image: '/images/Secretary.jpeg', speciality: 'Audiologist & Cochlear Implant Specialist' },
   { name: 'Mohd. Kamran Farooq Khan', role: 'Vice President', image: '/images/VIcePresident.png', speciality: 'Speech-Language Pathology' },
   { name: 'Dr. Sankalp Shukla', role: 'Treasurer', image: '/images/Treasurer.png', speciality: 'Speech-Language Pathology' },
-  { name: 'Mr. Priyaveer Chauhan', role: 'Secretary', image: '/images/Secretary.png', speciality: 'Speech-Language Pathology' },
   { name: 'Ms. Sneha Bansal', role: 'Member', image: '/images/MsSnehaBansal.png', speciality: 'Neuro-Audiology' },
   { name: 'Mr. Shiv Shanker Dwivedi', role: 'Member', image: '/images/MrShivShankerDwivedi.png', speciality: 'Pediatric Audiology' },
   { name: 'Mr. Lavkush Mishra', role: 'Member', image: '/images/LavkushMishraMember.png', speciality: '' },

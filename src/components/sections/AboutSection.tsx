@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import type { ReactNode } from 'react'
 import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
 import {
   Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
@@ -20,8 +21,138 @@ import { AnimatedSection } from '@/components/sections'
 import { Badge } from '@/components/ui/badge'
 import { executiveCouncil } from '@/lib/static-data'
 
+/* ─── Leadership Messages (President & Secretary) ─── */
+interface LeadershipSlide {
+  id: string
+  badge: string
+  name: string
+  role: string
+  image: string
+  alt: string
+  body: ReactNode
+}
+
+const leadershipMessages: LeadershipSlide[] = [
+  {
+    id: 'president',
+    badge: "President's Message",
+    name: 'Mr. Bhupendra Kumar Mishra',
+    role: 'President, UP ISHA',
+    image: '/images/President.jpeg',
+    alt: 'Mr. Bhupendra Kumar Mishra',
+    body: (
+      <p className="text-gray-600 dark:text-gray-300 leading-relaxed italic text-base mb-4">
+        &ldquo;It is my privilege to serve as the President of UP ISHA. Our association
+        continues to grow and strengthen, uniting professionals across Uttar Pradesh in
+        our shared commitment to improving communication health. Together, we can ensure
+        that every person with a speech or hearing challenge receives the care they
+        deserve. I invite you to join us in this noble mission.&rdquo;
+      </p>
+    ),
+  },
+  {
+    id: 'secretary',
+    badge: "Secretary's Message",
+    name: 'Mr. Priyaveer Chauhan',
+    role: 'Secretary, UP ISHA',
+    image: '/images/Secretary.jpeg',
+    alt: 'Mr. Priyaveer Chauhan',
+    body: (
+      <>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed italic text-base mb-4">
+          &ldquo;It is my privilege to serve as the Secretary of UP-ISHA and to work
+          alongside dedicated professionals committed to advancing the field of Speech
+          and Hearing Sciences.&rdquo;
+        </p>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
+          From its inception, UP-ISHA has been guided by the Core Motto:&nbsp;
+          <span className="font-medium text-upisha-teal">
+            &ldquo;Working Together for Excellence in Speech and Hearing Sciences.&rdquo;
+          </span>
+        </p>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
+          Our vision is simple yet meaningful &mdash; to promote excellence in
+          knowledge, clinical practice, and professional collaboration so that every
+          patient receives the best possible care and outcomes.
+        </p>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
+          We believe that continuous learning, sharing of expertise, and staying
+          updated with scientific advancements are the foundation of excellence.
+          Through academic initiatives, professional development, and collaborative
+          learning, UP-ISHA strives to create a platform where knowledge translates
+          into better clinical decisions and better patient outcomes.
+        </p>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
+          Our mission becomes even more meaningful when it comes to children with
+          special needs. Every child deserves the right intervention, at the right
+          time, from a knowledgeable and compassionate professional. By strengthening
+          our knowledge and skills, we can make a lasting difference in their
+          communication, development, confidence, and quality of life.
+        </p>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
+          Together, let us learn, grow, share, and serve &mdash; because excellence in
+          knowledge today creates excellence in care tomorrow.
+        </p>
+        <div className="mb-4">
+          <p className="font-semibold text-upisha-navy dark:text-white">&mdash; Secretary, UP-ISHA</p>
+          <p className="text-sm text-upisha-teal font-medium">
+            Working Together for Excellence in Speech and Hearing Sciences
+          </p>
+        </div>
+      </>
+    ),
+  },
+]
+
 /* ─── About Section ─── */
 export function AboutSection() {
+  const [current, setCurrent] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+
+  useEffect(() => {
+    if (isPaused || leadershipMessages.length === 0) return
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % leadershipMessages.length)
+    }, 10000)
+    return () => clearInterval(timer)
+  }, [isPaused])
+
+  const goNext = () => setCurrent((prev) => (prev + 1) % leadershipMessages.length)
+  const goPrev = () => setCurrent((prev) => (prev - 1 + leadershipMessages.length) % leadershipMessages.length)
+
+  // ── Executive Council carousel ──
+  const [councilPage, setCouncilPage] = useState(0)
+  const [councilIsPaused, setCouncilIsPaused] = useState(false)
+  const [perView, setPerView] = useState(3)
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth
+      setPerView(width < 640 ? 1 : width < 1024 ? 2 : 3)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const totalCouncilPages = Math.ceil(executiveCouncil.length / perView)
+
+  // Keep the page index valid when the number of cards per view changes on resize
+  useEffect(() => {
+    setCouncilPage((prev) => (prev >= totalCouncilPages ? 0 : prev))
+  }, [totalCouncilPages])
+
+  useEffect(() => {
+    if (councilIsPaused || totalCouncilPages <= 1) return
+    const timer = setInterval(() => {
+      setCouncilPage((prev) => (prev + 1) % totalCouncilPages)
+    }, 8000)
+    return () => clearInterval(timer)
+  }, [councilIsPaused, totalCouncilPages])
+
+  const goCouncilNext = () => setCouncilPage((prev) => (prev + 1) % totalCouncilPages)
+  const goCouncilPrev = () => setCouncilPage((prev) => (prev - 1 + totalCouncilPages) % totalCouncilPages)
+
   return (
     <AnimatedSection id="about" className="py-16 md:py-20 bg-white dark:bg-gray-900 section-pattern">
       <div className="max-w-7xl mx-auto px-4">
@@ -96,42 +227,84 @@ export function AboutSection() {
            </div>
         </div>
 
-        {/* President's Message - enhanced with avatar */}
-        <div className="mt-16 md:mt-20">
+        {/* Leadership Messages Carousel */}
+        <div
+          className="mt-16 md:mt-20 relative"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          {/* Prev arrow */}
+          <button
+            onClick={goPrev}
+            className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white dark:bg-gray-800 border border-upisha-teal/40 shadow-lg text-upisha-teal hover:bg-upisha-teal hover:text-white flex items-center justify-center transition-colors"
+            aria-label="Previous leadership message"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          {/* Next arrow */}
+          <button
+            onClick={goNext}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white dark:bg-gray-800 border border-upisha-teal/40 shadow-lg text-upisha-teal hover:bg-upisha-teal hover:text-white flex items-center justify-center transition-colors"
+            aria-label="Next leadership message"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+
           <Card className="border-upisha-teal/20 dark:bg-gray-800 dark:border-gray-700 card-gradient-top overflow-hidden">
             <CardContent className="p-0">
-              <div className="flex flex-col md:flex-row">
-                {/* Left: Avatar area with gradient bg */}
-                <div className="md:w-64 shrink-0 bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/15 p-6 md:p-8 flex flex-col items-center justify-center text-center">
-                  <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg mb-3">
-                    <img
-                      src="/images/President.jpeg"
-                      alt="Mr. Bhupendra Kumar Mishra"
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={leadershipMessages[current].id}
+                  initial={{ opacity: 0, x: 60 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -60 }}
+                  transition={{ duration: 0.5 }}
+                  className="flex flex-col md:flex-row"
+                >
+                  {/* Left: Avatar area with gradient bg */}
+                  <div className="md:w-64 shrink-0 bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 dark:from-upisha-teal/20 dark:to-upisha-gold/15 p-6 md:p-8 flex flex-col items-center justify-center text-center">
+                    <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg mb-3">
+                      <img
+                        src={leadershipMessages[current].image}
+                        alt={leadershipMessages[current].alt}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <h4 className="font-bold text-upisha-navy dark:text-white text-sm">
+                      {leadershipMessages[current].name}
+                    </h4>
+                    <p className="text-xs text-upisha-teal font-medium flex items-center gap-1 mt-1">
+                      <Star className="h-3 w-3 fill-upisha-gold text-upisha-gold" />
+                      {leadershipMessages[current].role}
+                    </p>
                   </div>
-                  <h4 className="font-bold text-upisha-navy dark:text-white text-sm">Mr. Bhupendra Kumar Mishra</h4>
-                  <p className="text-xs text-upisha-teal font-medium flex items-center gap-1 mt-1">
-                    <Star className="h-3 w-3 fill-upisha-gold text-upisha-gold" />
-                    President, UP ISHA
-                  </p>
-                </div>
-                {/* Right: Message content */}
-                <div className="flex-1 p-6 md:p-8">
-                  <Badge className="bg-upisha-gold text-white mb-4">President&apos;s Message</Badge>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed italic text-base mb-4">
-                    &ldquo;It is my privilege to serve as the President of UP ISHA. Our association
-                    continues to grow and strengthen, uniting professionals across Uttar Pradesh in
-                    our shared commitment to improving communication health. Together, we can ensure
-                    that every person with a speech or hearing challenge receives the care they
-                    deserve. I invite you to join us in this noble mission.&rdquo;
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="h-px flex-1 bg-gradient-to-r from-upisha-teal/20 to-transparent" />
-                    <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Est. 2024</span>
+                  {/* Right: Message content */}
+                  <div className="flex-1 p-6 md:p-8">
+                    <Badge className="bg-upisha-gold text-white mb-4">
+                      {leadershipMessages[current].badge}
+                    </Badge>
+                    {leadershipMessages[current].body}
+                    <div className="flex items-center gap-3">
+                      <div className="h-px flex-1 bg-gradient-to-r from-upisha-teal/20 to-transparent" />
+                      <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Est. 2024</span>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Slide dots */}
+              <div className="flex justify-center gap-2 pt-6 pb-1">
+                {leadershipMessages.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrent(i)}
+                    className={`h-2.5 rounded-full transition-all duration-300 ${
+                      i === current ? 'w-8 bg-upisha-gold' : 'w-2.5 bg-gray-300 dark:bg-gray-600 hover:bg-upisha-teal'
+                    }`}
+                    aria-label={`Go to message ${i + 1}`}
+                  />
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -146,40 +319,87 @@ export function AboutSection() {
               Meet the dedicated professionals leading UP ISHA
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {executiveCouncil.map((member, i) => (
-              <motion.div
-                key={member.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
+          <div
+            className="relative"
+            onMouseEnter={() => setCouncilIsPaused(true)}
+            onMouseLeave={() => setCouncilIsPaused(false)}
+          >
+            {/* Prev arrow */}
+            {totalCouncilPages > 1 && (
+              <button
+                onClick={goCouncilPrev}
+                className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white dark:bg-gray-800 border border-upisha-teal/40 shadow-lg text-upisha-teal hover:bg-upisha-teal hover:text-white flex items-center justify-center transition-colors"
+                aria-label="Previous council page"
               >
-                <Card className="text-center hover:shadow-lg transition-all duration-300 group overflow-hidden dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border card-lift">
-                  <CardContent className="pt-6 pb-6">
-                    <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-upisha-teal/10 group-hover:border-upisha-teal transition-colors shadow-sm">
-                      {member.image ? (
-                        <img
-                          src={member.image}
-                          alt={member.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full gradient-avatar text-2xl">
-                          {member.name.split(' ').filter(w => w.length > 1).slice(-2).map(w => w[0]).join('')}
-                        </div>
-                      )}
-                    </div>
-                    <h4 className="font-bold text-upisha-navy dark:text-white">{member.name}</h4>
-                    <p className="text-upisha-teal font-medium text-sm">{member.role}</p>
-                    <Badge variant="outline" className="mt-2 text-xs dark:border-gray-600 dark:text-gray-300">
-                      {member.speciality}
-                    </Badge>
-                  </CardContent>
-                </Card>
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            )}
+            {/* Next arrow */}
+            {totalCouncilPages > 1 && (
+              <button
+                onClick={goCouncilNext}
+                className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white dark:bg-gray-800 border border-upisha-teal/40 shadow-lg text-upisha-teal hover:bg-upisha-teal hover:text-white flex items-center justify-center transition-colors"
+                aria-label="Next council page"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            )}
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={councilPage}
+                initial={{ opacity: 0, x: 80 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -80 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {executiveCouncil
+                    .slice(councilPage * perView, councilPage * perView + perView)
+                    .map((member) => (
+                      <Card key={member.name} className="text-center hover:shadow-lg transition-all duration-300 group overflow-hidden dark:bg-gray-800 dark:border-gray-700 card-gradient-top card-gradient-border card-lift">
+                        <CardContent className="pt-6 pb-6">
+                          <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-upisha-teal/10 group-hover:border-upisha-teal transition-colors shadow-sm">
+                            {member.image ? (
+                              <img
+                                src={member.image}
+                                alt={member.name}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full gradient-avatar text-2xl">
+                                {member.name.split(' ').filter(w => w.length > 1).slice(-2).map(w => w[0]).join('')}
+                              </div>
+                            )}
+                          </div>
+                          <h4 className="font-bold text-upisha-navy dark:text-white">{member.name}</h4>
+                          <p className="text-upisha-teal font-medium text-sm">{member.role}</p>
+                          <Badge variant="outline" className="mt-2 text-xs dark:border-gray-600 dark:text-gray-300">
+                            {member.speciality}
+                          </Badge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
               </motion.div>
-            ))}
+            </AnimatePresence>
+
+            {/* Page dots */}
+            {totalCouncilPages > 1 && (
+              <div className="flex justify-center gap-2 mt-8">
+                {Array.from({ length: totalCouncilPages }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCouncilPage(i)}
+                    className={`h-2.5 rounded-full transition-all duration-300 ${
+                      i === councilPage ? 'w-8 bg-upisha-gold' : 'w-2.5 bg-gray-300 dark:bg-gray-600 hover:bg-upisha-teal'
+                    }`}
+                    aria-label={`Go to council page ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
