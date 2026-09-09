@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAnnouncements as fetchAnnouncements } from '@/lib/data'
 import { createAnnouncement } from '@/lib/firestore'
 import { announcementSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function GET(request: NextRequest) {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const announcements = await fetchAnnouncements()
-    return withSecurityHeaders(NextResponse.json({ announcements }))
+    return withCacheHeaders(withSecurityHeaders(NextResponse.json({ announcements })))
   } catch (error) {
     console.error('Error fetching announcements:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch announcements' }, { status: 500 }))

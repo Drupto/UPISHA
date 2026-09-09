@@ -39,12 +39,17 @@ const resolveIcon = (icon: unknown): React.ComponentType<{ className?: string }>
 }
 
 /* ─── Events Timeline Section ─── */
-export default function EventsTimelineSection() {
-  const [events, setEvents] = useState<TimelineEvent[]>([])
-  const [loading, setLoading] = useState(true)
+interface EventsTimelineSectionProps {
+  initialEvents?: TimelineEvent[]
+}
+
+export default function EventsTimelineSection({ initialEvents }: EventsTimelineSectionProps = {}) {
+  const [events, setEvents] = useState<TimelineEvent[]>(initialEvents ?? [])
+  const [loading, setLoading] = useState(!initialEvents)
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null)
 
   useEffect(() => {
+    if (initialEvents) return
     let cancelled = false
     fetch('/api/events')
       .then((r) => r.ok ? r.json() : Promise.reject())

@@ -6,28 +6,47 @@ function isFirebaseConfigured(): boolean {
   return !!(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID && process.env.NEXT_PUBLIC_FIREBASE_API_KEY)
 }
 
+const PUBLIC_CACHE_TTL_MS = 60 * 1000
+const publicDataCache = new Map<string, { value: unknown; expiresAt: number }>()
+
+// In-process TTL cache for public collections. Portable safety net on top of
+// CDN Cache-Control headers: on warm instances this skips the Firestore
+// round-trip entirely (works the same on Netlify and Firebase Hosting).
+async function withPublicDataCache<T>(key: string, loader: () => Promise<T>): Promise<T> {
+  const now = Date.now()
+  const cached = publicDataCache.get(key)
+  if (cached && cached.expiresAt > now) return cached.value as T
+  const value = await loader()
+  publicDataCache.set(key, { value, expiresAt: now + PUBLIC_CACHE_TTL_MS })
+  return value
+}
+
 export async function getAnnouncements(): Promise<Announcement[]> {
   if (!isFirebaseConfigured()) return []
-  try {
-    const { getAnnouncements: fbGetAnnouncements } = await import('@/lib/firestore')
-    const docs = await fbGetAnnouncements()
-    if (docs && docs.length > 0) return docs as Announcement[]
-    return []
-  } catch {
-    return []
-  }
+  return withPublicDataCache('announcements', async () => {
+    try {
+      const { getAnnouncements: fbGetAnnouncements } = await import('@/lib/firestore')
+      const docs = await fbGetAnnouncements()
+      if (docs && docs.length > 0) return docs as Announcement[]
+      return []
+    } catch {
+      return []
+    }
+  })
 }
 
 export async function getEvents(): Promise<TimelineEvent[]> {
   if (!isFirebaseConfigured()) return []
-  try {
-    const { getEvents: fbGetEvents } = await import('@/lib/firestore')
-    const docs = await fbGetEvents()
-    if (docs && docs.length > 0) return docs as TimelineEvent[]
-    return []
-  } catch {
-    return []
-  }
+  return withPublicDataCache('events', async () => {
+    try {
+      const { getEvents: fbGetEvents } = await import('@/lib/firestore')
+      const docs = await fbGetEvents()
+      if (docs && docs.length > 0) return docs as TimelineEvent[]
+      return []
+    } catch {
+      return []
+    }
+  })
 }
 
 export async function getProfessionals(): Promise<Professional[]> {
@@ -66,14 +85,16 @@ export async function getNewsletterSubscribers(): Promise<{ subscribers: Newslet
 
 export async function getWebinars(): Promise<Webinar[]> {
   if (!isFirebaseConfigured()) return []
-  try {
-    const { getWebinars: fbGetWebinars } = await import('@/lib/firestore')
-    const docs = await fbGetWebinars()
-    if (docs && docs.length > 0) return docs as Webinar[]
-    return []
-  } catch {
-    return []
-  }
+  return withPublicDataCache('webinars', async () => {
+    try {
+      const { getWebinars: fbGetWebinars } = await import('@/lib/firestore')
+      const docs = await fbGetWebinars()
+      if (docs && docs.length > 0) return docs as Webinar[]
+      return []
+    } catch {
+      return []
+    }
+  })
 }
 
 export async function getWebinarRegistrations(): Promise<WebinarRegistrationDoc[]> {
@@ -88,36 +109,42 @@ export async function getWebinarRegistrations(): Promise<WebinarRegistrationDoc[
 
 export async function getTestimonials(): Promise<Testimonial[]> {
   if (!isFirebaseConfigured()) return []
-  try {
-    const { getTestimonials: fbGetTestimonials } = await import('@/lib/firestore')
-    const docs = await fbGetTestimonials()
-    return (docs || []) as unknown as Testimonial[]
-  } catch (error) {
-    console.error('Failed to fetch testimonials from Firestore:', error)
-    return []
-  }
+  return withPublicDataCache('testimonials', async () => {
+    try {
+      const { getTestimonials: fbGetTestimonials } = await import('@/lib/firestore')
+      const docs = await fbGetTestimonials()
+      return (docs || []) as unknown as Testimonial[]
+    } catch (error) {
+      console.error('Failed to fetch testimonials from Firestore:', error)
+      return []
+    }
+  })
 }
 
 export async function getGalleryImages(): Promise<GalleryImage[]> {
   if (!isFirebaseConfigured()) return []
-  try {
-    const { getGalleryImages: fbGetGalleryImages } = await import('@/lib/firestore')
-    const docs = await fbGetGalleryImages()
-    if (docs && docs.length > 0) return docs as unknown as GalleryImage[]
-    return []
-  } catch {
-    return []
-  }
+  return withPublicDataCache('galleryImages', async () => {
+    try {
+      const { getGalleryImages: fbGetGalleryImages } = await import('@/lib/firestore')
+      const docs = await fbGetGalleryImages()
+      if (docs && docs.length > 0) return docs as unknown as GalleryImage[]
+      return []
+    } catch {
+      return []
+    }
+  })
 }
 
 export async function getPublications(): Promise<Publication[]> {
   if (!isFirebaseConfigured()) return []
-  try {
-    const { getPublications: fbGetPublications } = await import('@/lib/firestore')
-    const docs = await fbGetPublications()
-    if (docs && docs.length > 0) return docs as unknown as Publication[]
-    return []
-  } catch {
-    return []
-  }
+  return withPublicDataCache('publications', async () => {
+    try {
+      const { getPublications: fbGetPublications } = await import('@/lib/firestore')
+      const docs = await fbGetPublications()
+      if (docs && docs.length > 0) return docs as unknown as Publication[]
+      return []
+    } catch {
+      return []
+    }
+  })
 }

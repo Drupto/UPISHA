@@ -17,15 +17,23 @@ import { useToast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AnimatedSection } from '@/components/sections'
+import type { Testimonial } from '@/lib/types'
 
 /* ─── Testimonials Section ─── */
-export function TestimonialsSection() {
+interface TestimonialsSectionProps {
+  initialTestimonials?: Testimonial[]
+}
+
+export function TestimonialsSection({ initialTestimonials }: TestimonialsSectionProps = {}) {
   const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
-  const [testimonials, setTestimonials] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [testimonials, setTestimonials] = useState<any[]>(() =>
+    (initialTestimonials ?? []).filter((t) => t.isActive !== false)
+  )
+  const [loading, setLoading] = useState(!initialTestimonials)
 
   useEffect(() => {
+    if (initialTestimonials) return
     async function loadTestimonials() {
       try {
         const response = await fetch('/api/testimonials', { cache: 'no-store' })

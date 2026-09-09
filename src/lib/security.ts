@@ -75,6 +75,19 @@ export function withSecurityHeaders(response: NextResponse): NextResponse {
   return response
 }
 
+/**
+ * Platform-agnostic CDN cache headers for public, read-only API responses.
+ * Relies purely on standard HTTP Cache-Control semantics, so it works
+ * identically on Netlify, Firebase Hosting, Vercel, or self-hosted.
+ */
+export function withCacheHeaders(response: NextResponse, sMaxAge = 60): NextResponse {
+  response.headers.set(
+    'Cache-Control',
+    `public, s-maxage=${sMaxAge}, stale-while-revalidate=300`
+  )
+  return response
+}
+
 // Sanitize HTML to prevent XSS.
 // Unicode escapes avoid the editor/formatter decoding the entities.
 export function sanitizeHtml(input: string): string {

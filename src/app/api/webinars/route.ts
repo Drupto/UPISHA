@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getWebinars } from '@/lib/data'
 import { createWebinar, getWebinarRegistrationCount } from '@/lib/firestore'
 import { webinarSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function GET(request: NextRequest) {
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         }
       })
     )
-    return withSecurityHeaders(NextResponse.json({ webinars: webinarsWithCounts }))
+    return withCacheHeaders(withSecurityHeaders(NextResponse.json({ webinars: webinarsWithCounts })))
   } catch (error) {
     console.error('Error fetching webinars:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch webinars' }, { status: 500 }))

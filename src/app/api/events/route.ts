@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getEvents as fetchEvents } from '@/lib/data'
 import { createEvent } from '@/lib/firestore'
 import { eventSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function GET(request: NextRequest) {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const events = await fetchEvents()
-    return withSecurityHeaders(NextResponse.json({ events }))
+    return withCacheHeaders(withSecurityHeaders(NextResponse.json({ events })))
   } catch (error) {
     console.error('Error fetching events:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 }))

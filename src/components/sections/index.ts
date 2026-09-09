@@ -38,5 +38,3 @@ export { ThemeToggle } from './ThemeToggle'
 export { TopBar } from './TopBar'
 export { WaveDivider } from './WaveDivider'
 export { WebinarsSection } from './WebinarsSection'
-
-export { default as Home } from '@/app/page'

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPublications as fetchPublications } from '@/lib/data'
 import { createPublication, updatePublication, deletePublication } from '@/lib/firestore'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { publicationSchema } from '@/lib/validations'
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     const publications = await fetchPublications()
-    return withSecurityHeaders(NextResponse.json({ publications }))
+    return withCacheHeaders(withSecurityHeaders(NextResponse.json({ publications })))
   } catch (error) {
     console.error('Error fetching publications:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch publications' }, { status: 500 }))

@@ -4,11 +4,17 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Megaphone } from 'lucide-react'
 
+interface NewsTickerProps {
+  initialItems?: string[]
+}
+
 /* ─── News Ticker ─── */
-export function NewsTicker() {
-  const [items, setItems] = useState<string[]>([])
+export function NewsTicker({ initialItems = [] }: NewsTickerProps) {
+  const [items, setItems] = useState<string[]>(initialItems)
 
   useEffect(() => {
+    // Skip fetching when server-rendered data is provided
+    if (initialItems.length > 0) return
     let cancelled = false
     fetch('/api/announcements')
       .then((r) => r.ok ? r.json() : Promise.reject())
@@ -20,6 +26,7 @@ export function NewsTicker() {
       })
       .catch(() => {})
     return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (items.length === 0) return null

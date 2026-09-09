@@ -21,12 +21,17 @@ import Link from 'next/link'
 import type { Webinar } from '@/lib/types'
 
 /* ─── Webinars Section ─── */
-export function WebinarsSection() {
-  const [webinars, setWebinars] = useState<Webinar[]>([])
-  const [loading, setLoading] = useState(true)
+interface WebinarsSectionProps {
+  initialWebinars?: Webinar[]
+}
+
+export function WebinarsSection({ initialWebinars }: WebinarsSectionProps = {}) {
+  const [webinars, setWebinars] = useState<Webinar[]>(() => (initialWebinars ?? []).slice(0, 3))
+  const [loading, setLoading] = useState(!initialWebinars)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (initialWebinars) return
     const fetchWebinars = async () => {
       try {
         const res = await fetch('/api/webinars')
@@ -120,7 +125,7 @@ export function WebinarsSection() {
                             Speaker: <span className="font-medium">{webinar.speaker}</span>
                           </p>
                           <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1" suppressHydrationWarning>
                               <Calendar className="h-3.5 w-3.5 text-upisha-gold" />
                               {webinar.date ? new Date(webinar.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date TBD'}
                             </span>

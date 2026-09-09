@@ -21,13 +21,21 @@ interface SidebarEvent {
 }
 
 /* ─── Announcement Section ─── */
-export function AnnouncementSection() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([])
-  const [sidebarEvents, setSidebarEvents] = useState<SidebarEvent[]>([])
-  const [loading, setLoading] = useState(true)
+interface AnnouncementSectionProps {
+  initialAnnouncements?: Announcement[]
+  initialEvents?: TimelineEvent[]
+}
+
+export function AnnouncementSection({ initialAnnouncements, initialEvents }: AnnouncementSectionProps = {}) {
+  const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements ?? [])
+  const [sidebarEvents, setSidebarEvents] = useState<SidebarEvent[]>(() =>
+    (initialEvents ?? []).slice(0, 3).map((e) => ({ title: e.title, date: e.date, location: e.location }))
+  )
+  const [loading, setLoading] = useState(!(initialAnnouncements && initialEvents))
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null)
 
   useEffect(() => {
+    if (initialAnnouncements) return
     let cancelled = false
     fetch('/api/announcements')
       .then((r) => r.ok ? r.json() : Promise.reject())
@@ -47,6 +55,7 @@ export function AnnouncementSection() {
 
   // Fetch events for the News & Events sidebar
   useEffect(() => {
+    if (initialEvents) return
     let cancelled = false
     fetch('/api/events')
       .then((r) => r.ok ? r.json() : Promise.reject())

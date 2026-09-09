@@ -20,17 +20,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AnimatedSection } from '@/components/sections'
 import { Loader2 } from 'lucide-react'
+import type { GalleryImage } from '@/lib/types'
 
 /* ─── Gallery Section ─── */
-export function GallerySection() {
+interface GallerySectionProps {
+  initialImages?: GalleryImage[]
+}
+
+export function GallerySection({ initialImages }: GallerySectionProps = {}) {
   const [selectedImage, setSelectedImage] = useState<{ src: string; index: number } | null>(null)
   const [filter, setFilter] = useState('All')
   const [visibleCount, setVisibleCount] = useState(6)
-  const [galleryImages, setGalleryImages] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [galleryImages, setGalleryImages] = useState<any[]>(initialImages ?? [])
+  const [loading, setLoading] = useState(!initialImages)
   const { toast } = useToast()
 
   useEffect(() => {
+    if (initialImages) return
     async function loadImages() {
       try {
         const response = await fetch('/api/gallery')

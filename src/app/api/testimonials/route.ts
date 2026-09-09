@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getTestimonials as fetchTestimonials } from '@/lib/data'
 import { createTestimonial, updateTestimonial, deleteTestimonial } from '@/lib/firestore'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
-
-export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
     const forwarded = request.headers.get('x-forwarded-for')
     const realIp = request.headers.get('x-real-ip')
     const ip = forwarded ? forwarded.split(',')[0].trim() : realIp || 'anonymous'
-    
+
     if (!rateLimit(`testimonials:${ip}`, 30, 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
     }
 
     const testimonials = await fetchTestimonials()
-    return withSecurityHeaders(NextResponse.json({ testimonials }, { headers: { 'Cache-Control': 'no-store, max-age=0' } }))
+    return withCacheHeaders(withSecurityHeaders(NextResponse.json({ testimonials })))
   } catch (error) {
     console.error('Error fetching testimonials:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch testimonials' }, { status: 500 }))

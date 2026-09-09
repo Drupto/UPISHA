@@ -28,7 +28,7 @@ import { csrfHeaders } from '@/lib/csrf'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-interface PublicationItem {
+export interface PublicationItem {
   id?: string
   title: string
   description: string
@@ -40,9 +40,15 @@ interface PublicationItem {
 }
 
 /* ─── Publications Section ─── */
-export function PublicationsSection() {
-  const [publications, setPublications] = useState<PublicationItem[]>([])
-  const [loading, setLoading] = useState(true)
+interface PublicationsSectionProps {
+  initialPublications?: PublicationItem[]
+}
+
+export function PublicationsSection({ initialPublications }: PublicationsSectionProps = {}) {
+  const [publications, setPublications] = useState<PublicationItem[]>(() =>
+    (initialPublications ?? []).filter((p) => p.isActive !== false)
+  )
+  const [loading, setLoading] = useState(!initialPublications)
   const [submitOpen, setSubmitOpen] = useState(false)
   const [submitType, setSubmitType] = useState<'Journal'>('Journal')
   const [submitting, setSubmitting] = useState(false)
@@ -61,6 +67,7 @@ export function PublicationsSection() {
   })
 
   useEffect(() => {
+    if (initialPublications) return
     async function loadPublications() {
       try {
         const response = await fetch('/api/publications')

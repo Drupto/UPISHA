@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRateLimiter, SimpleCache } from '@/lib/rate-limit'
 import { getMembers, getEvents, getWebinars, getWebinarRegistrations } from '@/lib/data'
+import { withCacheHeaders } from '@/lib/security'
 
 // Rate limiter: 3 requests per 30 seconds per IP
 // Increased from 1 to handle dev mode hot reloads and component remounts
@@ -35,14 +36,14 @@ export async function GET(request: NextRequest) {
   const cacheKey = 'social-proof-notifications'
   const cachedData = cache.get(cacheKey)
   if (cachedData) {
-    return NextResponse.json(cachedData, {
+    return withCacheHeaders(NextResponse.json(cachedData, {
       headers: {
         'X-Cache': 'HIT',
         'X-RateLimit-Limit': '1',
         'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
         'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
       },
-    })
+    }))
   }
 
   try {
@@ -104,14 +105,14 @@ export async function GET(request: NextRequest) {
     // Cache the results
     cache.set(cacheKey, notifications)
 
-    return NextResponse.json(notifications, {
+    return withCacheHeaders(NextResponse.json(notifications, {
       headers: {
         'X-Cache': 'MISS',
         'X-RateLimit-Limit': '1',
         'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
         'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
       },
-    })
+    }))
   } catch (error) {
     console.error('Social proof API error:', error)
     return NextResponse.json(

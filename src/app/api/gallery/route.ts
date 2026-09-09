@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getGalleryImages as fetchGalleryImages } from '@/lib/data'
 import { createGalleryImage, updateGalleryImage, deleteGalleryImage } from '@/lib/firestore'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function GET(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const images = await fetchGalleryImages()
-    return withSecurityHeaders(NextResponse.json({ images }))
+    return withCacheHeaders(withSecurityHeaders(NextResponse.json({ images })))
   } catch (error) {
     console.error('Error fetching gallery images:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch gallery images' }, { status: 500 }))
