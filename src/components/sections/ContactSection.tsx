@@ -349,7 +349,7 @@ export function ContactSection() {
                       <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center uppercase tracking-wider font-medium">
                         Or reach us directly
                       </p>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <a
                           href="tel:+915224567890"
                           className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-upisha-teal/40 hover:bg-upisha-teal/5 dark:hover:bg-upisha-teal/10 transition-all group"
@@ -358,17 +358,6 @@ export function ContactSection() {
                             <PhoneCall className="h-3.5 w-3.5 text-upisha-teal group-hover:text-white transition-colors" />
                           </div>
                           <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-upisha-teal transition-colors">Schedule a Call</span>
-                        </a>
-                        <a
-                          href="https://wa.me/915224567890?text=Hello%20UP%20ISHA%2C%20I%20would%20like%20to%20know%20more%20about%20your%20association."
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-green-400/40 hover:bg-green-50 dark:hover:bg-green-900/10 transition-all group"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center group-hover:bg-green-500 transition-colors">
-                            <MessageSquare className="h-3.5 w-3.5 text-green-600 group-hover:text-white transition-colors" />
-                          </div>
-                          <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-green-600 transition-colors">WhatsApp</span>
                         </a>
                         <a
                           href="mailto:info@upisha.org"
