@@ -81,12 +81,20 @@ export function WebinarsSection({ initialWebinars }: WebinarsSectionProps = {}) 
                 Recorded sessions available
               </div>
             </div>
-            <Link href="/webinars">
-              <Button className="mt-6 bg-upisha-teal hover:bg-upisha-teal-dark text-white">
-                View All Webinars
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Link>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/webinars">
+                <Button className="bg-upisha-teal hover:bg-upisha-teal-dark text-white">
+                  View All Webinars
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+              <Link href="/webinars/lookup">
+                <Button variant="outline" className="border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white">
+                  <Search className="h-4 w-4 mr-2" />
+                  Check Webinar Registration
+                </Button>
+              </Link>
+            </div>
           </div>
           <div className="lg:col-span-2 space-y-4">
             {loading ? (

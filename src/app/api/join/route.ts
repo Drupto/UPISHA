@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 import { createMember, getMembers, createUserRecord } from '@/lib/firestore'
-import { joinSchema } from '@/lib/validations'
+import { joinSchema, JOIN_FIELD_LABELS } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection, getClientIp } from '@/lib/security'
 import { uploadDataUrl } from '@/lib/storage'
 
@@ -155,10 +156,31 @@ export async function POST(request: NextRequest) {
     }, { status: 201 }))
   } catch (err: unknown) {
     console.error('Error creating member:', err)
-    if (err instanceof Error && err.name === 'ZodError') {
-      return withSecurityHeaders(NextResponse.json({ error: 'Invalid input data' }, { status: 400 }))
+    if (err instanceof ZodError) {
+      const fieldOrder = Object.keys(JOIN_FIELD_LABELS)
+      const details = err.issues.map((issue) => {
+        const rawField = issue.path.length > 0 ? String(issue.path[0]) : 'form'
+        const field = rawField in JOIN_FIELD_LABELS ? rawField : 'form'
+        return { field, message: issue.message }
+      }).sort((a, b) => fieldOrder.indexOf(a.field) - fieldOrder.indexOf(b.field))
+      const fieldNames = Array.from(new Set(details.filter((d) => d.field !== 'form').map((d) => JOIN_FIELD_LABELS[d.field] ?? d.field)))
+      return withSecurityHeaders(NextResponse.json({
+        error: fieldNames.length > 0
+          ? `Please fix the following fields: ${fieldNames.join(', ')}`
+          : 'Please fix the highlighted fields and try again.',
+        details,
+      }, { status: 400 }))
     }
     const error = err as Error
+    // Duplicate email gets an actionable message (with a distinct code so the
+    // client can offer a "sign in instead" path) — without it, users get stuck
+    // in a retry loop because the Auth account from attempt #1 already exists.
+    if (error?.message === 'An account with this email already exists') {
+      return withSecurityHeaders(NextResponse.json({
+        error: 'An account with this email already exists. Please sign in instead of submitting a new application.',
+        code: 'EMAIL_EXISTS',
+      }, { status: 409 }))
+    }
     // Return a generic message to prevent email enumeration (H5).
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to submit application' }, { status: 500 }))
   }

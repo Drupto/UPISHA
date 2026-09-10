@@ -44,7 +44,7 @@ export function getOrganizationSchema() {
     },
     image: LOGO_URL,
     description: SITE_DESCRIPTION,
-    foundingDate: "2024",
+    foundingDate: "2025",
     areaServed: {
       "@type": "State",
       name: "Uttar Pradesh",
@@ -61,7 +61,7 @@ export function getOrganizationSchema() {
       "@type": "ContactPoint",
       telephone: "+91-522-456-7890",
       contactType: "customer service",
-      email: "info@upisha.org",
+      email: "office@upisha.org",
       availableLanguage: ["English", "Hindi"],
     },
     sameAs: [
@@ -415,7 +415,7 @@ export const siteConfig = {
     youtube: "https://youtube.com/@upisha",
   },
   contact: {
-    email: "info@upisha.org",
+    email: "office@upisha.org",
     phone: "+91-522-456-7890",
     address: {
       street: "110 Raghu Raj Nagar Patel Nagar",

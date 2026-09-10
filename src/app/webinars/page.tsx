@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Calendar, Clock, User, Monitor, ArrowRight, AlertCircle, Users, BadgeCheck, CreditCard } from 'lucide-react'
+import { Calendar, Clock, User, Monitor, ArrowRight, AlertCircle, Users, BadgeCheck, CreditCard, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -46,6 +46,14 @@ export default function WebinarsPage() {
             Stay updated with the latest professional development webinars from UP ISHA.
             Register for free to secure your spot.
           </p>
+          <div className="mt-6">
+            <Link href="/webinars/lookup">
+              <Button variant="outline" className="border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white">
+                <Search className="h-4 w-4 mr-2" />
+                Check Webinar Registration
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {loading ? (

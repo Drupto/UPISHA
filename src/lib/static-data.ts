@@ -108,16 +108,16 @@ export const membershipBenefits: string[] = [
 ]
 
 export const membershipTypes: MembershipPlan[] = [
-  { type: 'Life Member', price: '₹3,500', description: 'One-time payment for lifetime membership', features: ['All standard benefits', 'Voting rights', 'Conference discounts', 'Journal access', 'Professional Support'], popular: true },
+  { type: 'Life Member', price: '₹2,000', description: 'One-time payment for lifetime membership', features: ['All standard benefits', 'Voting rights', 'Conference discounts', 'Journal access', 'Professional Support'], popular: true },
   { type: 'Annual Member', price: '₹1,000/year', description: 'Annual renewable membership', features: ['Standard benefits', 'Journal access', 'Webinar access', 'Networking', 'Professional Support'], popular: false },
-  { type: 'Student Member', price: '₹500/year', description: 'For current ASLP students in UP', features: ['Student benefits', 'Mentorship program', 'Workshop access', 'Career guidance', 'Professional Support'], popular: false },
+  { type: 'Student Member', price: '₹1,000', description: 'For current ASLP students in UP (Valid for 3 Years)', features: ['Student benefits', 'Mentorship program', 'Workshop access', 'Career guidance', 'Professional Support'], popular: false },
 ]
 
 // Membership fee amounts (in INR) used for auto-generating receipts
 export const membershipFees: Record<string, number> = {
-  life: 3500,
+  life: 2000,
   annual: 1000,
-  student: 500,
+  student: 1000,
 }
 
 export const galleryImages: GalleryImage[] = [
@@ -145,9 +145,9 @@ export const faqItems: FAQ[] = [
 
 export const stats: Stat[] = [
   { value: 550, suffix: '+', label: 'Active Members', icon: Users },
-  { value: 2, suffix: '+', label: 'Years of Service', icon: Activity },
+  { value: 1, suffix: '+', label: 'Years of Service', icon: Activity },
   { value: 15, suffix: '+', label: 'Regional Chapters', icon: Globe },
-  { value: 50, suffix: '+', label: 'Annual Events', icon: Calendar },
+  { value: 50, suffix: '+', label: 'Events', icon: Calendar },
 ]
 
 export const testimonials: Testimonial[] = [

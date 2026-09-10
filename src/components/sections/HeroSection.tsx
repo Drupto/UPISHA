@@ -109,7 +109,7 @@ export function HeroSection() {
                 className="inline-flex items-center gap-1.5 bg-white/10 text-upisha-gold border border-upisha-gold/40 px-2.5 py-1 rounded-full text-[11px] md:text-xs font-semibold mb-5 backdrop-blur-sm"
               >
                 <Star className="h-3 w-3 fill-upisha-gold text-upisha-gold" />
-                Serving Since 2024
+                Serving Since 2025
               </motion.div>
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-5 leading-[1.1] text-shadow-hero">
                 {heroSlides[current].title}

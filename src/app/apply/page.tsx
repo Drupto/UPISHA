@@ -12,9 +12,33 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ToastAction } from '@/components/ui/toast'
 import { membershipTypes } from '@/lib/static-data'
+import { joinSchema, JOIN_FIELD_LABELS } from '@/lib/validations'
 import { AnimatedSection } from '@/components/sections'
 import { csrfHeaders } from '@/lib/csrf'
+
+const JOIN_FIELD_IDS: Record<string, string> = {
+  fullName: 'join-fullname',
+  email: 'join-email',
+  password: 'join-password',
+  phone: 'join-phone',
+  qualification: 'join-qualification',
+  rciNumber: 'join-rci-number',
+  membershipType: 'join-membership-type',
+  course: 'join-course',
+  currentYear: 'join-current-year',
+  city: 'join-city',
+  transactionNumber: 'join-transaction-number',
+  message: 'join-message',
+  address: 'join-address',
+  photoUrl: 'join-photo',
+  rciCertificateUrl: 'join-rci-certificate',
+  registrationDate: 'join-registration-date',
+  declaration: 'join-declaration',
+}
+
+type JoinServerError = { field: string; message: string }
 
 const defaultFormData = {
   fullName: '',
@@ -41,6 +65,9 @@ export default function ApplyPage() {
   const { toast } = useToast()
   const [formData, setFormData] = useState(defaultFormData)
   const [joinTouched, setJoinTouched] = useState<Record<string, boolean>>({})
+  const [joinServerErrors, setJoinServerErrors] = useState<Record<string, string>>({})
+  const [photoUploadError, setPhotoUploadError] = useState<string | null>(null)
+  const [rciUploadError, setRciUploadError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [showRestored, setShowRestored] = useState(false)
@@ -53,32 +80,65 @@ export default function ApplyPage() {
   if (joinTouched.fullName && formData.fullName.trim().length < 2) joinErrors.fullName = 'Name must be at least 2 characters'
   if (joinTouched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) joinErrors.email = 'Please enter a valid email address'
   if (joinTouched.password && formData.password.length < 8) joinErrors.password = 'Password must be at least 8 characters'
+  else if (joinTouched.password && formData.password.length >= 8 && !/[A-Z]/.test(formData.password)) joinErrors.password = 'Password must contain at least one uppercase letter (A–Z)'
+  else if (joinTouched.password && formData.password.length >= 8 && !/[a-z]/.test(formData.password)) joinErrors.password = 'Password must contain at least one lowercase letter (a–z)'
+  else if (joinTouched.password && formData.password.length >= 8 && !/[0-9]/.test(formData.password)) joinErrors.password = 'Password must contain at least one number (0–9)'
   if (joinTouched.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) joinErrors.phone = 'Please enter a valid 10-digit phone number'
   if (joinTouched.city && formData.city.trim().length === 0) joinErrors.city = 'City is required'
   if (joinTouched.transactionNumber && formData.transactionNumber.trim().length < 2) joinErrors.transactionNumber = 'Transaction number is required'
   if (joinTouched.membershipType && !formData.membershipType) joinErrors.membershipType = 'Please select a membership type'
   if (joinTouched.address && formData.address.trim().length < 5) joinErrors.address = 'Address must be at least 5 characters'
+  if (joinTouched.qualification && formData.qualification.trim().length < 2) joinErrors.qualification = 'Qualification is required'
+  if (joinTouched.course && formData.course.trim().length < 2) joinErrors.course = 'Course is required for student members'
+  if (joinTouched.currentYear && !formData.currentYear) joinErrors.currentYear = 'Please select your current year of study'
   if (joinTouched.declaration && !formData.declaration) joinErrors.declaration = 'You must accept the declaration to submit'
+  if (joinTouched.photoUrl && !formData.photoUrl) joinErrors.photoUrl = 'Please upload your photo'
+
+  // Server-side errors (from the last submit attempt) merge with the live
+  // client-side checks so the exact failing field stays highlighted.
+  const allJoinErrors: Record<string, string> = { ...joinServerErrors, ...joinErrors }
+
+  const scrollToJoinField = (field: string) => {
+    const id = JOIN_FIELD_IDS[field]
+    if (!id) return
+    const el = document.getElementById(id)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      const focusable = el.querySelector('input, textarea, button')
+      if (focusable instanceof HTMLElement) focusable.focus({ preventScroll: true })
+      else if (el instanceof HTMLElement) el.focus({ preventScroll: true })
+    }
+  }
 
   const joinValid: Record<string, boolean> = {
     fullName: formData.fullName.trim().length >= 2,
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email),
-    password: formData.password.length >= 8,
+    password: formData.password.length >= 8 && /[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) && /[0-9]/.test(formData.password),
     phone: /^\d{10}$/.test(formData.phone.replace(/\D/g, '')),
     city: formData.city.trim().length > 0,
     transactionNumber: formData.transactionNumber.trim().length >= 2,
     membershipType: !!formData.membershipType,
     address: formData.address.trim().length >= 5,
     declaration: formData.declaration === true,
+    photoUrl: !!formData.photoUrl,
   }
 
   const joinFieldClass = (field: string) => {
     const touched = joinTouched[field]
-    const error = joinErrors[field]
+    const error = allJoinErrors[field]
     const valid = joinValid[field]
-    if (touched && error) return 'border-red-400 dark:border-red-500 focus-visible:border-red-500'
+    if (error && (touched || joinServerErrors[field])) return 'border-red-400 dark:border-red-500 focus-visible:border-red-500'
     if (touched && valid) return 'border-green-400 dark:border-green-500 focus-visible:border-green-400'
     return 'input-focus-ring'
+  }
+
+  const clearJoinServerError = (field: string) => {
+    setJoinServerErrors((prev) => {
+      if (!(field in prev)) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
   }
 
   useEffect(() => {
@@ -124,21 +184,29 @@ export default function ApplyPage() {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 5 * 1024 * 1024) {
+      const message = 'Photo must be less than 5MB — please choose a smaller image.'
+      setPhotoUploadError(message)
+      setJoinTouched((prev) => ({ ...prev, photoUrl: true }))
       toast({
-        title: 'File too large',
-        description: 'Photo must be less than 5MB',
+        title: 'Photo too large',
+        description: message,
         variant: 'destructive',
       })
       return
     }
     if (!file.type.startsWith('image/')) {
+      const message = 'Please upload an image file (JPEG, PNG, or WebP) for your photo.'
+      setPhotoUploadError(message)
+      setJoinTouched((prev) => ({ ...prev, photoUrl: true }))
       toast({
-        title: 'Invalid file type',
-        description: 'Please upload an image file',
+        title: 'Invalid photo type',
+        description: message,
         variant: 'destructive',
       })
       return
     }
+    setPhotoUploadError(null)
+    clearJoinServerError('photoUrl')
     const base64 = await handleFileToBase64(file, 'photoUrl')
     setPhotoPreview(base64)
     setFormData({ ...formData, photoUrl: base64 })
@@ -148,13 +216,26 @@ export default function ApplyPage() {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 10 * 1024 * 1024) {
+      const message = 'RCI certificate must be less than 10MB — please choose a smaller file.'
+      setRciUploadError(message)
       toast({
-        title: 'File too large',
-        description: 'RCI certificate must be less than 10MB',
+        title: 'Certificate too large',
+        description: message,
         variant: 'destructive',
       })
       return
     }
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      const message = 'RCI certificate must be an image (JPEG/PNG) or a PDF file.'
+      setRciUploadError(message)
+      toast({
+        title: 'Invalid certificate type',
+        description: message,
+        variant: 'destructive',
+      })
+      return
+    }
+    setRciUploadError(null)
     const base64 = await handleFileToBase64(file, 'rciCertificateUrl')
     setRciPreview(base64)
     setFormData({ ...formData, rciCertificateUrl: base64 })
@@ -162,22 +243,37 @@ export default function ApplyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.membershipType) {
+    // Validate the whole form against the same schema the API enforces, so
+    // the user sees exactly which fields are wrong *before* anything is sent.
+    const parsed = joinSchema.safeParse(formData)
+    if (!parsed.success) {
+      const fieldOrder = Object.keys(JOIN_FIELD_LABELS)
+      const serverErrors: Record<string, string> = {}
+      const touchedAll: Record<string, boolean> = {}
+      for (const issue of parsed.error.issues) {
+        const rawField = issue.path.length > 0 ? String(issue.path[0]) : 'form'
+        const field = rawField in JOIN_FIELD_LABELS ? rawField : 'form'
+        if (!(field in serverErrors)) serverErrors[field] = issue.message
+        touchedAll[field] = true
+      }
+      setJoinServerErrors(serverErrors)
+      setJoinTouched((prev) => ({ ...prev, ...touchedAll }))
+      const fields = Object.keys(serverErrors).filter((f) => f !== 'form').sort(
+        (a, b) => fieldOrder.indexOf(a) - fieldOrder.indexOf(b)
+      )
+      const labels = fields.map((f) => JOIN_FIELD_LABELS[f] ?? f)
       toast({
-        title: 'Membership type required',
-        description: 'Please select a membership type before submitting.',
+        title: `Please fix ${fields.length} field${fields.length > 1 ? 's' : ''}`,
+        description: labels.length > 0 ? `Needs attention: ${labels.join(', ')}` : 'Please fix the highlighted fields and try again.',
         variant: 'destructive',
       })
+      if (fields.length > 0) {
+        // Let the inline errors render before scrolling to the first one.
+        setTimeout(() => scrollToJoinField(fields[0]), 50)
+      }
       return
     }
-    if (!formData.declaration) {
-      toast({
-        title: 'Declaration required',
-        description: 'Please accept the declaration to submit your application.',
-        variant: 'destructive',
-      })
-      return
-    }
+    setJoinServerErrors({})
     setIsSubmitting(true)
     try {
       const res = await fetch('/api/join', {
@@ -194,12 +290,61 @@ export default function ApplyPage() {
           description: data.message || 'Account created! Please check your email to verify your account.',
         })
       } else {
-        const errData = await res.json().catch(() => ({}))
-        toast({
-          title: 'Submission failed',
-          description: errData.error || 'Please try again or contact us directly.',
-          variant: 'destructive',
-        })
+        const errData = await res.json().catch(() => ({})) as {
+          error?: string
+          code?: string
+          details?: JoinServerError[]
+        }
+        if (errData.code === 'EMAIL_EXISTS') {
+          toast({
+            title: 'Email already registered',
+            description: 'An account with this email already exists — please sign in to your member portal instead of applying again.',
+            variant: 'destructive',
+            action: (
+              <ToastAction altText="Go to login" onClick={() => router.push('/login')}>
+                Go to Login
+              </ToastAction>
+            ),
+          })
+        } else if (Array.isArray(errData.details) && errData.details.length > 0) {
+          const serverErrors: Record<string, string> = {}
+          const touchedAll: Record<string, boolean> = {}
+          for (const d of errData.details) {
+            if (d.field && !(d.field in serverErrors)) {
+              serverErrors[d.field] = d.message || 'Invalid value'
+              touchedAll[d.field] = true
+            }
+          }
+          setJoinServerErrors(serverErrors)
+          setJoinTouched((prev) => ({ ...prev, ...touchedAll }))
+          const fieldOrder = Object.keys(JOIN_FIELD_LABELS)
+          const fields = Object.keys(serverErrors).filter((f) => f !== 'form').sort(
+            (a, b) => fieldOrder.indexOf(a) - fieldOrder.indexOf(b)
+          )
+          const fieldSummary = fields.length > 0
+            ? `Needs attention: ${fields.map((f) => JOIN_FIELD_LABELS[f] ?? f).join(', ')}`
+            : 'Please fix the highlighted fields and try again.'
+          toast({
+            title: 'Please fix the highlighted fields',
+            description: errData.error && !/invalid input data/i.test(errData.error) ? errData.error : fieldSummary,
+            variant: 'destructive',
+          })
+          if (fields.length > 0) {
+            setTimeout(() => scrollToJoinField(fields[0]), 50)
+          }
+        } else if (res.status === 429) {
+          toast({
+            title: 'Too many attempts',
+            description: errData.error || 'You have tried too many times. Please wait a while and try again later.',
+            variant: 'destructive',
+          })
+        } else {
+          toast({
+            title: 'Submission failed',
+            description: errData.error || 'Please try again or contact us directly.',
+            variant: 'destructive',
+          })
+        }
       }
     } catch {
       toast({
@@ -214,6 +359,10 @@ export default function ApplyPage() {
 
   const handleClearForm = () => {
     setFormData(defaultFormData)
+    setJoinServerErrors({})
+    setJoinTouched({})
+    setPhotoUploadError(null)
+    setRciUploadError(null)
     setPhotoPreview(null)
     setRciPreview(null)
     localStorage.removeItem('upisha-join-form')
@@ -315,13 +464,13 @@ export default function ApplyPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Photo Upload */}
-                <div>
+                <div id="join-photo" className="scroll-mt-32">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
-                    Photo
+                    Photo *
                   </label>
                   <div className="flex items-center gap-4">
                     <div
-                      className="w-20 h-20 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-pointer hover:border-upisha-teal transition-colors"
+                      className={`w-20 h-20 rounded-full border-2 border-dashed flex items-center justify-center overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-pointer transition-colors ${allJoinErrors.photoUrl ? 'border-red-400 dark:border-red-500' : 'border-gray-300 dark:border-gray-600 hover:border-upisha-teal'}`}
                       onClick={() => photoInputRef.current?.click()}
                     >
                       {photoPreview ? (
@@ -349,37 +498,40 @@ export default function ApplyPage() {
                         {photoPreview ? 'Change Photo' : 'Upload Photo'}
                       </Button>
                       <p className="text-[10px] text-gray-400 mt-1">Max 5MB. JPEG, PNG, or WebP.</p>
+                      {photoUploadError && <p role="alert" className="text-xs text-red-500 mt-1">{photoUploadError}</p>}
+                      {allJoinErrors.photoUrl && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.photoUrl}</p>}
                     </div>
                   </div>
                 </div>
 
                 {/* Membership Plan */}
-                <div>
+                <div id="join-membership-type" className="scroll-mt-32">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                     Select Membership Plan *
                   </label>
                   <Select
                     value={formData.membershipType}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
                       setFormData({ ...formData, membershipType: value })
-                    }
+                      clearJoinServerError('membershipType')
+                    }}
                     onOpenChange={() => setJoinTouched((prev) => ({ ...prev, membershipType: true }))}
                   >
-                    <SelectTrigger className={`w-full ${joinTouched.membershipType && joinErrors.membershipType ? 'border-red-400' : joinTouched.membershipType && joinValid.membershipType ? 'border-green-400' : ''}`}>
+                    <SelectTrigger className={`w-full ${allJoinErrors.membershipType ? 'border-red-400' : joinTouched.membershipType && joinValid.membershipType ? 'border-green-400' : ''}`}>
                       <SelectValue placeholder="Choose a plan" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="life">Life Member - ₹3,500</SelectItem>
+                      <SelectItem value="life">Life Member - ₹2,000</SelectItem>
                       <SelectItem value="annual">Annual Member - ₹1,000/year</SelectItem>
-                      <SelectItem value="student">Student Member - ₹500/year</SelectItem>
+                      <SelectItem value="student">Student Member - ₹1,000 (Valid for 3 Years)</SelectItem>
                     </SelectContent>
                   </Select>
-                  {joinTouched.membershipType && joinErrors.membershipType && <p className="text-xs text-red-500 mt-1">{joinErrors.membershipType}</p>}
+                  {allJoinErrors.membershipType && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.membershipType}</p>}
                 </div>
 
                 {/* Name & Email */}
                 <div className="grid sm:grid-cols-2 gap-5">
-                  <div>
+                  <div id="join-fullname" className="scroll-mt-32">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                       Full Name *
                     </label>
@@ -388,18 +540,19 @@ export default function ApplyPage() {
                         required
                         placeholder="Dr. Your Name"
                         value={formData.fullName}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setFormData({ ...formData, fullName: e.target.value })
-                        }
+                          clearJoinServerError('fullName')
+                        }}
                         onBlur={() => setJoinTouched((prev) => ({ ...prev, fullName: true }))}
                         className={joinFieldClass('fullName')}
                       />
                       {joinTouched.fullName && joinValid.fullName && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
-                      {joinTouched.fullName && joinErrors.fullName && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                      {allJoinErrors.fullName && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
                     </div>
-                    {joinTouched.fullName && joinErrors.fullName && <p className="text-xs text-red-500 mt-1">{joinErrors.fullName}</p>}
+                    {allJoinErrors.fullName && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.fullName}</p>}
                   </div>
-                  <div>
+                  <div id="join-email" className="scroll-mt-32">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                       Email *
                     </label>
@@ -409,19 +562,22 @@ export default function ApplyPage() {
                         type="email"
                         placeholder="you@example.com"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value })
+                          clearJoinServerError('email')
+                        }}
                         onBlur={() => setJoinTouched((prev) => ({ ...prev, email: true }))}
                         className={joinFieldClass('email')}
                       />
                       {joinTouched.email && joinValid.email && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
-                      {joinTouched.email && joinErrors.email && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                      {allJoinErrors.email && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
                     </div>
-                    {joinTouched.email && joinErrors.email && <p className="text-xs text-red-500 mt-1">{joinErrors.email}</p>}
+                    {allJoinErrors.email && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.email}</p>}
                   </div>
                 </div>
 
                 {/* Password */}
-                <div>
+                <div id="join-password" className="scroll-mt-32">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                     Create Password *
                   </label>
@@ -431,22 +587,23 @@ export default function ApplyPage() {
                       type="password"
                       placeholder="At least 8 characters"
                       value={formData.password}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({ ...formData, password: e.target.value })
-                      }
+                        clearJoinServerError('password')
+                      }}
                       onBlur={() => setJoinTouched((prev) => ({ ...prev, password: true }))}
                       className={joinFieldClass('password')}
                     />
                     {joinTouched.password && joinValid.password && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
-                    {joinTouched.password && joinErrors.password && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                    {allJoinErrors.password && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
                   </div>
-                  {joinTouched.password && joinErrors.password && <p className="text-xs text-red-500 mt-1">{joinErrors.password}</p>}
-                  <p className="text-[10px] text-gray-400 mt-1">This password will be used to log into your account. A verification email will be sent.</p>
+                  {allJoinErrors.password && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.password}</p>}
+                  <p className="text-[10px] text-gray-400 mt-1">Min 8 characters with at least one uppercase letter (A–Z), one lowercase letter (a–z) and one number (0–9). This password will be used to log into your account. A verification email will be sent.</p>
                 </div>
 
                 {/* Phone & City */}
                 <div className="grid sm:grid-cols-2 gap-5">
-                  <div>
+                  <div id="join-phone" className="scroll-mt-32">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                       Phone *
                     </label>
@@ -456,16 +613,19 @@ export default function ApplyPage() {
                         type="tel"
                         placeholder="+91-XXXXXXXXXX"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, phone: e.target.value })
+                          clearJoinServerError('phone')
+                        }}
                         onBlur={() => setJoinTouched((prev) => ({ ...prev, phone: true }))}
                         className={joinFieldClass('phone')}
                       />
                       {joinTouched.phone && joinValid.phone && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
-                      {joinTouched.phone && joinErrors.phone && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                      {allJoinErrors.phone && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
                     </div>
-                    {joinTouched.phone && joinErrors.phone && <p className="text-xs text-red-500 mt-1">{joinErrors.phone}</p>}
+                    {allJoinErrors.phone && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.phone}</p>}
                   </div>
-                  <div>
+                  <div id="join-city" className="scroll-mt-32">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                       City *
                     </label>
@@ -474,19 +634,22 @@ export default function ApplyPage() {
                         required
                         placeholder="Lucknow"
                         value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, city: e.target.value })
+                          clearJoinServerError('city')
+                        }}
                         onBlur={() => setJoinTouched((prev) => ({ ...prev, city: true }))}
                         className={joinFieldClass('city')}
                       />
                       {joinTouched.city && joinValid.city && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
-                      {joinTouched.city && joinErrors.city && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                      {allJoinErrors.city && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
                     </div>
-                    {joinTouched.city && joinErrors.city && <p className="text-xs text-red-500 mt-1">{joinErrors.city}</p>}
+                    {allJoinErrors.city && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.city}</p>}
                   </div>
                 </div>
 
                 {/* Address */}
-                <div>
+                <div id="join-address" className="scroll-mt-32">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                     Address *
                   </label>
@@ -495,19 +658,22 @@ export default function ApplyPage() {
                       required
                       placeholder="Full address with street, city, state, and pincode"
                       value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, address: e.target.value })
+                        clearJoinServerError('address')
+                      }}
                       onBlur={() => setJoinTouched((prev) => ({ ...prev, address: true }))}
                       rows={3}
                       className={joinFieldClass('address')}
                     />
                     {joinTouched.address && joinValid.address && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-green-500" />}
-                    {joinTouched.address && joinErrors.address && <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-red-500" />}
+                    {allJoinErrors.address && <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-red-500" />}
                   </div>
-                  {joinTouched.address && joinErrors.address && <p className="text-xs text-red-500 mt-1">{joinErrors.address}</p>}
+                  {allJoinErrors.address && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.address}</p>}
                 </div>
 
                 {/* Qualification */}
-                <div>
+                <div id="join-qualification" className="scroll-mt-32">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                     Qualification *
                   </label>
@@ -515,17 +681,20 @@ export default function ApplyPage() {
                     required
                     placeholder="M.Sc. (Audiology)"
                     value={formData.qualification}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({ ...formData, qualification: e.target.value })
-                    }
-                    className="input-focus-ring"
+                      clearJoinServerError('qualification')
+                    }}
+                    onBlur={() => setJoinTouched((prev) => ({ ...prev, qualification: true }))}
+                    className={joinFieldClass('qualification')}
                   />
+                  {allJoinErrors.qualification && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.qualification}</p>}
                 </div>
 
                 {/* Course & Current Year - Only for students */}
                 {formData.membershipType === 'student' && (
                   <div className="grid sm:grid-cols-2 gap-5">
-                    <div>
+                    <div id="join-course" className="scroll-mt-32">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Course *
                       </label>
@@ -533,23 +702,28 @@ export default function ApplyPage() {
                         required
                         placeholder="e.g. B.Sc. Audiology"
                         value={formData.course}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setFormData({ ...formData, course: e.target.value })
-                        }
-                        className="input-focus-ring"
+                          clearJoinServerError('course')
+                        }}
+                        onBlur={() => setJoinTouched((prev) => ({ ...prev, course: true }))}
+                        className={joinFieldClass('course')}
                       />
+                      {allJoinErrors.course && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.course}</p>}
                     </div>
-                    <div>
+                    <div id="join-current-year" className="scroll-mt-32">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         Current Year *
                       </label>
                       <Select
                         value={formData.currentYear}
-                        onValueChange={(value) =>
+                        onValueChange={(value) => {
                           setFormData({ ...formData, currentYear: value })
-                        }
+                          setJoinTouched((prev) => ({ ...prev, currentYear: true }))
+                          clearJoinServerError('currentYear')
+                        }}
                       >
-                        <SelectTrigger className="w-full input-focus-ring">
+                        <SelectTrigger className={`w-full ${allJoinErrors.currentYear ? 'border-red-400' : ''}`}>
                           <SelectValue placeholder="Select year" />
                         </SelectTrigger>
                         <SelectContent>
@@ -559,6 +733,7 @@ export default function ApplyPage() {
                           <SelectItem value="4">4th Year</SelectItem>
                         </SelectContent>
                       </Select>
+                      {allJoinErrors.currentYear && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.currentYear}</p>}
                     </div>
                   </div>
                 )}
@@ -583,7 +758,7 @@ export default function ApplyPage() {
                     </div>
 
                     {/* RCI Certificate Upload */}
-                    <div>
+                    <div id="join-rci-certificate" className="scroll-mt-32">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                         RCI Certificate
                       </label>
@@ -617,6 +792,7 @@ export default function ApplyPage() {
                             {rciPreview ? 'Change Certificate' : 'Upload Certificate'}
                           </Button>
                           <p className="text-[10px] text-gray-400 mt-1">Max 10MB. Image or PDF.</p>
+                          {rciUploadError && <p role="alert" className="text-xs text-red-500 mt-1">{rciUploadError}</p>}
                         </div>
                       </div>
                     </div>
@@ -659,7 +835,7 @@ export default function ApplyPage() {
                 </div>
 
                 {/* Transaction Number */}
-                <div>
+                <div id="join-transaction-number" className="scroll-mt-32">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
                     Transaction Number *
                   </label>
@@ -667,17 +843,18 @@ export default function ApplyPage() {
                     required
                     placeholder="Enter payment transaction / reference number"
                     value={formData.transactionNumber}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({ ...formData, transactionNumber: e.target.value })
-                    }
+                      clearJoinServerError('transactionNumber')
+                    }}
                     onBlur={() => setJoinTouched((prev) => ({ ...prev, transactionNumber: true }))}
                     className={joinFieldClass('transactionNumber')}
                   />
-                  {joinTouched.transactionNumber && joinErrors.transactionNumber && <p className="text-xs text-red-500 mt-1">{joinErrors.transactionNumber}</p>}
+                  {allJoinErrors.transactionNumber && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.transactionNumber}</p>}
                 </div>
 
                 {/* Declaration */}
-                <div className="p-4 rounded-lg bg-upisha-teal/5 border border-upisha-teal/20">
+                <div id="join-declaration" className={`scroll-mt-32 p-4 rounded-lg bg-upisha-teal/5 border ${allJoinErrors.declaration ? 'border-red-400' : 'border-upisha-teal/20'}`}>
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
@@ -685,6 +862,7 @@ export default function ApplyPage() {
                       onChange={(e) => {
                         setFormData({ ...formData, declaration: e.target.checked })
                         setJoinTouched((prev) => ({ ...prev, declaration: true }))
+                        clearJoinServerError('declaration')
                       }}
                       className="mt-0.5 h-4 w-4 rounded border-gray-300 text-upisha-teal focus:ring-upisha-teal"
                     />
@@ -692,7 +870,7 @@ export default function ApplyPage() {
                       I declare that the information provided above is true and correct, and I consent to UP ISHA using my details for membership purposes
                     </span>
                   </label>
-                  {joinTouched.declaration && joinErrors.declaration && <p className="text-xs text-red-500 mt-2 ml-7">{joinErrors.declaration}</p>}
+                  {allJoinErrors.declaration && <p role="alert" className="text-xs text-red-500 mt-2 ml-7">{allJoinErrors.declaration}</p>}
                 </div>
 
                 {/* Submit Buttons */}

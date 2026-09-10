@@ -67,11 +67,11 @@ export function Navbar({
                 className="h-full w-full object-contain"
               />
             </div>
-            <div className="hidden sm:block">
+            <div className="block min-w-0">
               <div className="font-bold text-upisha-navy dark:text-white text-sm md:text-base leading-tight">
                 UP ISHA
               </div>
-              <div className="text-[10px] md:text-xs text-upisha-teal font-medium leading-tight">
+              <div className="text-[10px] md:text-xs text-upisha-teal font-medium leading-tight whitespace-nowrap">
                 Speech & Hearing Association
               </div>
             </div>

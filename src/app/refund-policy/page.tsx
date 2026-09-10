@@ -65,7 +65,7 @@ export default function RefundPolicyPage() {
       <PolicySection title="4. How to Request a Cancellation or Refund">
         <p>To cancel or request a refund, please contact us at:</p>
         <ul className="list-disc pl-5 space-y-2">
-          <PolicyListItem>Email: info@upisha.org</PolicyListItem>
+          <PolicyListItem>Email: office@upisha.org</PolicyListItem>
           <PolicyListItem>
             Please include your full name, the email used for the transaction, and the receipt or
             transaction number (if available).
@@ -117,7 +117,7 @@ export default function RefundPolicyPage() {
       <PolicySection title="8. Contact for Refund Queries">
         <p>
           For any question about this policy or a specific refund, contact us at{' '}
-          <a href="mailto:info@upisha.org" className="text-upisha-teal hover:underline">info@upisha.org</a>{' '}
+          <a href="mailto:office@upisha.org" className="text-upisha-teal hover:underline">office@upisha.org</a>{' '}
           or by post at 110 Raghu Raj Nagar, Patel Nagar, Lucknow - 226016, Uttar Pradesh, India.
         </p>
       </PolicySection>

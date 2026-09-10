@@ -65,40 +65,12 @@ const leadershipMessages: LeadershipSlide[] = [
           and Hearing Sciences.&rdquo;
         </p>
         <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
-          From its inception, UP-ISHA has been guided by the Core Motto:&nbsp;
-          <span className="font-medium text-upisha-teal">
-            &ldquo;Working Together for Excellence in Speech and Hearing Sciences.&rdquo;
-          </span>
-        </p>
-        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
-          Our vision is simple yet meaningful &mdash; to promote excellence in
-          knowledge, clinical practice, and professional collaboration so that every
-          patient receives the best possible care and outcomes.
-        </p>
-        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
           We believe that continuous learning, sharing of expertise, and staying
           updated with scientific advancements are the foundation of excellence.
           Through academic initiatives, professional development, and collaborative
           learning, UP-ISHA strives to create a platform where knowledge translates
           into better clinical decisions and better patient outcomes.
         </p>
-        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
-          Our mission becomes even more meaningful when it comes to children with
-          special needs. Every child deserves the right intervention, at the right
-          time, from a knowledgeable and compassionate professional. By strengthening
-          our knowledge and skills, we can make a lasting difference in their
-          communication, development, confidence, and quality of life.
-        </p>
-        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
-          Together, let us learn, grow, share, and serve &mdash; because excellence in
-          knowledge today creates excellence in care tomorrow.
-        </p>
-        <div className="mb-4">
-          <p className="font-semibold text-upisha-navy dark:text-white">&mdash; Secretary, UP-ISHA</p>
-          <p className="text-sm text-upisha-teal font-medium">
-            Working Together for Excellence in Speech and Hearing Sciences
-          </p>
-        </div>
       </>
     ),
   },
@@ -109,11 +81,19 @@ export function AboutSection() {
   const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
 
+  // Hover-pause should only apply on devices with a real mouse/trackpad.
+  // On touch screens a tap synthesizes mouseenter without a matching
+  // mouseleave, which would latch the carousel in a permanently paused state.
+  const canHover = useMemo(
+    () => (typeof window !== 'undefined' ? window.matchMedia('(hover: hover)').matches : false),
+    []
+  )
+
   useEffect(() => {
     if (isPaused || leadershipMessages.length === 0) return
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % leadershipMessages.length)
-    }, 10000)
+    }, 4000)
     return () => clearInterval(timer)
   }, [isPaused])
 
@@ -146,7 +126,7 @@ export function AboutSection() {
     if (councilIsPaused || totalCouncilPages <= 1) return
     const timer = setInterval(() => {
       setCouncilPage((prev) => (prev + 1) % totalCouncilPages)
-    }, 8000)
+    }, 4000)
     return () => clearInterval(timer)
   }, [councilIsPaused, totalCouncilPages])
 
@@ -169,7 +149,7 @@ export function AboutSection() {
             </div>
             {/* Stats overlay - improved dark mode */}
             <div className="absolute -bottom-6 -right-6 md:right-6 bg-upisha-teal text-white rounded-xl p-5 shadow-lg ring-4 ring-white/20 dark:ring-gray-900/20">
-              <div className="text-3xl font-bold">2+</div>
+              <div className="text-3xl font-bold">1+</div>
               <div className="text-sm opacity-90">Years of Service</div>
             </div>
             <div className="absolute -top-4 -left-4 md:left-6 bg-upisha-gold text-white rounded-xl p-4 shadow-lg ring-4 ring-white/20 dark:ring-gray-900/20">
@@ -188,7 +168,7 @@ export function AboutSection() {
             <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed mb-4">
               The Uttar Pradesh Speech & Hearing Association (UP ISHA) is the premier professional
               body representing audiologists and speech-language pathologists in Uttar Pradesh,
-              India. Established in 2024, UP ISHA has been at the forefront of advancing the
+              India. Established in 2025, UP ISHA has been at the forefront of advancing the
               professions of audiology and speech-language pathology in the state.
             </p>
             <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed mb-6">
@@ -230,8 +210,8 @@ export function AboutSection() {
         {/* Leadership Messages Carousel */}
         <div
           className="mt-16 md:mt-20 relative"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
+          onMouseEnter={() => canHover && setIsPaused(true)}
+          onMouseLeave={() => canHover && setIsPaused(false)}
         >
           {/* Prev arrow */}
           <button
@@ -278,6 +258,13 @@ export function AboutSection() {
                       <Star className="h-3 w-3 fill-upisha-gold text-upisha-gold" />
                       {leadershipMessages[current].role}
                     </p>
+                    <a
+                      href={`mailto:${leadershipMessages[current].id === 'president' ? 'president@upisha.org' : 'secretary@upisha.org'}`}
+                      className="text-[11px] text-gray-500 dark:text-gray-400 hover:text-upisha-teal dark:hover:text-upisha-teal transition-colors flex items-center gap-1 mt-2"
+                    >
+                      <Mail className="h-3 w-3" />
+                      {leadershipMessages[current].id === 'president' ? 'president@upisha.org' : 'secretary@upisha.org'}
+                    </a>
                   </div>
                   {/* Right: Message content */}
                   <div className="flex-1 p-6 md:p-8">
@@ -287,7 +274,7 @@ export function AboutSection() {
                     {leadershipMessages[current].body}
                     <div className="flex items-center gap-3">
                       <div className="h-px flex-1 bg-gradient-to-r from-upisha-teal/20 to-transparent" />
-                      <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Est. 2024</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Est. 2025</span>
                     </div>
                   </div>
                 </motion.div>
@@ -321,8 +308,8 @@ export function AboutSection() {
           </div>
           <div
             className="relative"
-            onMouseEnter={() => setCouncilIsPaused(true)}
-            onMouseLeave={() => setCouncilIsPaused(false)}
+            onMouseEnter={() => canHover && setCouncilIsPaused(true)}
+            onMouseLeave={() => canHover && setCouncilIsPaused(false)}
           >
             {/* Prev arrow */}
             {totalCouncilPages > 1 && (

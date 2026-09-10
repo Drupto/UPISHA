@@ -132,8 +132,8 @@ export function ContactSection() {
     {
       icon: Mail,
       title: 'Email',
-      details: ['info@upisha.org', 'secretary@upisha.org'],
-      action: 'mailto:info@upisha.org',
+      details: ['office@upisha.org', 'president@upisha.org', 'secretary@upisha.org'],
+      action: 'mailto:office@upisha.org',
     },
     {
       icon: Clock,
@@ -360,7 +360,7 @@ export function ContactSection() {
                           <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-upisha-teal transition-colors">Schedule a Call</span>
                         </a>
                         <a
-                          href="mailto:info@upisha.org"
+                          href="mailto:office@upisha.org"
                           className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-upisha-gold/40 hover:bg-upisha-gold/5 dark:hover:bg-upisha-gold/10 transition-all group"
                         >
                           <div className="w-8 h-8 rounded-full bg-upisha-gold/10 flex items-center justify-center group-hover:bg-upisha-gold transition-colors">

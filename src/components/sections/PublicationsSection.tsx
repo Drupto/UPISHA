@@ -303,7 +303,7 @@ export function PublicationsSection({ initialPublications }: PublicationsSection
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                           <Send className="h-4 w-4 text-upisha-gold" />
-                          Submit to: editor@upisha.org
+                          Submit to: office@upisha.org
                         </div>
                       </div>
                       <Button size="sm" className="bg-upisha-gold hover:bg-upisha-gold/90 text-white">

@@ -39,10 +39,10 @@ export function PolicyPage({ badge, title, description, updated, children }: Pol
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Questions about this policy? Contact us at{' '}
             <a
-              href="mailto:info@upisha.org"
+              href="mailto:office@upisha.org"
               className="text-upisha-teal hover:underline"
             >
-              info@upisha.org
+              office@upisha.org
             </a>
             .
           </p>

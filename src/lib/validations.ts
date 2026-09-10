@@ -40,8 +40,10 @@ export const joinSchema = z.object({
   transactionNumber: z.string().min(2, 'Transaction number is required').max(100),
   message: z.string().max(5000).optional().nullable(),
   address: z.string().min(5, 'Address must be at least 5 characters').max(500),
-  photoUrl: z.string().url('Invalid photo URL').optional().nullable(),
-  rciCertificateUrl: z.string().url('Invalid certificate URL').optional().nullable(),
+  // Photo is compulsory for membership. (RCI certificate stays optional.)
+  // An empty string means "no file uploaded", so it is rejected here.
+  photoUrl: z.string({ message: 'Please upload your photo' }).min(1, 'Please upload your photo'),
+  rciCertificateUrl: z.union([z.string().url('Invalid certificate URL'), z.literal('')], { message: 'Invalid certificate URL' }).optional().nullable(),
   registrationDate: z.string().optional().nullable(),
   declaration: z.boolean().refine((val) => val === true, {
     message: 'You must accept the declaration to submit',
@@ -55,6 +57,31 @@ export const joinSchema = z.object({
   message: 'Course and current year are required for student members',
   path: ['course']
 })
+
+/**
+ * Human-friendly labels for join form fields, used to turn server-side
+ * validation errors into messages users can act on (e.g. in toasts that
+ * name the exact fields needing attention).
+ */
+export const JOIN_FIELD_LABELS: Record<string, string> = {
+  fullName: 'Full Name',
+  email: 'Email',
+  password: 'Password',
+  phone: 'Phone',
+  qualification: 'Qualification',
+  rciNumber: 'RCI Registration No.',
+  membershipType: 'Membership Plan',
+  course: 'Course',
+  currentYear: 'Current Year',
+  city: 'City',
+  transactionNumber: 'Transaction Number',
+  message: 'Additional Message',
+  address: 'Address',
+  photoUrl: 'Photo',
+  rciCertificateUrl: 'RCI Certificate',
+  registrationDate: 'Registration Date',
+  declaration: 'Declaration',
+}
 
 export const profileSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),

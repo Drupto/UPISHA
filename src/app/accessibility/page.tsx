@@ -78,8 +78,8 @@ export default function AccessibilityPage() {
           We welcome your feedback on the accessibility of this website. If you encounter any
           barrier — a page that is hard to navigate with a screen reader, missing captions, poor
           contrast, or anything else — please let us know at{' '}
-          <a href="mailto:info@upisha.org" className="text-upisha-teal hover:underline">
-            info@upisha.org
+          <a href="mailto:office@upisha.org" className="text-upisha-teal hover:underline">
+            office@upisha.org
           </a>
           , and we will aim to respond within 5 working days and to resolve confirmed issues as
           quickly as reasonably possible.

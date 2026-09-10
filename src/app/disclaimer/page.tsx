@@ -100,7 +100,7 @@ export default function DisclaimerPage() {
         <p>
           If you have questions about this disclaimer, or if you believe any content on this site
           is inaccurate and wish to report it, please contact us at{' '}
-          <a href="mailto:info@upisha.org" className="text-upisha-teal hover:underline">info@upisha.org</a>.
+          <a href="mailto:office@upisha.org" className="text-upisha-teal hover:underline">office@upisha.org</a>.
         </p>
       </PolicySection>
     </PolicyPage>

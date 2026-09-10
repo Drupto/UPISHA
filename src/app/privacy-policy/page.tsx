@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
         </p>
         <p>
           For any privacy-related queries, you can reach us at{' '}
-          <a href="mailto:info@upisha.org" className="text-upisha-teal hover:underline">info@upisha.org</a>{' '}
+          <a href="mailto:office@upisha.org" className="text-upisha-teal hover:underline">office@upisha.org</a>{' '}
           or by writing to the address above.
         </p>
       </PolicySection>
@@ -141,7 +141,7 @@ export default function PrivacyPolicyPage() {
         <p>
           Under India's Digital Personal Data Protection Act, 2023 (DPDP Act), you have rights over
           your personal data. You can exercise them by writing to us at{' '}
-          <a href="mailto:info@upisha.org" className="text-upisha-teal hover:underline">info@upisha.org</a>.
+          <a href="mailto:office@upisha.org" className="text-upisha-teal hover:underline">office@upisha.org</a>.
         </p>
         <ul className="list-disc pl-5 space-y-2">
           <PolicyListItem>
@@ -218,7 +218,7 @@ export default function PrivacyPolicyPage() {
           please contact us:
         </p>
         <ul className="list-disc pl-5 space-y-2">
-          <PolicyListItem>Email: info@upisha.org</PolicyListItem>
+          <PolicyListItem>Email: office@upisha.org</PolicyListItem>
           <PolicyListItem>Grievances: secretary@upisha.org</PolicyListItem>
           <PolicyListItem>
             Address: 110 Raghu Raj Nagar, Patel Nagar, Lucknow - 226016, Uttar Pradesh, India

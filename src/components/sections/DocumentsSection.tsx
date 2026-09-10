@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { ArrowRight, FileText } from 'lucide-react'
+import Link from 'next/link'
 import { AnimatedSection } from '@/components/sections'
 import { documents } from '@/lib/static-data'
 import { Button } from '@/components/ui/button'
@@ -35,8 +36,10 @@ export function DocumentsSection() {
                   <div className="flex-1">
                     <h4 className="font-bold text-upisha-navy dark:text-white mb-1">{doc.title}</h4>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{doc.description}</p>
-                    <Button variant="ghost" size="sm" className="text-upisha-teal hover:text-upisha-teal-dark p-0">
-                      Download <ArrowRight className="h-3 w-3 ml-1" />
+                    <Button asChild variant="ghost" size="sm" className="text-upisha-teal hover:text-upisha-teal-dark p-0">
+                      <Link href={`/request-document?doc=${encodeURIComponent(doc.title)}`}>
+                        Request Now <ArrowRight className="h-3 w-3 ml-1" />
+                      </Link>
                     </Button>
                   </div>
                 </div>

@@ -28,11 +28,11 @@ export function TopBar() {
             +91-522-456-7890
           </a>
           <a
-            href="mailto:info@upisha.org"
+            href="mailto:office@upisha.org"
             className="flex items-center gap-1.5 hover:text-upisha-gold transition-colors group"
           >
             <Mailbox className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-            info@upisha.org
+            office@upisha.org
           </a>
         </div>
         <div className="flex items-center gap-2">
