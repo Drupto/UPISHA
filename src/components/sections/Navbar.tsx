@@ -78,7 +78,7 @@ export function Navbar({
           </a>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center justify-center flex-1 gap-1">
             {navLinks.map((link) => {
               const isActive = activeSection === link.href.slice(1)
               return (
@@ -89,13 +89,13 @@ export function Navbar({
                     e.preventDefault()
                     onNavClick(link.href)
                   }}
-                  className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 text-center leading-tight flex items-center justify-center min-h-[2.5rem] ${
                     isActive
                       ? 'text-upisha-teal font-bold bg-upisha-teal-light dark:bg-upisha-teal/20'
                       : 'text-gray-600 dark:text-gray-300 hover:text-upisha-teal hover:bg-upisha-teal-light/50 dark:hover:bg-upisha-teal/10'
                   }`}
                 >
-                  {link.label}
+                  <span className="text-center">{link.label}</span>
                   {isActive && (
                     <motion.span
                       layoutId="nav-active-indicator"
