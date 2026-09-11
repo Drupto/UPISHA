@@ -78,11 +78,21 @@ function buildAdminCredential(): App['options'] {
     .replace(/^"|"$/g, '')
     .replace(/\\n/g, '\n')
 
+  // The Admin SDK does NOT infer a default Storage bucket from the project
+  // ID (unlike the client SDK) — without an explicit bucket,
+  // getStorage().bucket() throws "Bucket name not specified or invalid".
+  // Prefer the dedicated server var, falling back to the public client
+  // config value (it is public by design and safe to read server-side).
+  const storageBucket =
+    process.env.FIREBASE_ADMIN_STORAGE_BUCKET ||
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+
   return {
     credential: cert({ projectId, clientEmail, privateKey }),
     // Explicit projectId keeps token verification deterministic even if
     // the env var used for the client SDK differs.
     projectId,
+    ...(storageBucket ? { storageBucket } : {}),
   }
 }
 

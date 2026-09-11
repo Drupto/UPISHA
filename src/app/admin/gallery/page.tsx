@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Plus, Edit, Trash2, Loader2, Image as ImageIcon, Upload } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { csrfHeaders } from '@/lib/csrf'
 
 interface GalleryImage {
   id?: string
@@ -65,11 +66,16 @@ export default function AdminGallery() {
         
         const response = await fetch('/api/upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          // /api/upload enforces CSRF double-submit — the x-csrf-token header
+          // must match the csrf-token cookie, otherwise the request 403s.
+          headers: csrfHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ dataUrl, path: filename }),
         })
 
-        if (!response.ok) throw new Error('Upload failed')
+        if (!response.ok) {
+          const err = await response.json().catch(() => null)
+          throw new Error(err?.error || `Upload failed (${response.status})`)
+        }
 
         const data = await response.json()
         setUploadProgress(100)

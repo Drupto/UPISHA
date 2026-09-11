@@ -37,8 +37,10 @@ service cloud.firestore {
     }
 
     function isSelfEmail(email) {
+      // Rules language has no .toLowerCase() — case conversion is the
+      // zero-argument string method .lower() (not the global string.lower()).
       return isSignedIn() && request.auth.token.email != null &&
-        request.auth.token.email.toLowerCase() == email.toLowerCase();
+        request.auth.token.email.lower() == email.lower();
     }
 
     // ============ Public site content (world-readable, admin-managed) ============

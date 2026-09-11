@@ -111,10 +111,17 @@ export async function POST(request: NextRequest) {
         )
       }
     } catch (storageErr) {
-      console.error('Storage upload failed, falling back to raw values:', storageErr)
-      // Fall back to the original values (may be null) so the join isn't blocked
-      photoUrl = validated.photoUrl || null
-      rciCertificateUrl = validated.rciCertificateUrl || null
+      console.error('Storage upload failed during join submission:', storageErr)
+      // Do NOT fall back to raw `data:` URLs: a base64 photo easily exceeds
+      // Firestore's 1,048,576-byte document limit (fails with
+      // "3 INVALID_ARGUMENT: value of property is longer than 1048487 bytes")
+      // and raw base64 bloats/leaks member files into the members collection.
+      // Keep only real http(s) URLs (already-uploaded values); otherwise null
+      // so the member can re-upload later.
+      const keepUrlOnly = (v: string | null | undefined) =>
+        v && !v.startsWith('data:') ? v : null
+      photoUrl = keepUrlOnly(validated.photoUrl)
+      rciCertificateUrl = keepUrlOnly(validated.rciCertificateUrl)
     }
 
     // 3. Create the member document in Firestore (linked to the auth user via uid)

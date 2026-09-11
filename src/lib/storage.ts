@@ -23,6 +23,20 @@ import { getAdminStorage } from './firebase-server'
 const DOWNLOAD_URL_BASE = 'https://firebasestorage.googleapis.com/v0/b'
 
 /**
+ * Resolve the Storage bucket explicitly. The Admin SDK does not infer a
+ * default bucket from the project ID (unlike the client SDK), so we pass
+ * the name explicitly; if no env var is set we fall back to the app's
+ * `storageBucket` init option (see firebase-server.ts).
+ */
+function getBucket() {
+  const bucketName =
+    process.env.FIREBASE_ADMIN_STORAGE_BUCKET ||
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+  const storage = getAdminStorage()
+  return bucketName ? storage.bucket(bucketName) : storage.bucket()
+}
+
+/**
  * Upload a base64 data URL to Firebase Storage and return a durable
  * download URL. Replaces the previous client-SDK `uploadString` +
  * `getDownloadURL` implementation.
@@ -38,7 +52,7 @@ export async function uploadDataUrl(
   const contentType = match[1]
   const buffer = Buffer.from(match[2], 'base64')
 
-  const bucket = getAdminStorage().bucket()
+  const bucket = getBucket()
   const file = bucket.file(path)
   const token = randomUUID()
 
@@ -63,7 +77,7 @@ export async function uploadDataUrl(
  */
 export async function deleteStorageObject(path: string): Promise<void> {
   try {
-    await getAdminStorage().bucket().file(path).delete()
+    await getBucket().file(path).delete()
   } catch (err) {
     if ((err as { code?: number }).code !== 404) throw err
   }
