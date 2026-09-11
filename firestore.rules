@@ -84,48 +84,59 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // ============ Members (join form) ============
+    // ============ Members ============
+    // Docs are created by the SERVER (Admin SDK) via /api/join — the client
+    // never creates them. Owners may edit their own profile fields but must
+    // never change their own approval `status` (self-approval guard).
     match /members/{memberId} {
-      allow create: if true;
       allow read: if isAdmin();
-      allow update: if isAdmin() || isOwner(resource.data.uid);
+      allow create: if false;
+      allow update: if isAdmin() ||
+        (isOwner(resource.data.uid) &&
+         request.resource.data.status == resource.data.status);
       allow delete: if isAdmin();
     }
 
     // ============ Users (role records) ============
+    // Written ONLY by the server (Admin SDK). An owner must never be able
+    // to edit their own record — otherwise `role: 'admin'` self-grant.
     match /users/{userId} {
       allow read: if isAdmin() || isOwner(userId);
-      allow write: if isAdmin() || isOwner(userId);
+      allow write: if isAdmin();
     }
 
     // ============ Contact messages ============
+    // Created by the server (Admin SDK) via /api/contact; the email trigger
+    // Cloud Function fires on create — client creates would be an email-bomb
+    // vector, so the client surface is closed.
     match /contactMessages/{messageId} {
-      allow create: if true;
       allow read, update, delete: if isAdmin();
+      allow create: if false;
     }
 
     // ============ Newsletter ============
-    // Public upsert: create always; update only when the doc ID matches the
-    // subscribed email (prevents overwriting other subscribers' data).
+    // Subscribed via /api/newsletter (server, Admin SDK). The welcome-email
+    // trigger fires on create — client writes would be an email-bomb vector.
     match /newsletterSubscribers/{subId} {
-      allow create: if true;
-      allow update: if request.resource.data.email == subId;
-      allow read, delete: if isAdmin();
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // ============ Webinar registrations ============
+    // Created by the server (Admin SDK) via /api/webinars/register.
     match /webinarRegistrations/{regId} {
-      allow create: if true;
       allow read, update, delete: if isAdmin();
+      allow create: if false;
     }
 
     // ============ Publication submissions ============
+    // Created by the server (Admin SDK) via /api/publications/submissions.
     // Readable by admins and by the submitting author (email match).
     match /publicationSubmissions/{subId} {
-      allow create: if true;
       allow read: if isAdmin() ||
         (isSignedIn() && isSelfEmail(resource.data.authorEmail));
       allow update, delete: if isAdmin();
+      allow create: if false;
     }
 
     // ============ Certificates & receipts (member-private) ============
