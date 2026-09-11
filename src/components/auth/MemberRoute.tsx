@@ -5,7 +5,6 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useEffect, useState } from 'react'
 import { Loader2, MailCheck, MailWarning, RefreshCw, Clock, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-
 /**
  * Route guard for the member panel with 2-layer security:
  *   Layer 1: Email verification
@@ -15,9 +14,11 @@ import { Button } from '@/components/ui/button'
  */
 export default function MemberRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { user, role, memberStatus, loading, sendVerificationEmail } = useAuth()
+  const { user, role, memberStatus, loading, sendVerificationEmail, recheckEmailVerification } = useAuth()
   const [resending, setResending] = useState(false)
   const [resendMessage, setResendMessage] = useState<string | null>(null)
+  const [rechecking, setRechecking] = useState(false)
+  const [recheckMessage, setRecheckMessage] = useState<string | null>(null)
 
   const isMember = role === 'member' || role === 'admin'
   const isVerified = user?.emailVerified === true
@@ -43,6 +44,28 @@ export default function MemberRoute({ children }: { children: React.ReactNode })
       setResendMessage('Failed to send verification email. Please try again.')
     } finally {
       setResending(false)
+    }
+  }
+
+  /**
+   * Force-refresh the account from Firebase (reload + getIdToken(true)),
+   * re-establish the session cookie with the fresh claims, and re-run the
+   * role/status fetch. Avoids the old "refresh this page" advice, which
+   * just re-read the same cached token.
+   */
+  const handleRecheck = async () => {
+    setRechecking(true)
+    setRecheckMessage(null)
+    const verified = await recheckEmailVerification()
+    setRechecking(false)
+    if (verified) {
+      setRecheckMessage('Verified! Updating your session...')
+      // The emailVerified gate re-renders automatically once the refreshed
+      // user object lands in the auth context.
+    } else {
+      setRecheckMessage(
+        'Still pending — open the verification email and click the link, then press recheck again.'
+      )
     }
   }
 
@@ -96,8 +119,36 @@ export default function MemberRoute({ children }: { children: React.ReactNode })
                 {resendMessage}
               </p>
             )}
+            <Button
+              onClick={handleRecheck}
+              disabled={rechecking}
+              variant="outline"
+              className="w-full"
+            >
+              {rechecking ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Checking...
+                </>
+              ) : (
+                <>
+                  <MailCheck className="h-4 w-4 mr-2" />
+                  I&apos;ve Verified — Recheck Now
+                </>
+              )}
+            </Button>
+            {recheckMessage && (
+              <p className={`text-sm flex items-center justify-center gap-1 ${
+                recheckMessage.startsWith('Verified')
+                  ? 'text-upisha-teal dark:text-upisha-teal-light'
+                  : 'text-red-600 dark:text-red-400'
+              }`}>
+                <MailCheck className="h-4 w-4" />
+                {recheckMessage}
+              </p>
+            )}
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              After verifying, refresh this page to continue.
+              Just clicked the verification link? Press recheck — no page reload needed.
             </p>
           </div>
         </div>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { refreshAuthToken } from '@/lib/auth'
 import { Loader2, AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
@@ -23,7 +24,17 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      const { token } = await login(email, password)
+      const { token: loginToken } = await login(email, password)
+      // Belt-and-braces: force a server round-trip so the token carries the
+      // latest claims (guards against racing the session-restore verify in
+      // useAuth, which can otherwise overwrite the cookie with a stale token).
+      let token = loginToken
+      try {
+        const fresh = await refreshAuthToken()
+        if (fresh) token = fresh
+      } catch {
+        // keep loginToken — a fresh sign-in token is already current
+      }
       const verifyRes = await fetch('/api/auth/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
       // Determine role from the verify response and redirect accordingly
       const data = await verifyRes.json().catch(() => ({}))

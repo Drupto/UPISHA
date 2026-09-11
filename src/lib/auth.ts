@@ -74,3 +74,22 @@ export async function getCurrentUserToken(): Promise<string | null> {
   if (!user) return null
   return user.getIdToken()
 }
+
+/**
+ * Refresh the current user from the Firebase Auth server and mint a token
+ * with the LATEST claims (email_verified, custom claims, ...).
+ *
+ * getIdToken() normally returns a CACHED token (~1h validity) whose claims
+ * were frozen at mint time — so an email verified after login keeps
+ * reporting "unverified" until the cache expires. This helper:
+ *   1. reload()        — re-fetches the User record from Firebase servers
+ *   2. getIdToken(true) — bypasses the token cache (force refresh)
+ *
+ * Returns null when no user is signed in.
+ */
+export async function refreshAuthToken(): Promise<string | null> {
+  const user = getAuthInstance().currentUser
+  if (!user) return null
+  await user.reload()
+  return user.getIdToken(true)
+}
