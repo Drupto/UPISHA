@@ -3,6 +3,7 @@ import { uploadDataUrl } from '@/lib/storage'
 import { withSecurityHeaders, withCsrfProtection } from '@/lib/security'
 import { requireVerifiedMember, requireAdmin } from '@/lib/auth-helpers'
 import { checkRateLimitStrict, getClientIp } from '@/lib/firestore-rate-limit'
+import { validateDataUrl, MAX_IMAGE_BYTES, MAX_FILE_BYTES, DOC_MIME_TYPES } from '@/lib/upload-validation'
 
 // Allowed storage path prefixes — prevents path traversal / writing to arbitrary locations
 const ALLOWED_PATH_PREFIXES = [
@@ -28,46 +29,12 @@ const MEMBER_PATHS = [
   'publications/',
 ]
 
-// Max decoded file size (10MB for member PDFs, 5MB for admin images)
-const MAX_FILE_BYTES = 10 * 1024 * 1024
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
-
-// Allowed MIME types
-const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf']
-
 function isValidPath(path: string): boolean {
   if (!path || typeof path !== 'string') return false
   // Reject path traversal
   if (path.includes('..') || path.includes('\\') || path.startsWith('/')) return false
   // Must start with an allowed prefix
   return ALLOWED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))
-}
-
-function validateDataUrl(dataUrl: string, maxBytes: number): { valid: boolean; error?: string } {
-  if (!dataUrl || typeof dataUrl !== 'string') {
-    return { valid: false, error: 'Missing dataUrl' }
-  }
-
-  // Must be a data URL with an allowed MIME type
-  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/)
-  if (!match) {
-    return { valid: false, error: 'Invalid data URL format' }
-  }
-
-  const mimeType = match[1].toLowerCase()
-  if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
-    return { valid: false, error: 'Only PNG, JPEG, WebP, and GIF images, and PDFs are allowed' }
-  }
-
-  // Check decoded size
-  const base64Data = match[2]
-  const decodedBytes = Math.floor((base64Data.length * 3) / 4)
-  if (decodedBytes > maxBytes) {
-    const maxMB = Math.floor(maxBytes / (1024 * 1024))
-    return { valid: false, error: `File size exceeds ${maxMB}MB limit` }
-  }
-
-  return { valid: true }
 }
 
 export async function POST(request: NextRequest) {
@@ -112,7 +79,10 @@ export async function POST(request: NextRequest) {
 
     // Validate data URL (MIME type + size)
     const maxAllowedBytes = isMemberPath ? MAX_FILE_BYTES : MAX_IMAGE_BYTES
-    const urlCheck = validateDataUrl(dataUrl, maxAllowedBytes)
+    const urlCheck = validateDataUrl(dataUrl, {
+      maxBytes: maxAllowedBytes,
+      allowedMimeTypes: DOC_MIME_TYPES,
+    })
     if (!urlCheck.valid) {
       return withSecurityHeaders(NextResponse.json({ error: urlCheck.error || 'Invalid file data' }, { status: 400 }))
     }

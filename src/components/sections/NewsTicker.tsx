@@ -26,7 +26,6 @@ export function NewsTicker({ initialItems = [] }: NewsTickerProps) {
       })
       .catch(() => {})
     return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (items.length === 0) return null

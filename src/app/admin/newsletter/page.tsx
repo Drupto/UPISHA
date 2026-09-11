@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, Trash2, Search, Loader2, Mail, Download, Plus, Pencil, Send, Users
@@ -201,12 +201,11 @@ export default function AdminNewsletterPage() {
     URL.revokeObjectURL(url)
   }
 
-  const filteredSubscribers = useMemo(() => {
-    const q = searchQuery.toLowerCase()
-    return subscribers.filter((s) =>
-      s.email.toLowerCase().includes(q)
-    )
-  }, [subscribers, searchQuery])
+  // Plain computation — React Compiler auto-memoizes it; the previous manual
+  // useMemo could not be preserved by the compiler (lint error).
+  const filteredSubscribers = subscribers.filter((s) =>
+    s.email.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   const activeSubscribersCount = subscribers.filter((s) => s.isActive !== false).length
   const totalCampaigns = campaigns.length

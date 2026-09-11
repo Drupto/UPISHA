@@ -46,7 +46,25 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-useless-escape": "off",
   },
 }, {
-  ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", "examples/**", "skills"]
+  ignores: [
+    "node_modules/**",
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "examples/**",
+    "skills",
+    // Firebase Cloud Functions (own TS project + compiled lib/) — never lint here
+    "functions/**",
+    // Non-production scratch/scaffold dirs (removed in production cleanup, but
+    // kept in the ignore list so a resurrected folder can't break the CI gate)
+    "mini-services/**",
+    ".zscripts/**",
+    "download/**",
+    "tool-results/**",
+    "agent-ctx/**",
+    "db/**",
+  ]
 }];
 
 export default eslintConfig;

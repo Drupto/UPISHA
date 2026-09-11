@@ -38,7 +38,9 @@ export default function MemberCertificates() {
     fetchCertificates()
   }, [])
 
-  const fetchCertificates = async () => {
+  // Hoisted function declaration: the effect below calls this before its
+  // old const-declaration position (TDZ — React Compiler lint error).
+  async function fetchCertificates() {
     try {
       const res = await fetch('/api/certificates/mine')
       if (!res.ok) {
@@ -155,7 +157,7 @@ export default function MemberCertificates() {
                 {cert.status !== 'revoked' && (
                   <div className="mt-4 flex justify-end">
                     <CertificateDownload
-                      certificateRef={{ current: certRefs.current[cert.id] }}
+                      certificateRef={() => certRefs.current[cert.id] ?? null}
                       fileName={`${cert.memberName.replace(/\s+/g, '-')}-${cert.certificateNumber}`}
                     />
                   </div>

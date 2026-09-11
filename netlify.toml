@@ -1,5 +1,6 @@
 [build]
-  command = "next build"
+  # Gate deploys on typecheck — a type error blocks the production build
+  command = "npm run typecheck && next build"
   publish = ".next"
 
 [build.environment]

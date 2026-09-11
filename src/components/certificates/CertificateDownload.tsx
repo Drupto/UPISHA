@@ -8,7 +8,13 @@ import { Loader2, Download, Printer } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface CertificateDownloadProps {
-  certificateRef: React.RefObject<HTMLDivElement | null>
+  /**
+   * Either a standard React ref (verify page) or a getter closure that
+   * resolves the certificate element at click time (list pages — avoids
+   * reading `refs.current` during render, which React Compiler forbids
+   * and which is stale-null on first paint anyway).
+   */
+  certificateRef: React.RefObject<HTMLDivElement | null> | (() => HTMLDivElement | null)
   fileName?: string
 }
 
@@ -20,11 +26,16 @@ export default function CertificateDownload({
   const [downloading, setDownloading] = useState(false)
   const [printing, setPrinting] = useState(false)
 
+  // Resolve the element lazily — only inside event handlers.
+  const resolveEl = () =>
+    typeof certificateRef === 'function' ? certificateRef() : certificateRef.current
+
   const handleDownloadPDF = async () => {
-    if (!certificateRef.current) return
+    const el = resolveEl()
+    if (!el) return
     setDownloading(true)
     try {
-      const canvas = await toCanvas(certificateRef.current, {
+      const canvas = await toCanvas(el, {
         pixelRatio: 3,
         backgroundColor: '#ffffff',
         cacheBust: true,
@@ -53,10 +64,11 @@ export default function CertificateDownload({
   }
 
   const handlePrint = () => {
-    if (!certificateRef.current) return
+    const el = resolveEl()
+    if (!el) return
     setPrinting(true)
     try {
-      const printContent = certificateRef.current.cloneNode(true) as HTMLElement
+      const printContent = el.cloneNode(true) as HTMLElement
 
       const imgs = printContent.querySelectorAll('img')
       const imgPromises = Array.from(imgs).map((img) => {

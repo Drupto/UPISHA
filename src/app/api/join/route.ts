@@ -4,6 +4,7 @@ import { createMember, getMembers, createUserRecord } from '@/lib/firestore'
 import { joinSchema, JOIN_FIELD_LABELS } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection, getClientIp } from '@/lib/security'
 import { checkRateLimitStrict } from '@/lib/firestore-rate-limit'
+import { validateDataUrl, MAX_IMAGE_BYTES, MAX_FILE_BYTES, IMAGE_MIME_TYPES, DOC_MIME_TYPES } from '@/lib/upload-validation'
 import { uploadDataUrl } from '@/lib/storage'
 
 async function createFirebaseAuthUser(email: string, password: string, displayName: string) {
@@ -84,6 +85,36 @@ export async function POST(request: NextRequest) {
     // CSRF protection
     const csrfError = withCsrfProtection(request)
     if (csrfError) return csrfError
+
+    // Validate uploads (MIME + size) BEFORE creating the Firebase Auth
+    // account — an invalid payload must fail fast with a field-level error
+    // and never leave an orphaned auth user behind. Photo: images only
+    // (≤5MB); RCI certificate: images or PDF (≤10MB) — mirroring the
+    // storage.rules content checks.
+    if (validated.photoUrl && validated.photoUrl.startsWith('data:')) {
+      const photoCheck = validateDataUrl(validated.photoUrl, {
+        maxBytes: MAX_IMAGE_BYTES,
+        allowedMimeTypes: IMAGE_MIME_TYPES,
+      })
+      if (!photoCheck.valid) {
+        return withSecurityHeaders(NextResponse.json({
+          error: `Photo: ${photoCheck.error}`,
+          details: [{ field: 'photoUrl', message: photoCheck.error }],
+        }, { status: 400 }))
+      }
+    }
+    if (validated.rciCertificateUrl && validated.rciCertificateUrl.startsWith('data:')) {
+      const certCheck = validateDataUrl(validated.rciCertificateUrl, {
+        maxBytes: MAX_FILE_BYTES,
+        allowedMimeTypes: DOC_MIME_TYPES,
+      })
+      if (!certCheck.valid) {
+        return withSecurityHeaders(NextResponse.json({
+          error: `RCI Certificate: ${certCheck.error}`,
+          details: [{ field: 'rciCertificateUrl', message: certCheck.error }],
+        }, { status: 400 }))
+      }
+    }
 
     // 1. Create Firebase Auth user account first
     authUser = await createFirebaseAuthUser(

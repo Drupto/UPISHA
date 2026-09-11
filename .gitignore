@@ -31,6 +31,18 @@ node_modules
 firebase-key.json
 *.p12
 
+# Agent/CI scratch dirs & artifacts — never commit
+/tool-results/
+/agent-ctx/
+/download/
+/db/
+/examples/
+/mini-services/
+/.zscripts/
+/lint-*.txt
+/jest-output.log
+/build-output.log
+
 # debug
 npm-debug.log*
 yarn-debug.log*

@@ -18,7 +18,9 @@ export default function MemberReceipts() {
     fetchReceipts()
   }, [])
 
-  const fetchReceipts = async () => {
+  // Hoisted function declaration: the effect below calls this before its
+  // old const-declaration position (TDZ — React Compiler lint error).
+  async function fetchReceipts() {
     try {
       const res = await fetch('/api/receipts/mine')
       if (!res.ok) {

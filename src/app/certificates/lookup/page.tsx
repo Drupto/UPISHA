@@ -198,7 +198,7 @@ export default function CertificateLookupPage() {
                     {cert.status !== 'revoked' && (
                       <div className="flex justify-end">
                         <CertificateDownload
-                          certificateRef={{ current: certRefs.current[cert.id] }}
+                          certificateRef={() => certRefs.current[cert.id] ?? null}
                           fileName={`${cert.memberName.replace(/\s+/g, '-')}-${cert.certificateNumber}`}
                         />
                       </div>

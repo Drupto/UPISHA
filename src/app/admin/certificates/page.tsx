@@ -56,7 +56,9 @@ export default function AdminCertificates() {
     fetchAll()
   }, [])
 
-  const fetchAll = async () => {
+  // Hoisted function declaration: the effect below calls this before its
+  // old const-declaration position (TDZ — React Compiler lint error).
+  async function fetchAll() {
     setLoading(true)
     try {
       const [certRes, templateRes, memberRes] = await Promise.all([
