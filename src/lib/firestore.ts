@@ -1,8 +1,30 @@
-import { getDb } from './firebase-admin'
-import { FieldValue } from 'firebase/firestore'
+// ⚠️ SERVER-ONLY module — do not import from client components.
+//
+// All Firestore access runs through the Firebase Admin SDK
+// (./firebase-server), behind the client-SDK-compatible facade in
+// ./admin-firestore-compat so the CRUD helpers below keep their original
+// call signatures. Admin SDK calls bypass the Firestore security rules —
+// access control is enforced by the API layer (requireAuth / requireAdmin /
+// requireVerifiedMember) before reaching this code.
+import { getAdminDb } from './firebase-server'
+import {
+  collection,
+  addDoc,
+  getDocs,
+  getDoc,
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  where,
+  runTransaction,
+  FieldValue,
+} from './admin-firestore-compat'
 import type { TestimonialDoc, GalleryImageDoc, PublicationDoc, PublicationSubmissionDoc, CertificateTemplateDoc, CertificateDoc, ReceiptDoc } from '@/lib/types'
 
-const db = () => getDb()
+const db = () => getAdminDb()
 
 /**
  * Pick only the allowed fields from a partial update object.
@@ -214,20 +236,8 @@ export interface UserDoc {
   updatedAt?: FieldValue | Date
 }
 
-import {
-  collection,
-  addDoc,
-  getDocs,
-  getDoc,
-  doc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  where,
-  runTransaction,
-} from 'firebase/firestore'
+// Client-SDK import removed — server-side access is Admin-SDK-only now
+// (see header comment at the top of this file).
 
 // Certificate Template CRUD operations
 export async function createCertificateTemplate(data: CertificateTemplateDoc) {

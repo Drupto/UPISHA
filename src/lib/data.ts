@@ -1,3 +1,9 @@
+/**
+ * SERVER-ONLY data access helpers (Server Components + API routes).
+ * Do not import from client components — this transitively loads the
+ * Firebase Admin SDK via ./firestore → ./admin-firestore-compat →
+ * ./firebase-server.
+ */
 import { sampleProfessionals as staticProfessionals } from '@/lib/static-data'
 import type { Announcement, TimelineEvent, Professional, MemberDoc, ContactMessageDoc, NewsletterSubscriberDoc, Webinar, WebinarRegistrationDoc, Testimonial, GalleryImage, Publication } from '@/lib/types'
 

@@ -1,8 +1,28 @@
 rules_version = '2';
 
+// ---------------------------------------------------------------------------
+// UP ISHA - Firestore Security Rules           (project: upisha)
+// ---------------------------------------------------------------------------
+// Hardened rules — the previous version contained a recursive wildcard
+//   match /{document=**} { allow read: if true; }
+// which made EVERY collection world-readable (members, users, contact
+// messages, receipts, email logs, ...). That wildcard is gone; public reads
+// are now granted per-collection, explicitly.
+//
+// Server-side access: the Next.js API layer uses the Firebase ADMIN SDK
+// (src/lib/firebase-server.ts), which bypasses these rules entirely.
+// Authorization for API requests is enforced in code (requireAuth /
+// requireAdmin / requireVerifiedMember) — these rules protect the
+// browser-facing client SDK surface.
+//
+// Collections that only the server writes (rate_limits, api_logs, emailLogs)
+// are closed to clients completely.
+// ---------------------------------------------------------------------------
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ============ Helpers ============
     function isSignedIn() {
       return request.auth != null;
     }
@@ -16,89 +36,44 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Members (join form)
-    match /members/{memberId} {
-      allow create: if true;
-      allow read: if isAdmin();
-      allow update: if isAdmin() || isOwner(resource.data.uid);
-      allow delete: if isAdmin();
+    function isSelfEmail(email) {
+      return isSignedIn() && request.auth.token.email != null &&
+        request.auth.token.email.toLowerCase() == email.toLowerCase();
     }
 
-    // Users
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin() || isOwner(userId);
-    }
-
-    // Contact messages
-    match /contactMessages/{messageId} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-
-    // Newsletter subscribers
-    // Public upsert: allow create always, and allow update only when the
-    // document ID matches the email being subscribed (prevents overwriting
-    // other subscribers' data). Read/delete remain admin-only.
-    match /newsletterSubscribers/{subId} {
-      allow create: if true;
-      allow update: if request.resource.data.email == subId;
-      allow read, delete: if isAdmin();
-    }
-
-    // Newsletter campaigns
-    match /newsletterCampaigns/{campaignId} {
+    // ============ Public site content (world-readable, admin-managed) ============
+    match /announcements/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Webinars
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /testimonials/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /galleryImages/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /publications/{pubId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /webinars/{webinarId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Webinar registrations
-    match /webinarRegistrations/{regId} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-
-    // Announcements, Events, Testimonials, Gallery, Publications
-    match /{document=**} {
+    match /newsletterCampaigns/{campaignId} {
       allow read: if true;
-    }
-
-    match /announcements/{docId} {
-      allow write: if isAdmin();
-    }
-
-    match /events/{eventId} {
-      allow write: if isAdmin();
-    }
-
-    match /testimonials/{docId} {
-      allow write: if isAdmin();
-    }
-
-    match /galleryImages/{docId} {
-      allow write: if isAdmin();
-    }
-
-    match /publications/{pubId} {
-      allow write: if isAdmin();
-    }
-
-    // Publication submissions
-    match /publicationSubmissions/{subId} {
-      allow create: if true;
-      allow read: if isAdmin() || isSignedIn();
-      allow update, delete: if isAdmin();
-    }
-
-    // Certificates
-    match /certificates/{certId} {
-      allow read: if isAdmin() || resource.data.memberUid == request.auth.uid;
       allow write: if isAdmin();
     }
 
@@ -107,16 +82,84 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Receipts
-    match /receipts/{receiptId} {
-      allow read: if isAdmin() || resource.data.memberUid == request.auth.uid;
+    // ============ Members (join form) ============
+    match /members/{memberId} {
+      allow create: if true;
+      allow read: if isAdmin();
+      allow update: if isAdmin() || isOwner(resource.data.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ============ Users (role records) ============
+    match /users/{userId} {
+      allow read: if isAdmin() || isOwner(userId);
+      allow write: if isAdmin() || isOwner(userId);
+    }
+
+    // ============ Contact messages ============
+    match /contactMessages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ============ Newsletter ============
+    // Public upsert: create always; update only when the doc ID matches the
+    // subscribed email (prevents overwriting other subscribers' data).
+    match /newsletterSubscribers/{subId} {
+      allow create: if true;
+      allow update: if request.resource.data.email == subId;
+      allow read, delete: if isAdmin();
+    }
+
+    // ============ Webinar registrations ============
+    match /webinarRegistrations/{regId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ============ Publication submissions ============
+    // Readable by admins and by the submitting author (email match).
+    match /publicationSubmissions/{subId} {
+      allow create: if true;
+      allow read: if isAdmin() ||
+        (isSignedIn() && isSelfEmail(resource.data.authorEmail));
+      allow update, delete: if isAdmin();
+    }
+
+    // ============ Certificates & receipts (member-private) ============
+    match /certificates/{certId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && resource.data.memberUid == request.auth.uid);
       allow write: if isAdmin();
     }
 
-    // Email logs (written by Cloud Functions only)
+    match /receipts/{receiptId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && resource.data.memberUid == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // ============ Server-only collections (Admin SDK only) ============
+    // Written by Cloud Functions (Brevo email logging) and by the Next.js
+    // server (rate limiting, API audit logs) — clients get nothing.
     match /emailLogs/{logId} {
-      allow read: if isAdmin();
-      allow write: if false;
+      allow read, write: if false;
+    }
+
+    match /rate_limits/{docId} {
+      allow read, write: if false;
+    }
+
+    match /api_logs/{logId} {
+      allow read, write: if false;
+    }
+
+    // ============ Explicit deny-all fallback ============
+    // Any collection not explicitly allowed above is closed. (Firestore
+    // denies by default; this block documents that and guards against
+    // accidentally re-introducing a permissive wildcard.)
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/firebase-admin'
+import { verifyIdToken } from '@/lib/firebase-server'
 import { getUserByUid, getMemberByUid } from '@/lib/firestore'
 
 export async function GET(request: NextRequest) {
@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const sessionToken = request.cookies.get('session')?.value
     if (!sessionToken) return NextResponse.json({ authenticated: false }, { status: 401 })
 
-    const decodedToken = await verifyToken(sessionToken)
+    const decodedToken = await verifyIdToken(sessionToken, true)
     const userRecord = await getUserByUid(decodedToken.uid)
 
     // Fetch member approval status (only for member role)

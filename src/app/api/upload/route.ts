@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadDataUrl } from '@/lib/storage'
 import { withSecurityHeaders, withCsrfProtection } from '@/lib/security'
-import { requireAuth, requireAdmin } from '@/lib/auth-helpers'
+import { requireVerifiedMember, requireAdmin } from '@/lib/auth-helpers'
 import { checkRateLimitStrict, getClientIp } from '@/lib/firestore-rate-limit'
 
 // Allowed storage path prefixes — prevents path traversal / writing to arbitrary locations
@@ -87,8 +87,11 @@ export async function POST(request: NextRequest) {
     // Determine if this is a member-accessible path (e.g. publications/) or admin-only
     const isMemberPath = MEMBER_PATHS.some((prefix) => path.startsWith(prefix))
     
-    // Require authentication for all uploads; admin for admin-only paths
-    const auth = await (isMemberPath ? requireAuth(request) : requireAdmin(request))
+    // Member paths: requireVerifiedMember enforces role 'member'/'admin' +
+    // email verification + admin approval — parity with the storage.rules
+    // requirement that publications/ writers have a member/admin role.
+    // (requireAuth alone would let ANY signed-in user upload.)
+    const auth = await (isMemberPath ? requireVerifiedMember(request) : requireAdmin(request))
     if (auth instanceof NextResponse) {
       return withSecurityHeaders(auth)
     }

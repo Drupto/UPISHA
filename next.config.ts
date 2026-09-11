@@ -10,7 +10,9 @@ const strictCsp = "default-src 'self'; script-src 'self' 'unsafe-inline' https:/
 const devCsp = "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.googleapis.com wss://firestore.googleapis.com wss://*.firebaseio.com; font-src 'self' data:; frame-src https://www.openstreetmap.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Keep the (CommonJS, heavyweight) Firebase Admin SDK out of the bundler
+  // graph — Netlify Functions require() it from node_modules at runtime.
+  serverExternalPackages: ['firebase-admin'],
   poweredByHeader: false,
   turbopack: {
     root: import.meta.dirname,

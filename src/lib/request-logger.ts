@@ -3,7 +3,7 @@
  * Logs API requests to Firestore for security monitoring and audit trail
  */
 
-import { getDb } from './firebase'
+import { getAdminDb } from './firebase-server'
 import { 
   collection, 
   addDoc, 
@@ -12,13 +12,13 @@ import {
   getDocs,
   deleteDoc,
   Timestamp 
-} from 'firebase/firestore'
+} from './admin-firestore-compat'
 
 const API_LOGS_COLLECTION = 'api_logs'
 
 // Lazy db accessor so module import during build does not fail
 // when env vars are not yet available.
-const db = () => getDb()
+const db = () => getAdminDb()
 
 export interface ApiLogEntry {
   id?: string

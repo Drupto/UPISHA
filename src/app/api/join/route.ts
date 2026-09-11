@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 import { createMember, getMembers, createUserRecord } from '@/lib/firestore'
 import { joinSchema, JOIN_FIELD_LABELS } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection, getClientIp } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, withCsrfProtection, getClientIp } from '@/lib/security'
+import { checkRateLimitStrict } from '@/lib/firestore-rate-limit'
 import { uploadDataUrl } from '@/lib/storage'
 
 async function createFirebaseAuthUser(email: string, password: string, displayName: string) {
@@ -71,9 +72,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validated = joinSchema.parse(body)
 
-    // Rate limiting — use IP + email to prevent bypass via email change (H3)
+    // Rate limiting — use IP + email to prevent bypass via email change (H3).
+    // Firestore limiter (fail-closed): effective across serverless instances
+    // on Netlify, where in-memory state is ephemeral (HIGH-1).
     const clientIp = getClientIp(request)
-    if (!rateLimit(`join:${clientIp}:${validated.email}`, 3, 60 * 60 * 1000)) {
+    const rate = await checkRateLimitStrict(`join:${clientIp}:${validated.email}`, 3, 60 * 60 * 1000)
+    if (!rate.allowed) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
 

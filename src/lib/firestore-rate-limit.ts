@@ -4,7 +4,7 @@
  * and works across serverless instances.
  */
 
-import { getDb } from './firebase-admin'
+import { getAdminDb } from './firebase-server'
 import {
   collection,
   doc,
@@ -15,7 +15,7 @@ import {
   where,
   increment,
   Timestamp,
-} from 'firebase/firestore'
+} from './admin-firestore-compat'
 
 interface RateLimitEntry {
   identifier: string
@@ -28,7 +28,7 @@ const RATE_LIMITS_COLLECTION = 'rate_limits'
 
 // Lazy db accessor (matches firestore.ts pattern) so module import
 // during build does not fail when env vars are unavailable.
-const db = () => getDb()
+const db = () => getAdminDb()
 
 /**
  * Get the client IP from a request, taking forwarded headers into account.

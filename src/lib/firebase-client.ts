@@ -42,48 +42,17 @@ export function getStorageInstance(): FirebaseStorage {
 
 export { FieldValue }
 
-/**
- * Verify a Firebase ID token using the Firebase Auth REST API (admin SDK alternative).
- * Uses only NEXT_PUBLIC_* env vars — no service account needed.
- *
- * NOTE: The identitytoolkit lookup endpoint does NOT return custom claims.
- * Role-based access control is enforced via the Firestore `users` collection
- * (see requireAdmin()/requireVerifiedMember() in auth-helpers.ts) and the
- * Firestore security rules. For full custom-claims support, install
- * `firebase-admin` and initialize it with a service account, then use
- * `admin.auth().verifyIdToken()`.
- */
-export async function verifyToken(token: string) {
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
-  
-  if (!projectId) {
-    throw new Error('NEXT_PUBLIC_FIREBASE_PROJECT_ID is not configured')
-  }
-  
-  const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: token }),
-    }
-  )
-
-  if (!response.ok) {
-    throw new Error('Invalid token')
-  }
-
-  const data = await response.json()
-  const user = data.users?.[0]
-
-  if (!user) {
-    throw new Error('User not found')
-  }
-
-  return {
-    uid: user.localId,
-    email: user.email || null,
-    name: user.displayName || null,
-    emailVerified: user.emailVerified === true,
-  }
-}
+// NOTE: Token verification was removed from this module — it was server-side
+// logic living in a client module. It now lives in the real Firebase Admin
+// SDK module: src/lib/firebase-server.ts → verifyIdToken(), which uses
+// admin.auth().verifyIdToken() with revocation checking and custom-claims
+// support (replacing the REST identitytoolkit accounts:lookup approach).
+//
+// This file remains a lazy client/Web-SDK singleton (getConfig/getDb/
+// getStorageInstance) for browser-side Firebase usage.
+//
+// HISTORICAL NOTE (for the audit trail): the previous implementation here
+// verified ID tokens via the identitytoolkit REST API (accounts:lookup with
+// the public web API key). That endpoint cannot check token revocation and
+// does not return custom claims — which is why verification moved to the
+// Admin SDK.

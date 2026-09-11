@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server'
-import { verifyToken } from './firebase-admin'
+import { verifyIdToken } from './firebase-server'
 import { getUserByUid, getMemberByUid } from './firestore'
 
 export async function requireAuth(request: NextRequest) {
@@ -11,7 +11,11 @@ export async function requireAuth(request: NextRequest) {
   }
 
   try {
-    const decodedToken = await verifyToken(sessionToken)
+    // Admin SDK verification with revocation checking (checkRevoked=true):
+    // rejects tokens invalidated by password change / account disable /
+    // explicit revokeRefreshTokens — impossible with the previous REST
+    // identitytoolkit accounts:lookup approach (HIGH-2 slice).
+    const decodedToken = await verifyIdToken(sessionToken, true)
     return decodedToken
   } catch {
     return NextResponse.json({ authenticated: false, error: 'Invalid token' }, { status: 401 })
