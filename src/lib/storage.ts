@@ -61,12 +61,26 @@ export async function uploadDataUrl(
     resumable: false,
     metadata: {
       contentType,
-      // Classic download-token: makes the ?alt=media&token=… URL work the
-      // same way getDownloadURL() URLs did under the client SDK.
-      firebaseStorageDownloadTokens: token,
       cacheControl: 'public, max-age=31536000, immutable',
     },
   })
+
+  // ⚠️ The new Firebase Storage backend (*.firebasestorage.app buckets)
+  // DROPS custom metadata passed through file.save() — the
+  // `firebaseStorageDownloadTokens` key must be applied explicitly via
+  // setMetadata() AFTER the upload. Without it, the ?alt=media&token=…
+  // URL below 403s (observed live: token missing → GET 403 Forbidden).
+  await file.setMetadata({ metadata: { firebaseStorageDownloadTokens: token } })
+
+  // Verify the token actually landed — fail LOUDLY in the server logs
+  // instead of returning a URL that will 403 at display time.
+  const [meta] = await file.getMetadata()
+  if (!(meta.metadata && meta.metadata.firebaseStorageDownloadTokens === token)) {
+    console.error(
+      `STORAGE WARNING: download token was not persisted for "${path}" — ` +
+      'the returned URL will NOT be readable until the token metadata exists.'
+    )
+  }
 
   const encodedPath = encodeURIComponent(path)
   return `${DOWNLOAD_URL_BASE}/${bucket.name}/o/${encodedPath}?alt=media&token=${token}`
