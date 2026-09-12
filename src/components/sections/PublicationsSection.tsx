@@ -6,7 +6,7 @@ import {
   Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
   Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
   Heart, Stethoscope, GraduationCap, Globe, Facebook, Twitter, Instagram,
-  Linkedin, Youtube, Send, Clock, Calendar, ArrowRight, CheckCircle2,
+  Linkedin, Youtube, Send, Calendar, ArrowRight, CheckCircle2,
   Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote,
   Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
   PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
@@ -294,10 +294,6 @@ export function PublicationsSection({ initialPublications }: PublicationsSection
                       </p>
                       <div className="space-y-3 mb-4">
                         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                          <Clock className="h-4 w-4 text-upisha-gold" />
-                          Submission Deadline: June 30, 2026
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                           <FileText className="h-4 w-4 text-upisha-gold" />
                           Follow APA 7th Edition formatting
                         </div>
@@ -306,10 +302,12 @@ export function PublicationsSection({ initialPublications }: PublicationsSection
                           Submit to: office@upisha.org
                         </div>
                       </div>
-                      <Button size="sm" className="bg-upisha-gold hover:bg-upisha-gold/90 text-white">
-                        <Download className="h-4 w-4 mr-1" />
-                        Author Guidelines
-                      </Button>
+                      <Link href="/author-guidelines">
+                        <Button size="sm" className="bg-upisha-gold hover:bg-upisha-gold/90 text-white">
+                          <Download className="h-4 w-4 mr-1" />
+                          Author Guidelines
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 </div>
