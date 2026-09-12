@@ -164,8 +164,11 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(to right, #0d7377, #c7923e, #0d7377);
+    height: 4px;
+    background: linear-gradient(90deg, #0d7377 0%, #0d7377 55%, #c7923e 100%);
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+    pointer-events: none;
     z-index: 1;
   }
 

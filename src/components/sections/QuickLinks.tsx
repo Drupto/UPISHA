@@ -1,59 +1,52 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
-import {
-  Menu, X, Phone, Mail, MapPin, ChevronRight, ChevronLeft, ChevronUp, ChevronDown,
-  Users, BookOpen, FileText, Award, Camera, UserPlus, Ear, MessageSquare,
-  Heart, Stethoscope, GraduationCap, Globe, Facebook, Twitter, Instagram,
-  Linkedin, Youtube, Send, Clock, Calendar, ArrowRight, CheckCircle2,
-  Star, Briefcase, Shield, ExternalLink, Download, Eye, Quote,
-  Activity, Microscope, HandHeart, TrendingUp, Building2, Newspaper,
-  PlayCircle, Sun, Moon, Bell, Timer, Sparkles, Search, AlertCircle,
-  Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
-  PhoneCall, Building, Mailbox, Zap,
-} from 'lucide-react'
-import { documents } from '@/lib/static-data'
+import { motion } from 'framer-motion'
+import { Ear, MessageSquare, Users, Award, ArrowUpRight } from 'lucide-react'
 
 /* ─── Quick Links ─── */
 export function QuickLinks() {
   const links = [
-    { icon: Ear, label: 'Audiology', href: '#about', color: 'bg-teal-500' },
+    { icon: Ear, label: 'Audiology', href: '#about' },
     {
       icon: MessageSquare,
       label: 'Speech Language Pathology',
       href: '#about',
-      color: 'bg-emerald-600',
     },
     {
       icon: Users,
       label: 'Locate Professional',
       href: '#contact',
-      color: 'bg-upisha-gold',
     },
-    { icon: Award, label: 'Clinic Accreditation', href: '#documents', color: 'bg-upisha-navy' },
+    { icon: Award, label: 'Clinic Accreditation', href: '#documents' },
   ]
 
   return (
-    <div className="relative z-20 -mt-16 md:-mt-20">
+    <div className="relative z-20 -mt-16 md:-mt-20 pb-8">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
           {links.map((link, i) => (
             <motion.a
               key={link.label}
               href={link.href}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl p-4 md:p-6 flex flex-col items-center gap-3 text-center transition-all duration-300 hover:-translate-y-1 group border-t-[3px] border-t-transparent hover:border-t-upisha-teal card-gradient-top"
+              aria-label={`${link.label} — learn more`}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ delay: i * 0.08, duration: 0.5, ease: 'easeOut' }}
+              className="card-gradient-top group relative flex h-full min-h-[164px] md:min-h-[184px] flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 pt-6 text-center shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-1.5 hover:border-upisha-teal/20 hover:shadow-[0_20px_45px_-15px_rgba(13,115,119,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-upisha-teal focus-visible:ring-offset-2 dark:border-white/10 dark:bg-gray-800/95 md:p-6 md:pt-7"
             >
-              <div
-                className={`${link.color} w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}
-              >
-                <link.icon className="h-6 w-6 md:h-7 md:w-7 text-white" />
+              <ArrowUpRight
+                aria-hidden="true"
+                className="absolute right-3 top-3 h-4 w-4 text-upisha-teal/40 opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-upisha-teal group-hover:opacity-100 group-focus-visible:opacity-100"
+              />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-upisha-teal/10 to-upisha-gold/10 transition-all duration-300 group-hover:-rotate-3 group-hover:scale-110 group-hover:from-upisha-teal group-hover:to-upisha-teal-dark group-hover:shadow-lg group-hover:shadow-upisha-teal/30 dark:from-upisha-teal/20 dark:to-upisha-gold/20 md:h-16 md:w-16">
+                <link.icon className="h-7 w-7 text-upisha-teal transition-colors duration-300 group-hover:text-white md:h-8 md:w-8" />
               </div>
-              <span className="text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-upisha-teal transition-colors">
+              <span className="text-balance text-sm font-bold leading-tight tracking-tight text-upisha-navy transition-colors duration-300 group-hover:text-upisha-teal dark:text-white dark:group-hover:text-upisha-gold md:text-[15px]">
                 {link.label}
+              </span>
+              <span className="text-[11px] font-medium uppercase tracking-widest text-slate-400 opacity-0 transition-all duration-300 group-hover:opacity-100 dark:text-slate-500">
+                Learn more
               </span>
             </motion.a>
           ))}
