@@ -23,7 +23,6 @@ export function SectionNavigationIndicator({ activeSection }: { activeSection: s
     { id: 'about', label: 'About' },
     { id: 'documents', label: 'Documents' },
     { id: 'publications', label: 'Publications' },
-    { id: 'professionals', label: 'Professionals' },
     { id: 'join', label: 'Join' },
     { id: 'gallery', label: 'Gallery' },
     { id: 'contact', label: 'Contact' },

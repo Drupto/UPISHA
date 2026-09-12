@@ -33,6 +33,7 @@ export function GallerySection({ initialImages }: GallerySectionProps = {}) {
   const [visibleCount, setVisibleCount] = useState(6)
   const [galleryImages, setGalleryImages] = useState<any[]>(initialImages ?? [])
   const [loading, setLoading] = useState(!initialImages)
+  const touchStartX = useRef<number | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -235,7 +236,21 @@ export function GallerySection({ initialImages }: GallerySectionProps = {}) {
               </DialogDescription>
             </DialogHeader>
             {selectedImage && (
-              <div className="relative">
+              <div
+                className="relative"
+                onTouchStart={(e) => {
+                  touchStartX.current = e.touches[0]?.clientX ?? null
+                }}
+                onTouchEnd={(e) => {
+                  if (touchStartX.current === null) return
+                  const endX = e.changedTouches[0]?.clientX ?? touchStartX.current
+                  const deltaX = endX - touchStartX.current
+                  touchStartX.current = null
+                  if (Math.abs(deltaX) < 50) return
+                  if (deltaX < 0) goToNext()
+                  else goToPrev()
+                }}
+              >
                 {/* Image Counter */}
                 <div className="absolute top-3 right-3 z-10 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full">
                   {selectedImage.index + 1} of {filteredImages.length}

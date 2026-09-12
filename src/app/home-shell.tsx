@@ -135,7 +135,7 @@ export function HomeShell({
       if (gPressed) {
         const map: Record<string, string> = {
           h: 'home', a: 'about', j: 'join', c: 'contact', g: 'gallery',
-          d: 'documents', p: 'professionals',
+          d: 'documents', p: 'publications',
         }
         const target = map[e.key.toLowerCase()]
         if (target) {

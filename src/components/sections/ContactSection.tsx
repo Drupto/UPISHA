@@ -126,8 +126,8 @@ export function ContactSection() {
     {
       icon: Phone,
       title: 'Phone',
-      details: ['+91-522-456-7890', '+91-522-456-7891'],
-      action: 'tel:+915224567890',
+      details: ['+91-9555155940'],
+      action: 'tel:+919555155940',
     },
     {
       icon: Mail,
@@ -351,7 +351,7 @@ export function ContactSection() {
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         <a
-                          href="tel:+915224567890"
+                          href="tel:+919555155940"
                           className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-upisha-teal/40 hover:bg-upisha-teal/5 dark:hover:bg-upisha-teal/10 transition-all group"
                         >
                           <div className="w-8 h-8 rounded-full bg-upisha-teal/10 flex items-center justify-center group-hover:bg-upisha-teal transition-colors">

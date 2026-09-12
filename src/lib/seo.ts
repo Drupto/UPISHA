@@ -59,7 +59,7 @@ export function getOrganizationSchema() {
     },
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: "+91-522-456-7890",
+      telephone: "+91-9555155940",
       contactType: "customer service",
       email: "office@upisha.org",
       availableLanguage: ["English", "Hindi"],
@@ -416,7 +416,7 @@ export const siteConfig = {
   },
   contact: {
     email: "office@upisha.org",
-    phone: "+91-522-456-7890",
+    phone: "+91-9555155940",
     address: {
       street: "110 Raghu Raj Nagar Patel Nagar",
       city: "Lucknow",

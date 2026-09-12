@@ -30,7 +30,7 @@ export function FloatingContact() {
     <AnimatePresence>
       {isVisible && (
         <motion.a
-          href="tel:+915224001234"
+          href="tel:+919555155940"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.5 }}

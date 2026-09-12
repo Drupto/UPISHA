@@ -13,7 +13,7 @@ import {
   Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
   PhoneCall, Building, Mailbox, Zap,
 } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useAutoAdvance } from '@/lib/hooks/useAutoAdvance'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AnimatedSection } from '@/components/sections'
@@ -25,12 +25,12 @@ interface TestimonialsSectionProps {
 }
 
 export function TestimonialsSection({ initialTestimonials }: TestimonialsSectionProps = {}) {
-  const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [testimonials, setTestimonials] = useState<any[]>(() =>
     (initialTestimonials ?? []).filter((t) => t.isActive !== false)
   )
   const [loading, setLoading] = useState(!initialTestimonials)
+  const [current, setCurrent] = useAutoAdvance(testimonials.length, { intervalMs: 6000, isPaused })
 
   useEffect(() => {
     if (initialTestimonials) return
@@ -51,14 +51,6 @@ export function TestimonialsSection({ initialTestimonials }: TestimonialsSection
     }
     loadTestimonials()
   }, [])
-
-  useEffect(() => {
-    if (isPaused || testimonials.length === 0) return
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % testimonials.length)
-    }, 6000)
-    return () => clearInterval(timer)
-  }, [isPaused, testimonials.length])
 
   const goNext = () => setCurrent((prev) => (prev + 1) % testimonials.length)
   const goPrev = () => setCurrent((prev) => (prev - 1 + testimonials.length) % testimonials.length)

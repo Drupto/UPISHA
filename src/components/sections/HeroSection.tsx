@@ -16,30 +16,39 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { heroSlides } from '@/lib/static-data'
+import { useAutoAdvance } from '@/lib/hooks/useAutoAdvance'
 
 /* ─── Hero Section ─── */
 export function HeroSection() {
-  const [current, setCurrent] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+  const [current, setCurrent] = useAutoAdvance(heroSlides.length, { intervalMs: 6000, isPaused })
   const { toast } = useToast()
   const heroRef = useRef<HTMLElement>(null)
   const { scrollY } = useScroll()
 
+  // Hover-pause should only apply on devices with a real mouse/trackpad.
+  // On touch screens a tap synthesizes mouseenter without a matching
+  // mouseleave, which would latch the carousel in a permanently paused state.
+  const canHover = useMemo(
+    () => (typeof window !== 'undefined' ? window.matchMedia('(hover: hover)').matches : false),
+    []
+  )
+
   // Parallax-like scroll effect
   const heroTranslateY = useTransform(scrollY, [0, 700], [0, 80])
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % heroSlides.length)
-    }, 6000)
-    return () => clearInterval(timer)
-  }, [])
 
   const goTo = (index: number) => setCurrent(index)
   const goPrev = () => setCurrent((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)
   const goNext = () => setCurrent((prev) => (prev + 1) % heroSlides.length)
 
   return (
-    <section id="home" ref={heroRef} className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+    <section
+      id="home"
+      ref={heroRef}
+      className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden"
+      onMouseEnter={() => canHover && setIsPaused(true)}
+      onMouseLeave={() => canHover && setIsPaused(false)}
+    >
       {/* Parallax container */}
       <motion.div style={{ y: heroTranslateY }} className="absolute inset-0">
       {/* Decorative geometric shapes */}

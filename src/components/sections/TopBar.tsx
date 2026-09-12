@@ -21,11 +21,11 @@ export function TopBar() {
       <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="flex items-center gap-4 flex-wrap justify-center">
           <a
-            href="tel:+915224567890"
+            href="tel:+919555155940"
             className="flex items-center gap-1.5 hover:text-upisha-gold transition-colors group"
           >
             <PhoneCall className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-            +91-522-456-7890
+            +91-9555155940
           </a>
           <a
             href="mailto:office@upisha.org"

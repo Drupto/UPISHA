@@ -310,7 +310,14 @@ export default function EventsTimelineSection({ initialEvents }: EventsTimelineS
                 <Button
                   className="flex-1 bg-upisha-teal hover:bg-upisha-teal-dark text-white"
                   onClick={() => {
-                    document.getElementById(selectedEvent.registrationLink.slice(1))?.scrollIntoView({ behavior: 'smooth' })
+                    const link = selectedEvent.registrationLink
+                    if (link && !link.startsWith('#')) {
+                      window.open(link, '_blank', 'noopener,noreferrer')
+                    } else if (link) {
+                      document.getElementById(link.slice(1))?.scrollIntoView({ behavior: 'smooth' })
+                    } else {
+                      document.getElementById('join')?.scrollIntoView({ behavior: 'smooth' })
+                    }
                     setSelectedEvent(null)
                   }}
                 >

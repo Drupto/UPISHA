@@ -22,13 +22,38 @@ import { publications } from '@/lib/static-data'
 /* ─── Footer ─── */
 export function Footer() {
   const [footerEmail, setFooterEmail] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
-  const handleFooterNewsletter = (e: React.FormEvent) => {
+  // Real newsletter subscription (same endpoint as NewsletterSection)
+  const handleFooterNewsletter = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (footerEmail) {
-      toast({ title: 'Subscribed!', description: 'You have been subscribed to our newsletter.' })
-      setFooterEmail('')
+    if (!footerEmail || isSubmitting) return
+    setIsSubmitting(true)
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: footerEmail }),
+      })
+      if (res.ok) {
+        toast({ title: 'Subscribed!', description: 'You have been subscribed to our newsletter.' })
+        setFooterEmail('')
+      } else {
+        toast({
+          title: 'Subscription failed',
+          description: 'This email may already be subscribed. Please try another.',
+          variant: 'destructive',
+        })
+      }
+    } catch {
+      toast({
+        title: 'Network error',
+        description: 'Please check your connection and try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -83,7 +108,7 @@ export function Footer() {
             <div>
               <h4 className="font-semibold text-upisha-gold mb-4 social-icon-hover inline-block">Quick Links</h4>
               <ul className="space-y-2">
-                {['About Us', 'Documents', 'Publications', 'Professionals'].map((link) => (
+                {['About Us', 'Documents', 'Publications'].map((link) => (
                   <li key={link}>
                     <a
                       href={`#${link.toLowerCase().replace(/\s/g, '')}`}
@@ -123,7 +148,6 @@ export function Footer() {
               <ul className="space-y-2">
                 {[
                   { label: 'Join Now', href: '#join' },
-                  { label: 'Find Professional', href: '#professionals' },
                   { label: 'Submit Paper', href: '#publications' },
                   { label: 'Contact Us', href: '#contact' },
                   { label: 'Check Webinar Registration', href: '/webinars/lookup' },
@@ -154,8 +178,12 @@ export function Footer() {
                   required
                   className="h-9 text-xs bg-white/10 border-white/10 text-white placeholder:text-gray-500 focus:border-upisha-teal input-focus-ring"
                 />
-                <Button type="submit" size="sm" className="h-9 bg-upisha-teal hover:bg-upisha-teal-dark text-white shrink-0 px-3">
-                  <Send className="h-3.5 w-3.5" />
+                <Button type="submit" size="sm" className="h-9 bg-upisha-teal hover:bg-upisha-teal-dark text-white shrink-0 px-3" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <span className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send className="h-3.5 w-3.5" />
+                  )}
                 </Button>
               </form>
               <div className="space-y-1.5 text-xs text-gray-400">
@@ -165,7 +193,7 @@ export function Footer() {
                 </p>
                 <p className="flex items-center gap-2">
                   <Phone className="h-3.5 w-3.5 shrink-0 text-upisha-teal" />
-                  +91-522-456-7890
+                  +91-9555155940
                 </p>
                 <p className="flex items-center gap-2">
                   <Mail className="h-3.5 w-3.5 shrink-0 text-upisha-teal" />

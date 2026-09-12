@@ -37,8 +37,6 @@ export function CommandPalette({
       ...navLinks.map((l) => ({ label: l.label, href: l.href, group: 'Pages', icon: ChevronRight })),
       { label: 'Join UP ISHA - Membership', href: '#join', group: 'Actions', icon: UserPlus },
       { label: 'Contact the Association', href: '#contact', group: 'Actions', icon: Mail },
-      { label: 'Find an Audiologist', href: '#professionals', group: 'Directory', icon: Ear },
-      { label: 'Find a Speech-Language Pathologist', href: '#professionals', group: 'Directory', icon: MessageSquare },
       { label: 'Browse Documents', href: '#documents', group: 'Resources', icon: FileText },
       { label: 'View Publications', href: '#publications', group: 'Resources', icon: BookOpen },
       { label: 'View Gallery', href: '#gallery', group: 'Resources', icon: Camera },

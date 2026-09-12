@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getWebinarRegistrationByRegistrationNumber, getCertificatesByRegistrationId, getReceiptByRegistrationNumber } from '@/lib/firestore'
+import { getWebinarById, getWebinarRegistrationByRegistrationNumber, getCertificatesByRegistrationId, getReceiptByRegistrationNumber } from '@/lib/firestore'
 import { withSecurityHeaders, rateLimit } from '@/lib/security'
 
 /**
@@ -55,7 +55,24 @@ export async function GET(request: NextRequest) {
       : null
 
     // Only expose safe public data — never email, phone, or any other
-    // private contact information.
+    // private contact information. The meeting link is a sensitive join
+    // credential, so it is returned only for confirmed registrations.
+    let meetingLink: string | null = null
+    let webinarDate: string | null = null
+    let webinarTime: string | null = null
+    try {
+      const webinar = registration.webinarId ? await getWebinarById(registration.webinarId) : null
+      if (webinar) {
+        webinarDate = webinar.date || null
+        webinarTime = webinar.time || null
+        if (registration.status === 'confirmed' && webinar.meetingLink) {
+          meetingLink = webinar.meetingLink
+        }
+      }
+    } catch {
+      // A missing/unreadable webinar should not break lookup; join details stay null.
+    }
+
     return withSecurityHeaders(NextResponse.json({
       registration: {
         id: registration.id,
@@ -64,6 +81,9 @@ export async function GET(request: NextRequest) {
         webinarType: registration.webinarType,
         status: registration.status,
         registrationNumber: registration.registrationNumber,
+        webinarDate,
+        webinarTime,
+        meetingLink,
         createdAt: registration.createdAt,
       },
       certificates: certificates.map((c) => ({

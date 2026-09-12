@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AnimatedSection } from '@/components/sections'
 import { Badge } from '@/components/ui/badge'
 import { executiveCouncil } from '@/lib/static-data'
+import { useAutoAdvance } from '@/lib/hooks/useAutoAdvance'
 
 /* ─── Leadership Messages (President & Secretary) ─── */
 interface LeadershipSlide {
@@ -78,8 +79,8 @@ const leadershipMessages: LeadershipSlide[] = [
 
 /* ─── About Section ─── */
 export function AboutSection() {
-  const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [current, setCurrent] = useAutoAdvance(leadershipMessages.length, { intervalMs: 4000, isPaused })
 
   // Hover-pause should only apply on devices with a real mouse/trackpad.
   // On touch screens a tap synthesizes mouseenter without a matching
@@ -89,19 +90,10 @@ export function AboutSection() {
     []
   )
 
-  useEffect(() => {
-    if (isPaused || leadershipMessages.length === 0) return
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % leadershipMessages.length)
-    }, 4000)
-    return () => clearInterval(timer)
-  }, [isPaused])
-
+  // ── Executive Council carousel ──
   const goNext = () => setCurrent((prev) => (prev + 1) % leadershipMessages.length)
   const goPrev = () => setCurrent((prev) => (prev - 1 + leadershipMessages.length) % leadershipMessages.length)
 
-  // ── Executive Council carousel ──
-  const [councilPage, setCouncilPage] = useState(0)
   const [councilIsPaused, setCouncilIsPaused] = useState(false)
   const [perView, setPerView] = useState(3)
 
@@ -116,19 +108,12 @@ export function AboutSection() {
   }, [])
 
   const totalCouncilPages = Math.ceil(executiveCouncil.length / perView)
+  const [councilPage, setCouncilPage] = useAutoAdvance(totalCouncilPages, { intervalMs: 4000, isPaused: councilIsPaused })
 
   // Keep the page index valid when the number of cards per view changes on resize
   useEffect(() => {
     setCouncilPage((prev) => (prev >= totalCouncilPages ? 0 : prev))
   }, [totalCouncilPages])
-
-  useEffect(() => {
-    if (councilIsPaused || totalCouncilPages <= 1) return
-    const timer = setInterval(() => {
-      setCouncilPage((prev) => (prev + 1) % totalCouncilPages)
-    }, 4000)
-    return () => clearInterval(timer)
-  }, [councilIsPaused, totalCouncilPages])
 
   const goCouncilNext = () => setCouncilPage((prev) => (prev + 1) % totalCouncilPages)
   const goCouncilPrev = () => setCouncilPage((prev) => (prev - 1 + totalCouncilPages) % totalCouncilPages)

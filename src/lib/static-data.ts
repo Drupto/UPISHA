@@ -37,8 +37,8 @@ export const heroSlides: HeroSlide[] = [
     image: '/images/hero-2.png',
     title: 'Empowering Communication',
     subtitle: 'Supporting professionals who transform lives through speech and hearing care',
-    cta: 'Find a Professional',
-    ctaLink: '#professionals',
+    cta: 'Get in Touch',
+    ctaLink: '#contact',
   },
   {
     image: '/images/hero-3.png',

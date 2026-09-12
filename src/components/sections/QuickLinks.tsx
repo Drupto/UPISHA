@@ -18,17 +18,17 @@ import { documents } from '@/lib/static-data'
 /* ─── Quick Links ─── */
 export function QuickLinks() {
   const links = [
-    { icon: Ear, label: 'Audiology', href: '#professionals', color: 'bg-teal-500' },
+    { icon: Ear, label: 'Audiology', href: '#about', color: 'bg-teal-500' },
     {
       icon: MessageSquare,
       label: 'Speech Language Pathology',
-      href: '#professionals',
+      href: '#about',
       color: 'bg-emerald-600',
     },
     {
       icon: Users,
       label: 'Locate Professional',
-      href: '#professionals',
+      href: '#contact',
       color: 'bg-upisha-gold',
     },
     { icon: Award, label: 'Clinic Accreditation', href: '#documents', color: 'bg-upisha-navy' },

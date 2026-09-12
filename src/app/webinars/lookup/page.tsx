@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Loader2, CheckCircle2, XCircle, Clock3, Calendar, User, Monitor, FileText, Receipt as ReceiptIcon, ChevronDown } from 'lucide-react'
+import { Search, Loader2, CheckCircle2, XCircle, Clock3, Calendar, Clock, User, Monitor, FileText, ExternalLink, Receipt as ReceiptIcon, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -21,6 +21,9 @@ interface LookupResult {
     webinarType?: 'paid' | 'free'
     status?: 'pending' | 'confirmed' | 'rejected'
     registrationNumber?: string | null
+    webinarDate?: string | null
+    webinarTime?: string | null
+    meetingLink?: string | null
     createdAt?: Date | string
   }
   certificates: Array<{
@@ -180,6 +183,27 @@ export default function WebinarLookupPage() {
                       </span>
                     )}
                   </div>
+                  {(result.registration.webinarDate || result.registration.webinarTime) && (
+                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <Clock className="h-3.5 w-3.5 text-upisha-teal" />
+                      {[result.registration.webinarDate, result.registration.webinarTime].filter(Boolean).join(' • ')}
+                    </div>
+                  )}
+                  {result.registration.meetingLink ? (
+                    <a
+                      href={result.registration.meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-flex items-center gap-2 rounded-lg bg-upisha-teal px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-upisha-teal-dark"
+                    >
+                      Join Now
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  ) : result.registration.status === 'pending' ? (
+                    <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+                      The Join Now button will appear here once your registration is confirmed by the administrator.
+                    </p>
+                  ) : null}
                 </div>
 
                 {result.certificates.length > 0 && (
