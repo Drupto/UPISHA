@@ -30,7 +30,8 @@ interface LeadershipSlide {
   role: string
   image: string
   alt: string
-  body: ReactNode
+  excerpt: ReactNode
+  fullBody?: ReactNode
 }
 
 const leadershipMessages: LeadershipSlide[] = [
@@ -41,7 +42,7 @@ const leadershipMessages: LeadershipSlide[] = [
     role: 'President, UP ISHA',
     image: '/images/President.jpeg',
     alt: 'Mr. Bhupendra Kumar Mishra',
-    body: (
+    excerpt: (
       <p className="text-gray-600 dark:text-gray-300 leading-relaxed italic text-base mb-4">
         &ldquo;It is my privilege to serve as the President of UP ISHA. Our association
         continues to grow and strengthen, uniting professionals across Uttar Pradesh in
@@ -58,7 +59,7 @@ const leadershipMessages: LeadershipSlide[] = [
     role: 'Secretary, UP ISHA',
     image: '/images/Secretary.jpeg',
     alt: 'Mr. Priyaveer Chauhan',
-    body: (
+    excerpt: (
       <>
         <p className="text-gray-600 dark:text-gray-300 leading-relaxed italic text-base mb-4">
           &ldquo;It is my privilege to serve as the Secretary of UP-ISHA and to work
@@ -74,13 +75,66 @@ const leadershipMessages: LeadershipSlide[] = [
         </p>
       </>
     ),
+    fullBody: (
+      <>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed italic text-base mb-4">
+          &ldquo;It is my privilege to serve as the Secretary of UP-ISHA and to work
+          alongside dedicated professionals committed to advancing the field of Speech
+          and Hearing Sciences.&rdquo;
+        </p>
+        <div className="border-l-4 border-upisha-gold bg-upisha-gold/5 dark:bg-upisha-gold/10 rounded-r-lg px-4 py-3 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-upisha-gold mb-1">Core Motto</p>
+          <p className="italic text-gray-600 dark:text-gray-300 text-base">
+            &ldquo;Working Together for Excellence in Speech and Hearing Sciences&rdquo;
+          </p>
+        </div>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
+          Our vision is simple yet meaningful — to promote excellence in knowledge,
+          clinical practice, and professional collaboration so that every patient
+          receives the best possible care and outcomes.
+        </p>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
+          We believe that continuous learning, sharing of expertise, and staying
+          updated with scientific advancements are the foundation of excellence.
+          Through academic initiatives, professional development, and collaborative
+          learning, UP-ISHA strives to create a platform where knowledge translates
+          into better clinical decisions and better patient outcomes.
+        </p>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
+          Our mission becomes even more meaningful when it comes to children with
+          special needs. Every child deserves the right intervention, at the right
+          time, from a knowledgeable and compassionate professional. By strengthening
+          our knowledge and skills, we can make a lasting difference in their
+          communication, development, confidence, and quality of life.
+        </p>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-4">
+          Together, let us learn, grow, share, and serve — because excellence in
+          knowledge today creates excellence in care tomorrow.
+        </p>
+        <p className="text-sm font-semibold text-upisha-navy dark:text-white mb-1">
+          — Secretary, UP-ISHA
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          Working Together for Excellence in Speech and Hearing Sciences
+        </p>
+      </>
+    ),
   },
 ]
 
 /* ─── About Section ─── */
 export function AboutSection() {
   const [isPaused, setIsPaused] = useState(false)
-  const [current, setCurrent] = useAutoAdvance(leadershipMessages.length, { intervalMs: 4000, isPaused })
+  const [expanded, setExpanded] = useState(false)
+  const [current, setCurrent] = useAutoAdvance(leadershipMessages.length, {
+    intervalMs: 4000,
+    isPaused: isPaused || expanded,
+  })
+
+  // Collapse the expanded message when the carousel moves to another slide
+  useEffect(() => {
+    setExpanded(false)
+  }, [current])
 
   // Hover-pause should only apply on devices with a real mouse/trackpad.
   // On touch screens a tap synthesizes mouseenter without a matching
@@ -256,7 +310,30 @@ export function AboutSection() {
                     <Badge className="bg-upisha-gold text-white mb-4">
                       {leadershipMessages[current].badge}
                     </Badge>
-                    {leadershipMessages[current].body}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.35 }}
+                    >
+                      {expanded && leadershipMessages[current].fullBody
+                        ? leadershipMessages[current].fullBody
+                        : leadershipMessages[current].excerpt}
+                    </motion.div>
+                    {leadershipMessages[current].fullBody && (
+                      <div className="mb-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          aria-expanded={expanded}
+                          aria-controls={`leadership-message-${leadershipMessages[current].id}`}
+                          onClick={() => setExpanded((e) => !e)}
+                          className="border-upisha-teal/40 text-upisha-teal hover:bg-upisha-teal hover:text-white dark:border-upisha-teal/60 dark:text-upisha-teal dark:hover:bg-upisha-teal dark:hover:text-white transition-colors"
+                        >
+                          {expanded ? 'Show Less' : 'Read Full Message'}
+                          {expanded ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                        </Button>
+                      </div>
+                    )}
                     <div className="flex items-center gap-3">
                       <div className="h-px flex-1 bg-gradient-to-r from-upisha-teal/20 to-transparent" />
                       <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Est. 2025</span>
