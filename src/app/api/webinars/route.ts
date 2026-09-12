@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
       registrationLink: validated.registrationLink ? sanitizeHtml(validated.registrationLink) : null,
       meetingLink: validated.meetingLink ? sanitizeHtml(validated.meetingLink) : null,
       type: validated.type ?? 'paid',
+      price: validated.price ?? null,
       isActive: validated.isActive,
       maxAttendees: validated.maxAttendees ?? null,
     })

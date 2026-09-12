@@ -122,6 +122,7 @@ export interface Webinar {
   registrationLink?: string | null
   meetingLink?: string | null
   type?: WebinarType
+  price?: number | null
   isActive?: boolean
   maxAttendees?: number | null
   registrationCount?: number

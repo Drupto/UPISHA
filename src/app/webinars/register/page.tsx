@@ -254,6 +254,14 @@ export default function WebinarRegisterPage() {
               <CardTitle className="text-upisha-navy dark:text-white">Payment Details</CardTitle>
             </CardHeader>
             <CardContent>
+              {selectedWebinar?.price ? (
+                <div className="mb-4 p-3 rounded-lg bg-upisha-teal/10 border border-upisha-teal/30 flex items-center justify-between">
+                  <span className="text-sm font-medium text-upisha-navy dark:text-white">
+                    Registration Fee — {selectedWebinar.title}
+                  </span>
+                  <span className="text-lg font-bold text-upisha-teal">₹{selectedWebinar.price}</span>
+                </div>
+              ) : null}
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
                   <h4 className="text-sm font-semibold text-upisha-navy dark:text-white mb-2">Bank Transfer</h4>

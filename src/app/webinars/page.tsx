@@ -106,7 +106,7 @@ export default function WebinarsPage() {
                         ) : (
                           <Badge className="shrink-0 text-xs bg-upisha-gold/20 text-upisha-gold-dark dark:text-upisha-gold">
                             <CreditCard className="h-3 w-3 mr-1" />
-                            Paid
+                            {webinar.type === 'paid' && webinar.price ? `Paid • ₹${webinar.price}` : 'Paid'}
                           </Badge>
                         )}
                       </div>

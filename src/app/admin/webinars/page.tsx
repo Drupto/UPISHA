@@ -29,6 +29,7 @@ interface WebinarItem {
   registrationLink?: string | null
   meetingLink?: string | null
   type?: 'paid' | 'free'
+  price?: number | null
   isActive?: boolean
   maxAttendees?: number | null
   registrationCount?: number
@@ -81,6 +82,7 @@ export default function AdminWebinarsPage() {
     registrationLink: '',
     meetingLink: '',
     type: 'paid' as 'paid' | 'free',
+    price: '',
     maxAttendees: '',
   })
   const [webinarSubmitting, setWebinarSubmitting] = useState(false)
@@ -200,6 +202,10 @@ export default function AdminWebinarsPage() {
       toast({ title: 'Validation error', description: 'Please fill all required fields', variant: 'destructive' })
       return
     }
+    if (webinarForm.type === 'paid' && (!webinarForm.price || Number(webinarForm.price) <= 0)) {
+      toast({ title: 'Validation error', description: 'Please enter a fee amount (₹) for paid webinars', variant: 'destructive' })
+      return
+    }
     setWebinarSubmitting(true)
     try {
       const url = editingWebinar
@@ -210,6 +216,7 @@ export default function AdminWebinarsPage() {
       const payload = {
         ...webinarForm,
         maxAttendees: webinarForm.maxAttendees ? Number(webinarForm.maxAttendees) : null,
+        price: webinarForm.type === 'paid' && webinarForm.price ? Number(webinarForm.price) : null,
         registrationLink: webinarForm.registrationLink || null,
         meetingLink: webinarForm.meetingLink || null,
       }
@@ -227,7 +234,7 @@ export default function AdminWebinarsPage() {
         })
         setShowWebinarForm(false)
         setEditingWebinar(null)
-        setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '', meetingLink: '', type: 'paid', maxAttendees: '' })
+        setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '', meetingLink: '', type: 'paid', price: '', maxAttendees: '' })
         fetchWebinars()
       } else {
         const err = await res.json().catch(() => ({}))
@@ -252,6 +259,7 @@ export default function AdminWebinarsPage() {
       registrationLink: webinar.registrationLink || '',
       meetingLink: webinar.meetingLink || '',
       type: webinar.type || 'paid',
+      price: webinar.price != null ? String(webinar.price) : '',
       maxAttendees: webinar.maxAttendees ? String(webinar.maxAttendees) : '',
     })
     setShowWebinarForm(true)
@@ -464,7 +472,7 @@ export default function AdminWebinarsPage() {
               <Button
                 onClick={() => {
                   setEditingWebinar(null)
-                  setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '', meetingLink: '', type: 'paid', maxAttendees: '' })
+                  setWebinarForm({ title: '', date: '', time: '', speaker: '', duration: '', description: '', registrationLink: '', meetingLink: '', type: 'paid', price: '', maxAttendees: '' })
                   setShowWebinarForm(!showWebinarForm)
                 }}
                 className="bg-upisha-teal hover:bg-upisha-teal-dark text-white"
@@ -592,6 +600,24 @@ export default function AdminWebinarsPage() {
                             <p className="text-xs text-gray-400 mt-1">Leave empty for unlimited seats</p>
                           </div>
                         </div>
+                        {webinarForm.type === 'paid' && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                              Fee Amount (₹) *
+                            </label>
+                            <Input
+                              type="number"
+                              min="1"
+                              required
+                              placeholder="e.g. 500"
+                              value={webinarForm.price}
+                              onChange={(e) => setWebinarForm({ ...webinarForm, price: e.target.value })}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">
+                              Amount attendees must pay. Shown on the website and printed on the payment receipt.
+                            </p>
+                          </div>
+                        )}
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">

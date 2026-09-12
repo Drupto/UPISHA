@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   getReceiptsByMemberUid,
   getReceiptsByMemberId,
+  getReceiptsByEmail,
   getMemberByUid,
   createReceipt,
 } from '@/lib/firestore'
@@ -24,16 +25,20 @@ export async function GET(request: NextRequest) {
     }
 
     const memberId = (member as { id?: string }).id
+    const memberEmail = member.email?.toLowerCase()
 
-    // Query by both memberUid and memberId to handle all receipt creation paths
-    const [uidReceipts, idReceipts] = await Promise.all([
+    // Query by memberUid, memberId AND email. Webinar receipts are keyed by
+    // the registration email (memberEmail) since registrations happen
+    // pre-login on the public site - same approach as /api/certificates/mine.
+    const [uidReceipts, idReceipts, emailReceipts] = await Promise.all([
       getReceiptsByMemberUid(decoded.uid),
       memberId ? getReceiptsByMemberId(memberId) : Promise.resolve([]),
+      memberEmail ? getReceiptsByEmail(memberEmail) : Promise.resolve([]),
     ])
 
     // Merge and deduplicate by receipt id
     const receiptMap = new Map<string, (typeof uidReceipts)[number]>()
-    for (const receipt of [...uidReceipts, ...idReceipts]) {
+    for (const receipt of [...uidReceipts, ...idReceipts, ...emailReceipts]) {
       if (receipt.id && !receiptMap.has(receipt.id)) {
         receiptMap.set(receipt.id, receipt)
       }
@@ -76,12 +81,13 @@ export async function GET(request: NextRequest) {
             issuedAt: new Date(),
           })
           // Re-fetch receipts after backfill
-          const [newUidReceipts, newIdReceipts] = await Promise.all([
+          const [newUidReceipts, newIdReceipts, newEmailReceipts] = await Promise.all([
             getReceiptsByMemberUid(decoded.uid),
             memberId ? getReceiptsByMemberId(memberId) : Promise.resolve([]),
+            memberEmail ? getReceiptsByEmail(memberEmail) : Promise.resolve([]),
           ])
           const newReceiptMap = new Map<string, (typeof newUidReceipts)[number]>()
-          for (const receipt of [...newUidReceipts, ...newIdReceipts]) {
+          for (const receipt of [...newUidReceipts, ...newIdReceipts, ...newEmailReceipts]) {
             if (receipt.id && !newReceiptMap.has(receipt.id)) {
               newReceiptMap.set(receipt.id, receipt)
             }

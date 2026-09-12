@@ -3,6 +3,8 @@ import {
   getWebinarById,
   getReceiptByReceiptNumber,
   createReceipt,
+  updateReceipt,
+  getMemberByEmail,
 } from '@/lib/firestore'
 import { sanitizeHtml } from '@/lib/security'
 import type { ReceiptDoc } from '@/lib/types'
@@ -37,18 +39,47 @@ export async function ensureWebinarReceipt(
   }
 
   const receiptNumber = webinarReceiptNumber(id)
-  const existing = await getReceiptByReceiptNumber(receiptNumber)
-  if (existing) {
-    return { created: false, receipt: existing }
-  }
-
   const webinar = registration.webinarId ? await getWebinarById(registration.webinarId) : null
   const amount = webinar?.price ?? 0
 
+  const existing = await getReceiptByReceiptNumber(receiptNumber)
+  if (existing) {
+    // Receipts issued before the webinar had a price (or before the price was
+    // set on the webinar) carry amount 0. Sync them so the corrected fee
+    // flows through to the stored/downloadable receipt.
+    const price = typeof webinar?.price === 'number' ? webinar.price : 0
+    if (existing.id && existing.amount === 0 && price > 0) {
+      try {
+        await updateReceipt(existing.id, { amount: price })
+        const refreshed = await getReceiptByReceiptNumber(receiptNumber)
+        return { created: false, receipt: refreshed ?? existing }
+      } catch (syncError) {
+        console.error('Failed to sync webinar receipt amount:', syncError)
+      }
+    }
+    return { created: false, receipt: existing }
+  }
+
+  // Link the receipt to the member account when the registration email
+  // belongs to one, so it matches the profile queries (memberUid / memberId)
+  // in addition to the email-based lookup.
+  let memberId: string = registration.email
+  let memberUid: string = registration.email
+  try {
+    const linkedMember = await getMemberByEmail(registration.email)
+    if (linkedMember) {
+      if (linkedMember.id) memberId = linkedMember.id
+      if (linkedMember.uid) memberUid = linkedMember.uid
+    }
+  } catch (linkError) {
+    // Fall back to email-based linkage
+    console.error('Failed to link webinar receipt to member account:', linkError)
+  }
+
   await createReceipt({
     receiptNumber,
-    memberId: registration.email,
-    memberUid: registration.email,
+    memberId,
+    memberUid,
     memberName: sanitizeHtml(registration.fullName),
     memberEmail: registration.email,
     transactionType: 'webinar',

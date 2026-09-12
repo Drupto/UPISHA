@@ -638,6 +638,46 @@ export async function getReceiptsByMemberId(memberId: string): Promise<ReceiptDo
   }
 }
 
+/**
+ * Receipts for webinar registrations are keyed by the registration email
+ * (memberEmail), since registrations happen pre-login on the public site.
+ * This lookup lets members see those receipts in their profile - mirroring
+ * getCertificatesByEmail which covers the same situation for certificates.
+ */
+export async function getReceiptsByEmail(email: string): Promise<ReceiptDoc[]> {
+  try {
+    const snapshot = await getDocs(
+      query(collection(db(), 'receipts'), where('memberEmail', '==', email.toLowerCase()), orderBy('createdAt', 'desc'))
+    )
+    return snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        ...data,
+        issuedAt: data.issuedAt?.toDate ? data.issuedAt.toDate() : (data.issuedAt ? new Date(data.issuedAt) : null),
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+      } as ReceiptDoc
+    })
+  } catch (error) {
+    // Fallback: fetch all receipts and filter in memory (avoids composite index requirement)
+    console.error('getReceiptsByEmail query failed, falling back to in-memory filter:', error)
+    try {
+      const allReceipts = await getReceipts()
+      return allReceipts
+        .filter((r) => (r.memberEmail || '').toLowerCase() === email.toLowerCase())
+        .sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return bTime - aTime
+        })
+    } catch (fallbackError) {
+      console.error('Fallback receipt email lookup also failed:', fallbackError)
+      return []
+    }
+  }
+}
+
 export async function getReceiptById(id: string): Promise<ReceiptDoc | null> {
   const ref = doc(db(), 'receipts', id)
   const snap = await getDoc(ref)
@@ -1122,6 +1162,34 @@ export async function getMemberByUid(uid: string): Promise<MemberDoc | null> {
   if (snapshot.empty) return null
   const doc = snapshot.docs[0]
   return { id: doc.id, ...doc.data() } as MemberDoc
+}
+
+/**
+ * Look up a member by email (case-insensitive). Used to link webinar
+ * registrations/receipts (which only carry the registrant's email) back to
+ * the member account when one exists.
+ */
+export async function getMemberByEmail(email: string): Promise<(MemberDoc & { uid?: string | null }) | null> {
+  const normalized = email.trim().toLowerCase()
+  if (!normalized) return null
+  try {
+    const snapshot = await getDocs(query(collection(db(), 'members'), where('email', '==', normalized)))
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0]
+      return { id: doc.id, ...doc.data() } as MemberDoc & { uid?: string | null }
+    }
+  } catch (error) {
+    console.error('getMemberByEmail query failed, falling back to in-memory filter:', error)
+  }
+  // Fallback: fetch all members and filter in memory (avoids composite index requirement)
+  try {
+    const all = await getMembers()
+    const found = all.find((m) => ((m as { email?: string }).email || '').toLowerCase() === normalized)
+    return found ? (found as MemberDoc & { uid?: string | null }) : null
+  } catch (fallbackError) {
+    console.error('Fallback member email lookup also failed:', fallbackError)
+    return null
+  }
 }
 
 export async function getMemberById(id: string): Promise<MemberDoc | null> {

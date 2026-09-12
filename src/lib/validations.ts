@@ -148,6 +148,7 @@ export const webinarSchema = z.object({
   registrationLink: optionalUrl(),
   meetingLink: optionalUrl(),
   type: z.enum(['paid', 'free']).optional().default('paid'),
+  price: z.number().nonnegative().max(1000000).optional().nullable(),
   isActive: z.boolean().optional().default(true),
   maxAttendees: z.number().int().positive().optional().nullable(),
 })
