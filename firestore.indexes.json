@@ -49,6 +49,14 @@
       ]
     },
     {
+      "collectionGroup": "receipts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "memberEmail", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "newsletterSubscribers",
       "queryScope": "COLLECTION",
       "fields": [
