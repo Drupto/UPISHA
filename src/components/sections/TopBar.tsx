@@ -13,6 +13,7 @@ import {
   Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
   PhoneCall, Building, Mailbox, Zap,
 } from 'lucide-react'
+import { siteConfig } from '@/lib/seo'
 
 /* ─── Top Bar ─── */
 export function TopBar() {
@@ -38,15 +39,16 @@ export function TopBar() {
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 mr-1 hidden sm:inline">Follow us:</span>
           {[
-            { icon: Facebook, label: 'Facebook' },
-            { icon: Twitter, label: 'Twitter' },
-            { icon: Instagram, label: 'Instagram' },
-            { icon: Linkedin, label: 'LinkedIn' },
-            { icon: Youtube, label: 'YouTube' },
+            { icon: Facebook, label: 'Facebook', href: siteConfig.links.facebook },
+            { icon: Twitter, label: 'X', href: siteConfig.links.x },
+            { icon: Instagram, label: 'Instagram', href: siteConfig.links.instagram },
+            { icon: Youtube, label: 'YouTube', href: siteConfig.links.youtube },
           ].map((social) => (
             <a
               key={social.label}
-              href="#"
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
               className="w-7 h-7 rounded-full bg-white/5 hover:bg-upisha-gold flex items-center justify-center transition-all duration-200 hover:scale-110 hover:text-upisha-navy"
               aria-label={social.label}
             >

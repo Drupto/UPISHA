@@ -13,6 +13,7 @@ import {
   Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
   PhoneCall, Building, Mailbox, Zap,
 } from 'lucide-react'
+import { siteConfig } from '@/lib/seo'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -86,19 +87,16 @@ export function Footer() {
               </p>
               {/* Social media icons row */}
               <div className="flex items-center gap-3">
-                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="Facebook">
+                <a href={siteConfig.links.facebook} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="Facebook">
                   <Facebook className="h-4 w-4" />
                 </a>
-                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="Twitter">
+                <a href={siteConfig.links.x} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="X">
                   <Twitter className="h-4 w-4" />
                 </a>
-                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="Instagram">
+                <a href={siteConfig.links.instagram} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="Instagram">
                   <Instagram className="h-4 w-4" />
                 </a>
-                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="LinkedIn">
-                  <Linkedin className="h-4 w-4" />
-                </a>
-                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="YouTube">
+                <a href={siteConfig.links.youtube} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-upisha-teal flex items-center justify-center transition-colors social-icon-hover" aria-label="YouTube">
                   <Youtube className="h-4 w-4" />
                 </a>
               </div>

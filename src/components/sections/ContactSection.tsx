@@ -13,6 +13,7 @@ import {
   Megaphone, Lightbulb, Trophy, MapPinned, Command, Share2, Printer,
   PhoneCall, Building, Mailbox, Zap,
 } from 'lucide-react'
+import { siteConfig } from '@/lib/seo'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -198,15 +199,16 @@ export function ContactSection() {
                 <h4 className="font-semibold text-upisha-navy dark:text-white text-sm mb-3">Follow Us</h4>
                 <div className="flex gap-2.5">
                   {[
-                    { icon: Facebook, label: 'Facebook', color: 'hover:bg-blue-600' },
-                    { icon: Twitter, label: 'Twitter', color: 'hover:bg-sky-500' },
-                    { icon: Instagram, label: 'Instagram', color: 'hover:bg-pink-600' },
-                    { icon: Linkedin, label: 'LinkedIn', color: 'hover:bg-blue-700' },
-                    { icon: Youtube, label: 'YouTube', color: 'hover:bg-red-600' },
+                    { icon: Facebook, label: 'Facebook', href: siteConfig.links.facebook, color: 'hover:bg-blue-600' },
+                    { icon: Twitter, label: 'X', href: siteConfig.links.x, color: 'hover:bg-sky-500' },
+                    { icon: Instagram, label: 'Instagram', href: siteConfig.links.instagram, color: 'hover:bg-pink-600' },
+                    { icon: Youtube, label: 'YouTube', href: siteConfig.links.youtube, color: 'hover:bg-red-600' },
                   ].map((social) => (
                     <a
                       key={social.label}
-                      href="#"
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className={`w-9 h-9 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 ${social.color} hover:text-white transition-all`}
                       aria-label={social.label}
                     >

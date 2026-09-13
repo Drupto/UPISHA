@@ -65,11 +65,10 @@ export function getOrganizationSchema() {
       availableLanguage: ["English", "Hindi"],
     },
     sameAs: [
-      "https://facebook.com/upisha",
-      "https://twitter.com/upisha",
-      "https://instagram.com/upisha",
-      "https://linkedin.com/company/upisha",
-      "https://youtube.com/@upisha",
+      "https://www.facebook.com/profile.php?id=61594269153694",
+      "https://x.com/OfficialUPISHA",
+      "https://www.instagram.com/upishachapter/",
+      "https://www.youtube.com/@UPISHAOFFICIAL",
     ],
   };
 }
@@ -408,11 +407,10 @@ export const siteConfig = {
   description: SITE_DESCRIPTION,
   ogImage: "/images/mainlogo.jpeg",
   links: {
-    facebook: "https://facebook.com/upisha",
-    twitter: "https://twitter.com/upisha",
-    instagram: "https://instagram.com/upisha",
-    linkedin: "https://linkedin.com/company/upisha",
-    youtube: "https://youtube.com/@upisha",
+    facebook: "https://www.facebook.com/profile.php?id=61594269153694",
+    x: "https://x.com/OfficialUPISHA",
+    instagram: "https://www.instagram.com/upishachapter/",
+    youtube: "https://www.youtube.com/@UPISHAOFFICIAL",
   },
   contact: {
     email: "office@upisha.org",
