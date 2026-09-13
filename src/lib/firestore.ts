@@ -1139,21 +1139,21 @@ export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 
 export async function seedDefaultCertificateTemplates() {
   try {
     const existing = await getCertificateTemplates()
-    const hasDefaults = existing.some((t) => t.isDefault === true)
 
-    // Ensure the webinar participation template always exists even after initial seeding
-    const webinarTemplate = DEFAULT_CERTIFICATE_TEMPLATES.find((t) => t.category === 'webinar')
-    if (webinarTemplate && !existing.some((t) => t.name === webinarTemplate.name)) {
-      await createCertificateTemplate({ ...webinarTemplate, category: 'webinar' })
-      return { seeded: true }
-    }
-
-    if (hasDefaults) return { seeded: false }
-
+    // Idempotently create every missing default template (membership types
+    // AND webinar). No early return: previously this function created only
+    // the webinar template on a fresh database and then skipped full seeding
+    // on later calls (because that template has isDefault: true), which left
+    // the Life/Annual/Student membership templates permanently missing.
+    const existingNames = new Set(existing.map((t) => t.name))
+    let seeded = false
     for (const template of DEFAULT_CERTIFICATE_TEMPLATES) {
-      await createCertificateTemplate(template)
+      if (!existingNames.has(template.name)) {
+        await createCertificateTemplate({ ...template })
+        seeded = true
+      }
     }
-    return { seeded: true }
+    return { seeded }
   } catch (error) {
     console.error('Error seeding default certificate templates:', error)
     return { seeded: false, error }
