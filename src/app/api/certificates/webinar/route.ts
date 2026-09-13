@@ -3,7 +3,7 @@ import {
   getWebinarRegistrations,
   getWebinarById,
   getCertificateTemplateById,
-  createCertificate,
+  upsertCertificate,
   getCertificatesByEmail,
   seedDefaultCertificateTemplates,
 } from '@/lib/firestore'
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     // Fetch webinar details for the certificate
     const webinar = registration.webinarId ? await getWebinarById(registration.webinarId) : null
 
-    const certificate = await createCertificate({
+    const certificate = await upsertCertificate({
       templateId,
       type: 'webinar',
       memberName: sanitizeHtml(registration.fullName),

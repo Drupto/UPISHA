@@ -5,7 +5,7 @@ import {
   getCertificatesByEmail,
   getCertificateTemplateById,
   getActiveCertificateTemplateByType,
-  createCertificate,
+  upsertCertificate,
   seedDefaultCertificateTemplates,
 } from '@/lib/firestore'
 import { getMemberByUid } from '@/lib/firestore'
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
         if (template && template.id) {
           const memberUid = (member as { uid?: string | null }).uid
           if (memberUid) {
-            await createCertificate({
+            await upsertCertificate({
               templateId: template.id,
               memberId: memberId || '',
               memberUid,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateMember, deleteMember, getMemberById as fetchMemberById } from '@/lib/firestore'
-import { getActiveCertificateTemplateByType, getCertificatesByMemberId, seedDefaultCertificateTemplates, upsertMembershipCertificate } from '@/lib/firestore'
+import { getActiveCertificateTemplateByType, getCertificatesByMemberId, seedDefaultCertificateTemplates, upsertCertificate } from '@/lib/firestore'
 import { upsertMembershipReceipt, getReceiptsByMemberId } from '@/lib/firestore'
 import { membershipFees } from '@/lib/static-data'
 import { withSecurityHeaders, sanitizeHtml } from '@/lib/security'
@@ -44,7 +44,7 @@ export async function PUT(
             if (!alreadyIssued) {
               const memberUid = (member as { uid?: string | null }).uid
               if (memberUid) {
-                await upsertMembershipCertificate({
+                await upsertCertificate({
                   templateId: template.id,
                   memberId: id,
                   memberUid,

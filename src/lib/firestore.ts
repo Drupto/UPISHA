@@ -408,15 +408,15 @@ export async function createCertificate(data: CertificateDoc) {
 }
 
 /**
- * Idempotent membership certificate creation.
+ * Idempotent certificate creation.
  *
  * Writes to a deterministic document ID derived from the certificate number
- * (`UPISHA-<memberId>`) so concurrent issuance attempts (admin approval,
- * retries, double-clicks) converge on a single document instead of
- * duplicating certificates. Only used for membership auto-issuance —
- * webinar certificates use their own number scheme and keep addDoc.
+ * so concurrent issuance attempts (admin approval, member backfill, manual
+ * admin issue, retries, double-clicks) converge on a single document instead
+ * of duplicating certificates. Used for both membership certificates
+ * (`UPISHA-<memberId>`) and webinar certificates (`UPISHA-WEB-<registrationId>`).
  */
-export async function upsertMembershipCertificate(data: CertificateDoc) {
+export async function upsertCertificate(data: CertificateDoc) {
   if (!data.certificateNumber) throw new Error('upsertMembershipCertificate requires a certificateNumber')
   const ref = doc(db(), 'certificates', data.certificateNumber)
   await setDoc(ref, {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
   getCertificates,
-  createCertificate,
+  upsertCertificate,
   getCertificateTemplateById,
   getCertificatesByMemberId,
   seedDefaultCertificateTemplates,
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       return withSecurityHeaders(NextResponse.json({ error: 'Member has no associated user account' }, { status: 400 }))
     }
 
-    const certificate = await createCertificate({
+    const certificate = await upsertCertificate({
       templateId,
       memberId,
       memberUid,
