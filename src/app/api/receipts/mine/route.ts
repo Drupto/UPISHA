@@ -4,7 +4,7 @@ import {
   getReceiptsByMemberId,
   getReceiptsByEmail,
   getMemberByUid,
-  createReceipt,
+  upsertMembershipReceipt,
 } from '@/lib/firestore'
 import { membershipFees } from '@/lib/static-data'
 import { withSecurityHeaders, sanitizeHtml } from '@/lib/security'
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
             annual: 'Annual Membership Fee',
             student: 'Student Membership Fee',
           }
-          await createReceipt({
+          await upsertMembershipReceipt({
             receiptNumber: `UPISHA-RCPT-${memberId || ''}`,
             memberId: memberId || '',
             memberUid,

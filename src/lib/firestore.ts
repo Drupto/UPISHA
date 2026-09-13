@@ -407,6 +407,28 @@ export async function createCertificate(data: CertificateDoc) {
   return { id: ref.id }
 }
 
+/**
+ * Idempotent membership certificate creation.
+ *
+ * Writes to a deterministic document ID derived from the certificate number
+ * (`UPISHA-<memberId>`) so concurrent issuance attempts (admin approval,
+ * retries, double-clicks) converge on a single document instead of
+ * duplicating certificates. Only used for membership auto-issuance —
+ * webinar certificates use their own number scheme and keep addDoc.
+ */
+export async function upsertMembershipCertificate(data: CertificateDoc) {
+  if (!data.certificateNumber) throw new Error('upsertMembershipCertificate requires a certificateNumber')
+  const ref = doc(db(), 'certificates', data.certificateNumber)
+  await setDoc(ref, {
+    ...data,
+    status: data.status ?? 'issued',
+    qualification: data.qualification ?? null,
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+  })
+  return { id: data.certificateNumber }
+}
+
 export async function getCertificates(): Promise<CertificateDoc[]> {
   const snapshot = await getDocs(query(collection(db(), 'certificates'), orderBy('createdAt', 'desc')))
   return snapshot.docs.map((doc) => {
@@ -554,6 +576,31 @@ export async function createReceipt(data: ReceiptDoc) {
     updatedAt: data.updatedAt ?? new Date(),
   })
   return { id: ref.id }
+}
+
+/**
+ * Idempotent membership receipt creation.
+ *
+ * Writes to a deterministic document ID derived from the receipt number
+ * (`UPISHA-RCPT-<memberId>`) so that concurrent creation attempts — admin
+ * approval, the /api/receipts/mine lazy backfill, retries, double-clicks —
+ * all converge on the SAME document instead of inserting duplicates.
+ * Last write wins; the data written is identical in every path.
+ */
+export async function upsertMembershipReceipt(data: ReceiptDoc) {
+  if (!data.receiptNumber) throw new Error('upsertMembershipReceipt requires a receiptNumber')
+  const ref = doc(db(), 'receipts', data.receiptNumber)
+  await setDoc(ref, {
+    ...data,
+    status: data.status ?? 'paid',
+    currency: data.currency ?? 'INR',
+    transactionNumber: data.transactionNumber ?? null,
+    paymentMethod: data.paymentMethod ?? null,
+    issuedAt: data.issuedAt ?? new Date(),
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+  })
+  return { id: data.receiptNumber }
 }
 
 export async function getReceipts() {

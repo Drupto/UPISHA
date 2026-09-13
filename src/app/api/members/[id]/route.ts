@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateMember, deleteMember, getMemberById as fetchMemberById } from '@/lib/firestore'
-import { getActiveCertificateTemplateByType, createCertificate, getCertificatesByMemberId, seedDefaultCertificateTemplates } from '@/lib/firestore'
-import { createReceipt, getReceiptsByMemberId } from '@/lib/firestore'
+import { getActiveCertificateTemplateByType, getCertificatesByMemberId, seedDefaultCertificateTemplates, upsertMembershipCertificate } from '@/lib/firestore'
+import { upsertMembershipReceipt, getReceiptsByMemberId } from '@/lib/firestore'
 import { membershipFees } from '@/lib/static-data'
 import { withSecurityHeaders, sanitizeHtml } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
@@ -44,7 +44,7 @@ export async function PUT(
             if (!alreadyIssued) {
               const memberUid = (member as { uid?: string | null }).uid
               if (memberUid) {
-                await createCertificate({
+                await upsertMembershipCertificate({
                   templateId: template.id,
                   memberId: id,
                   memberUid,
@@ -71,7 +71,7 @@ export async function PUT(
                 annual: 'Annual Membership Fee',
                 student: 'Student Membership Fee',
               }
-              await createReceipt({
+              await upsertMembershipReceipt({
                 receiptNumber: `UPISHA-RCPT-${id}`,
                 memberId: id,
                 memberUid,
