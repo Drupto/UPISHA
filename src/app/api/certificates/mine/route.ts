@@ -106,6 +106,10 @@ export async function GET(request: NextRequest) {
       enriched.push({
         ...cert,
         memberId,
+        // RCI number comes straight from the member profile (never stored on
+        // the certificate doc) and is only exposed on the authenticated
+        // member endpoint - never on public verify/lookup endpoints.
+        rciNumber: member.rciNumber ? sanitizeHtml(member.rciNumber) : null,
         template: template ? {
           id: template.id,
           name: template.name,

@@ -16,6 +16,7 @@ interface CertificatePreviewProps {
   memberId?: string
   date?: string
   qualification?: string
+  rciNumber?: string
   certificateNumber?: string
   verificationUrl?: string
   scale?: number
@@ -34,6 +35,7 @@ export function replacePlaceholders(
     memberId?: string
     date?: string
     qualification?: string
+    rciNumber?: string
     certificateNumber?: string
     webinarTitle?: string
     webinarDate?: string
@@ -47,6 +49,7 @@ export function replacePlaceholders(
     .replace(/\{memberId\}/g, data.memberId || '')
     .replace(/\{date\}/g, data.date || '')
     .replace(/\{qualification\}/g, data.qualification || '')
+    .replace(/\{rciNumber\}/g, data.rciNumber || '')
     .replace(/\{certificateNumber\}/g, data.certificateNumber || '')
     .replace(/\{webinarTitle\}/g, data.webinarTitle || '')
     .replace(/\{webinarDate\}/g, data.webinarDate || '')
@@ -99,6 +102,7 @@ export default function CertificatePreview({
   memberId = 'member-id',
   date,
   qualification,
+  rciNumber,
   certificateNumber,
   verificationUrl,
   scale: externalScale,
@@ -188,6 +192,7 @@ export default function CertificatePreview({
       memberId,
       date: displayDate,
       qualification,
+      rciNumber,
       certificateNumber,
       webinarTitle,
       webinarDate: webinarDate ? formatDate(webinarDate) : '',
@@ -314,6 +319,20 @@ export default function CertificatePreview({
             </p>
           )}
 
+          {/* Registration line */}
+          <p
+            className="text-center mb-3"
+            style={{
+              fontSize: 12,
+              fontWeight: 'normal',
+              fontStyle: 'normal',
+              color: '#9ca3af',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Registered Under The UP Society Registration Act, 1860
+          </p>
+
           {/* Divider */}
           <div
             className="w-2/3 h-px mx-auto mb-3"
@@ -324,6 +343,23 @@ export default function CertificatePreview({
           <div className="w-full max-w-[85%] space-y-0">
             {template.textBlocks.map(renderBlock)}
           </div>
+
+          {/* RCI registration number — shown only when the member has one
+              (students and members without an RCI number stay unchanged) */}
+          {rciNumber && (
+            <p
+              className="text-center mt-2"
+              style={{
+                fontSize: 14,
+                fontWeight: 'normal',
+                fontStyle: 'normal',
+                color: '#6b7280',
+                letterSpacing: '0.02em',
+              }}
+            >
+              RCI Reg. No.: {rciNumber}
+            </p>
+          )}
 
           {/* Certificate number */}
           {certificateNumber && (
@@ -337,18 +373,20 @@ export default function CertificatePreview({
 
           {/* Footer with QR verification, seal, and signature */}
           <div className="w-full flex items-end justify-between px-4 mt-auto pt-6">
-            {/* Stamp */}
-            <div className="flex flex-col items-center gap-1 w-32">
+            {/* President signature (left) — same signature treatment as before,
+                rendered in the slot previously used for the official stamp.
+                The President's signature image is uploaded via the stampUrl
+                template field (relabeled "President's Signature" in admin). */}
+            <div className="flex flex-col items-center gap-1 w-40">
               {safeStampUrl && (
                 <img
                   src={safeStampUrl}
-                  alt="Stamp"
-                  className="h-16 w-16 object-contain"
+                  alt="President Signature"
+                  className="h-12 w-32 object-contain"
                 />
               )}
-              <p className="text-[10px] text-gray-400 text-center uppercase tracking-wider">
-                Official Seal
-              </p>
+              <div className="w-full h-px bg-gray-400" />
+              <p className="text-xs text-gray-600 text-center">President, UP ISHA</p>
             </div>
 
             {/* QR Verification */}
@@ -387,8 +425,10 @@ export default function CertificatePreview({
                   className="h-12 w-32 object-contain"
                 />
               )}
+              {/* Secretary signature (right) — same signature feature,
+                  role label swapped from President to Secretary */}
               <div className="w-full h-px bg-gray-400" />
-              <p className="text-xs text-gray-600 text-center">{template.footerText}</p>
+              <p className="text-xs text-gray-600 text-center">Secretary, UP ISHA</p>
             </div>
           </div>
         </div>

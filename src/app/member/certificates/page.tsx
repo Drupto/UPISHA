@@ -17,6 +17,7 @@ interface CertificateItem {
   memberName: string
   membershipType?: string | null
   qualification?: string | null
+  rciNumber?: string | null
   certificateNumber: string
   issueDate: string
   status?: string
@@ -143,6 +144,7 @@ export default function MemberCertificates() {
                     memberId={cert.memberId}
                     date={cert.issueDate}
                     qualification={cert.qualification || undefined}
+                    rciNumber={cert.rciNumber || undefined}
                     certificateNumber={cert.certificateNumber}
                     verificationUrl={`${window.location.origin}/verify/${cert.id}`}
                     webinarTitle={cert.webinarTitle || undefined}

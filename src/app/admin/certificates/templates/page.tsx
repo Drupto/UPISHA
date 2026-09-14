@@ -74,7 +74,7 @@ const emptyForm: TemplateForm = {
   titleFont: defaultTitleFont,
   subtitleFont: defaultSubtitleFont,
   textBlocks: [emptyBlock()],
-  footerText: 'President, UP ISHA',
+  footerText: 'Secretary, UP ISHA',
   logoUrl: '/images/mainlogo.jpeg',
   signatureUrl: '',
   stampUrl: '',
@@ -302,6 +302,7 @@ export default function AdminCertificateTemplates() {
     '{memberId} - member ID',
     '{date} - issue date',
     '{qualification} - member qualification',
+    '{rciNumber} - member RCI number (members only)',
     '{certificateNumber} - certificate number',
   ]
 
@@ -619,8 +620,12 @@ export default function AdminCertificateTemplates() {
 
                 <div>
                   <Label>Footer Text</Label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Signature labels are fixed on issued certificates (President on the left,
+                    Secretary on the right). This text is kept for reference only.
+                  </p>
                   <Input
-                    placeholder="e.g. President, UP ISHA"
+                    placeholder="e.g. Secretary, UP ISHA"
                     value={form.footerText}
                     onChange={(e) => setForm({ ...form, footerText: e.target.value })}
                     className="mt-1"
@@ -658,7 +663,9 @@ export default function AdminCertificateTemplates() {
                     )}
                   </div>
                   <div>
-                    <Label>Stamp / Seal</Label>
+                    {/* This field is rendered as the President's signature
+                        block (left footer slot) on issued certificates. */}
+                    <Label>President&apos;s Signature</Label>
                     <Input
                       ref={stampInputRef}
                       type="file"
@@ -668,7 +675,7 @@ export default function AdminCertificateTemplates() {
                     />
                     {uploadingField === 'stampUrl' && <Loader2 className="h-3 w-3 animate-spin text-upisha-teal mt-1" />}
                     {form.stampUrl && (
-                      <img src={form.stampUrl} alt="Stamp" className="h-10 w-10 object-contain mt-2" />
+                      <img src={form.stampUrl} alt="President Signature" className="h-10 w-10 object-contain mt-2" />
                     )}
                   </div>
                   <div>
