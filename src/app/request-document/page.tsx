@@ -11,7 +11,7 @@ import { AnimatedSection } from '@/components/sections'
 
 const OFFICE_EMAILS = [
   { label: 'Office — all document requests', email: 'office@upisha.org' },
-  { label: 'President', email: 'president@upisha.org' },
+  { label: 'President', email: 'pres.up@upisha.org' },
   { label: 'Secretary', email: 'secretary@upisha.org' },
 ]
 

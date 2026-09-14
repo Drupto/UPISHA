@@ -298,11 +298,11 @@ export function AboutSection() {
                       {leadershipMessages[current].role}
                     </p>
                     <a
-                      href={`mailto:${leadershipMessages[current].id === 'president' ? 'president@upisha.org' : 'secretary@upisha.org'}`}
+                      href={`mailto:${leadershipMessages[current].id === 'president' ? 'pres.up@upisha.org' : 'secretary@upisha.org'}`}
                       className="text-[11px] text-gray-500 dark:text-gray-400 hover:text-upisha-teal dark:hover:text-upisha-teal transition-colors flex items-center gap-1 mt-2"
                     >
                       <Mail className="h-3 w-3" />
-                      {leadershipMessages[current].id === 'president' ? 'president@upisha.org' : 'secretary@upisha.org'}
+                      {leadershipMessages[current].id === 'president' ? 'pres.up@upisha.org' : 'secretary@upisha.org'}
                     </a>
                   </div>
                   {/* Right: Message content */}

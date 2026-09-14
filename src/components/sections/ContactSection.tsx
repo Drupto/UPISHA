@@ -133,7 +133,7 @@ export function ContactSection() {
     {
       icon: Mail,
       title: 'Email',
-      details: ['office@upisha.org', 'president@upisha.org', 'secretary@upisha.org'],
+      details: ['office@upisha.org', 'pres.up@upisha.org', 'secretary@upisha.org'],
       action: 'mailto:office@upisha.org',
     },
     {
