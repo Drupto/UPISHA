@@ -188,6 +188,7 @@ export interface MemberDoc {
   phone: string
   qualification: string
   rciNumber?: string | null
+  membershipId?: string | null
   membershipType: string
   course?: string | null
   currentYear?: string | null

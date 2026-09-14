@@ -105,6 +105,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Resolve the display Membership ID: admin-assigned ID wins, Firestore
+    // doc ID is the fallback (identical output to before when no custom ID
+    // is assigned). Only the display value is overridden — the stored
+    // receipt docs and receipt numbers keep the doc ID so existing receipts
+    // and lazy-backfill deduplication are undisturbed.
+    const displayMemberId = member.membershipId || memberId
+    // Keep each stored receipt's own memberId unless we have a resolved
+    // display ID, so the mapped rows always carry a string memberId.
+    receipts = receipts.map((r) => ({ ...r, memberId: displayMemberId ?? r.memberId }))
+
     return withSecurityHeaders(NextResponse.json({ receipts }))
   } catch (error) {
     console.error('Error fetching member receipts:', error)

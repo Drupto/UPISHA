@@ -41,7 +41,7 @@ function pickFields<T extends object>(data: Partial<T>, allowed: readonly (keyof
 }
 
 const MEMBER_UPDATE_FIELDS = [
-  'fullName', 'email', 'phone', 'qualification', 'rciNumber', 'membershipType',
+  'fullName', 'email', 'phone', 'qualification', 'rciNumber', 'membershipId', 'membershipType',
   'course', 'currentYear', 'city', 'transactionNumber', 'message', 'address',
   'photoUrl', 'rciCertificateUrl', 'registrationDate', 'status',
 ] as const
@@ -114,6 +114,7 @@ export interface MemberDoc {
   phone: string
   qualification: string
   rciNumber?: string | null
+  membershipId?: string | null
   membershipType: string
   course?: string | null
   currentYear?: string | null
@@ -1193,6 +1194,7 @@ export async function createMember(data: MemberDoc) {
     createdAt: data.createdAt ?? new Date(),
     updatedAt: data.updatedAt ?? new Date(),
     rciNumber: data.rciNumber ?? null,
+    membershipId: data.membershipId ?? null,
     transactionNumber: data.transactionNumber ?? null,
     message: data.message ?? null,
     address: data.address ?? null,
@@ -1244,6 +1246,37 @@ export async function getMemberById(id: string): Promise<MemberDoc | null> {
   const snap = await getDoc(ref)
   if (!snap.exists()) return null
   return { id: snap.id, ...snap.data() } as MemberDoc
+}
+
+/**
+ * Membership ID helpers (admin-assigned, e.g. "UP001").
+ *
+ * The Firestore document ID stays the internal lookup key; `membershipId` is
+ * a separate human-friendly field that admins assign/override. Existing
+ * certificates and receipts reference the doc ID, so adding or changing a
+ * `membershipId` never disturbs already-issued documents — display code
+ * resolves `membershipId || docId` at view time.
+ */
+const MEMBERSHIP_ID_PATTERN = /^UP\d{3,}$/
+
+/** Trim + uppercase; returns '' when blank so callers can distinguish "clear" from "invalid". */
+export function normalizeMembershipId(raw: unknown): string {
+  if (typeof raw !== 'string') return ''
+  return raw.trim().toUpperCase().replace(/\s+/g, '')
+}
+
+export function isValidMembershipId(id: string): boolean {
+  return MEMBERSHIP_ID_PATTERN.test(id)
+}
+
+/** Look up a member by their admin-assigned membership ID (normalized). */
+export async function getMemberByMembershipId(membershipId: string): Promise<MemberDoc | null> {
+  const normalized = normalizeMembershipId(membershipId)
+  if (!normalized) return null
+  const snapshot = await getDocs(query(collection(db(), 'members'), where('membershipId', '==', normalized)))
+  if (snapshot.empty) return null
+  const found = snapshot.docs[0]
+  return { id: found.id, ...found.data() } as MemberDoc
 }
 
 export async function getMembers() {

@@ -105,7 +105,10 @@ export async function GET(request: NextRequest) {
       const template = cert.templateId ? await getCertificateTemplateById(cert.templateId) : null
       enriched.push({
         ...cert,
-        memberId,
+        // Admin-assigned membership ID wins; fall back to the Firestore doc
+        // ID exactly as before when no custom ID has been assigned, so
+        // existing certificates render unchanged.
+        memberId: member.membershipId || memberId,
         // RCI number comes straight from the member profile (never stored on
         // the certificate doc) and is only exposed on the authenticated
         // member endpoint - never on public verify/lookup endpoints.

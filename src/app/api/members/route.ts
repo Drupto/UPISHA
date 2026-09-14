@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getMembers, createMember } from '@/lib/firestore'
+import { getMembers, createMember, normalizeMembershipId, isValidMembershipId, getMemberByMembershipId } from '@/lib/firestore'
 import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { joinSchema } from '@/lib/validations'
@@ -48,12 +48,32 @@ export async function POST(request: NextRequest) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
     }
 
+    // Optional admin-assigned membership ID (e.g. "UP001").
+    let membershipId: string | null = null
+    if (body.membershipId !== undefined && body.membershipId !== null && String(body.membershipId).trim() !== '') {
+      membershipId = normalizeMembershipId(body.membershipId)
+      if (!isValidMembershipId(membershipId)) {
+        return withSecurityHeaders(NextResponse.json(
+          { error: 'Invalid membership ID. Use the format UP001 (UP followed by at least 3 digits).' },
+          { status: 400 }
+        ))
+      }
+      const existing = await getMemberByMembershipId(membershipId)
+      if (existing) {
+        return withSecurityHeaders(NextResponse.json(
+          { error: `Membership ID ${membershipId} is already assigned.` },
+          { status: 409 }
+        ))
+      }
+    }
+
     const member = await createMember({
       fullName: sanitizeHtml(validated.fullName),
       email: validated.email.toLowerCase(),
       phone: validated.phone,
       qualification: sanitizeHtml(validated.qualification),
       rciNumber: validated.rciNumber ? sanitizeHtml(validated.rciNumber) : null,
+      membershipId,
       membershipType: sanitizeHtml(validated.membershipType),
       city: sanitizeHtml(validated.city),
       transactionNumber: sanitizeHtml(validated.transactionNumber),

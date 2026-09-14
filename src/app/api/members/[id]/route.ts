@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateMember, deleteMember, getMemberById as fetchMemberById } from '@/lib/firestore'
+import { updateMember, deleteMember, getMemberById as fetchMemberById, normalizeMembershipId, isValidMembershipId, getMemberByMembershipId } from '@/lib/firestore'
 import { getActiveCertificateTemplateByType, getCertificatesByMemberId, seedDefaultCertificateTemplates, upsertCertificate } from '@/lib/firestore'
 import { upsertMembershipReceipt, getReceiptsByMemberId } from '@/lib/firestore'
 import { membershipFees } from '@/lib/static-data'
@@ -27,6 +27,28 @@ export async function PUT(
     if (body.membershipType) updateData.membershipType = sanitizeHtml(body.membershipType)
     if (body.city) updateData.city = sanitizeHtml(body.city)
     if (body.address !== undefined) updateData.address = body.address ? sanitizeHtml(body.address) : null
+
+    // Admin-assigned membership ID (e.g. "UP001"). Optional: blank clears it.
+    // Never touched by /api/join, so applications stay admin-assignable only.
+    if (body.membershipId !== undefined) {
+      const normalized = normalizeMembershipId(body.membershipId)
+      if (normalized && !isValidMembershipId(normalized)) {
+        return withSecurityHeaders(NextResponse.json(
+          { error: 'Invalid membership ID. Use the format UP001 (UP followed by at least 3 digits).' },
+          { status: 400 }
+        ))
+      }
+      if (normalized) {
+        const existing = await getMemberByMembershipId(normalized)
+        if (existing && existing.id !== id) {
+          return withSecurityHeaders(NextResponse.json(
+            { error: `Membership ID ${normalized} is already assigned.` },
+            { status: 409 }
+          ))
+        }
+      }
+      updateData.membershipId = normalized || null
+    }
 
     // Auto-issue certificate and receipt when member is approved
     if (body.status === 'approved') {

@@ -32,6 +32,7 @@ interface Member {
   email: string
   phone: string
   membershipType: string
+  membershipId?: string | null
   city: string
   status: string
   transactionNumber?: string | null
@@ -48,6 +49,7 @@ interface EditForm {
   email: string
   phone: string
   membershipType: string
+  membershipId: string
   city: string
   address: string
   status: string
@@ -70,6 +72,7 @@ export default function AdminMembers() {
     email: '',
     phone: '',
     membershipType: '',
+    membershipId: '',
     city: '',
     address: '',
     status: '',
@@ -136,6 +139,21 @@ export default function AdminMembers() {
     }
   }
 
+  // Next sequential admin-assigned membership ID suggestion (UP001, UP002, ...).
+  // Computed client-side from the already-loaded list; purely a suggestion —
+  // the server-side uniqueness check remains the source of truth.
+  const suggestedMembershipId = (() => {
+    let max = 0
+    for (const m of members) {
+      const match = typeof m.membershipId === 'string' ? m.membershipId.trim().toUpperCase().match(/^UP(\d+)$/) : null
+      if (match) {
+        const n = parseInt(match[1], 10)
+        if (!isNaN(n) && n > max) max = n
+      }
+    }
+    return `UP${String(max + 1).padStart(3, '0')}`
+  })()
+
   const openEditDialog = (member: Member) => {
     setEditingMember(member)
     setEditForm({
@@ -143,6 +161,9 @@ export default function AdminMembers() {
       email: member.email || '',
       phone: member.phone || '',
       membershipType: member.membershipType || '',
+      // Keep the current assignment (or blank). The suggestion is offered as
+      // a placeholder + one-click button — never assigned without consent.
+      membershipId: member.membershipId || '',
       city: member.city || '',
       address: member.address || '',
       status: member.status || 'pending',
@@ -161,6 +182,7 @@ export default function AdminMembers() {
           email: editForm.email,
           phone: editForm.phone,
           membershipType: editForm.membershipType,
+          membershipId: editForm.membershipId,
           city: editForm.city,
           address: editForm.address,
           status: editForm.status,
@@ -185,6 +207,7 @@ export default function AdminMembers() {
     const q = searchQuery.toLowerCase()
     return (
       m.id.toLowerCase().includes(q) ||
+      (m.membershipId || '').toLowerCase().includes(q) ||
       m.fullName.toLowerCase().includes(q) ||
       m.email.toLowerCase().includes(q) ||
       m.city.toLowerCase().includes(q) ||
@@ -199,9 +222,10 @@ export default function AdminMembers() {
   const paginatedMembers = filteredMembers.slice(startIndex, startIndex + itemsPerPage)
 
   const exportMembersCSV = () => {
-    const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Membership Type', 'City', 'Address', 'Registration Date', 'Txn Number', 'Entry Date', 'Status']
+    const headers = ['ID', 'Membership ID', 'Full Name', 'Email', 'Phone', 'Membership Type', 'City', 'Address', 'Registration Date', 'Txn Number', 'Entry Date', 'Status']
     const rows = filteredMembers.map(m => [
       m.id,
+      m.membershipId || '',
       m.fullName,
       m.email,
       m.phone,
@@ -298,7 +322,16 @@ export default function AdminMembers() {
               <tbody>
                 {paginatedMembers.map((member) => (
                   <tr key={member.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <td className="py-3 font-mono text-xs text-gray-500">{member.id}</td>
+                    <td className="py-3">
+                      {member.membershipId ? (
+                        <div>
+                          <span className="font-mono text-xs font-semibold text-upisha-teal">{member.membershipId}</span>
+                          <div className="font-mono text-[10px] text-gray-400" title="Internal document ID">{member.id}</div>
+                        </div>
+                      ) : (
+                        <span className="font-mono text-xs text-gray-500" title="No membership ID assigned yet — document ID shown">{member.id}</span>
+                      )}
+                    </td>
                     <td className="py-3">
                       {member.photoUrl ? (
                         <img
@@ -498,6 +531,28 @@ export default function AdminMembers() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-membershipId">Membership ID</Label>
+                <Input
+                  id="edit-membershipId"
+                  value={editForm.membershipId}
+                  placeholder={suggestedMembershipId}
+                  onChange={(e) => setEditForm({ ...editForm, membershipId: e.target.value.toUpperCase() })}
+                />
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] text-gray-500">Format UP001 · leave blank to clear</p>
+                  {!editForm.membershipId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditForm({ ...editForm, membershipId: suggestedMembershipId })}
+                    >
+                      Use {suggestedMembershipId}
+                    </Button>
+                  )}
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label>Membership Type</Label>
                 <Select

@@ -15,6 +15,7 @@ interface MemberProfile {
   phone: string
   qualification: string
   rciNumber?: string | null
+  membershipId?: string | null
   membershipType: string
   city: string
   transactionNumber?: string | null
@@ -114,7 +115,7 @@ export default function MemberDashboard() {
           <CardContent className="space-y-4">
             <div className="text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Member ID</p>
-              <p className="font-mono text-sm text-upisha-teal bg-upisha-teal/5 rounded-lg py-2 px-3 inline-block">{profile.id}</p>
+              <p className="font-mono text-sm text-upisha-teal bg-upisha-teal/5 rounded-lg py-2 px-3 inline-block">{profile.membershipId || profile.id}</p>
             </div>
             <div className="flex justify-center">
               {profile.photoUrl ? (
