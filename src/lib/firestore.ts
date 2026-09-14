@@ -1386,6 +1386,62 @@ export async function upsertNewsletterSubscriber(email: string) {
   return { id: docRef.id }
 }
 
+/**
+ * Soft-opt-out: flips isActive to false (keeps the doc for audit trail).
+ * Called by /api/newsletter/unsubscribe (HMAC-token verified public link)
+ * — never by the client SDK directly.
+ */
+export async function deactivateNewsletterSubscriber(email: string) {
+  const docRef = doc(db(), 'newsletterSubscribers', email.toLowerCase())
+  await setDoc(
+    docRef,
+    {
+      email: email.toLowerCase(),
+      isActive: false,
+      unsubscribedAt: new Date(),
+      updatedAt: new Date(),
+    },
+    { merge: true }
+  )
+  return { id: docRef.id }
+}
+
+// ─── Email quota (Brevo daily limit, written by the Cloud Functions) ───
+
+export interface EmailQuotaStatus {
+  date: string
+  used: number
+  limit: number
+  remaining: number
+  exhausted: boolean
+  updatedAt: Date | null
+}
+
+/**
+ * Today's email-quota counter, as written by the Cloud Functions
+ * (emailQuota/{YYYY-MM-DD}, UTC day — same keying as the functions).
+ * Missing doc simply means "nothing sent today".
+ */
+export async function getEmailQuotaToday(): Promise<EmailQuotaStatus> {
+  const date = new Date().toISOString().slice(0, 10)
+  try {
+    const snap = await getDoc(doc(db(), 'emailQuota', date))
+    const data = snap.data() as { used?: unknown; limit?: unknown; exhausted?: unknown; updatedAt?: unknown } | undefined
+    const used = typeof data?.used === 'number' ? data.used : 0
+    const limit = typeof data?.limit === 'number' && data.limit > 0 ? data.limit : 300
+    const exhausted = data?.exhausted === true || used >= limit
+    const updatedAtRaw = data?.updatedAt
+    const updatedAt =
+      updatedAtRaw && typeof (updatedAtRaw as { toDate?: unknown }).toDate === 'function'
+        ? (updatedAtRaw as { toDate: () => Date }).toDate()
+        : null
+    return { date, used, limit, remaining: Math.max(0, limit - used), exhausted, updatedAt }
+  } catch (err) {
+    console.error('Error reading email quota:', err)
+    return { date, used: 0, limit: 300, remaining: 300, exhausted: false, updatedAt: null }
+  }
+}
+
 export async function getNewsletterSubscribers() {
   const snapshot = await getDocs(
     query(collection(db(), 'newsletterSubscribers'), where('isActive', '==', true), orderBy('createdAt', 'desc'))

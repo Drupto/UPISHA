@@ -1,7 +1,9 @@
 import * as admin from 'firebase-admin'
+import * as crypto from 'crypto'
 import * as functions from 'firebase-functions'
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { defineSecret } from 'firebase-functions/params'
 import { setGlobalOptions } from 'firebase-functions/v2'
 
 // Initialize Firebase Admin
@@ -11,18 +13,34 @@ if (!admin.apps.length) {
 
 const db = admin.firestore()
 
+// ─── Secrets (Secret Manager) ───
+// v2 functions only receive Secret Manager values that are explicitly
+// declared here — `firebase functions:secrets:set BREVO_API_KEY` is NOT
+// enough on its own. Declaring them also makes them available as
+// process.env.* at runtime.
+export const BREVO_API_KEY = defineSecret('BREVO_API_KEY')
+export const BREVO_SENDER_EMAIL = defineSecret('BREVO_SENDER_EMAIL')
+export const BREVO_SENDER_NAME = defineSecret('BREVO_SENDER_NAME')
+export const SITE_URL = defineSecret('SITE_URL')
+// HMAC secret for per-recipient newsletter unsubscribe links — must match
+// NEWSLETTER_UNSUBSCRIBE_SECRET in the Next.js app environment.
+export const NEWSLETTER_UNSUBSCRIBE_SECRET = defineSecret('NEWSLETTER_UNSUBSCRIBE_SECRET')
+
 // Set region to match the project
 setGlobalOptions({
   region: 'asia-south1',
   maxInstances: 10,
   timeoutSeconds: 120,
+  secrets: [BREVO_API_KEY, BREVO_SENDER_EMAIL, BREVO_SENDER_NAME, SITE_URL, NEWSLETTER_UNSUBSCRIBE_SECRET],
 })
 
 // ─── Email service imports ───
 import {
   sendSingleEmail,
   sendBulkEmails,
+  sendBulkRenderedEmails,
   EmailRecipient,
+  RenderedBulkEmail,
 } from './email/brevo.service'
 import {
   renderMemberApprovalEmail,
@@ -297,7 +315,15 @@ export const onNewsletterSubscriberCreated = onDocumentCreated('newsletterSubscr
 })
 
 // ─── Firestore Trigger: Newsletter Campaign Marked as Sent ───
-export const sendNewsletterCampaign = onDocumentUpdated('newsletterCampaigns/{campaignId}', async (event) => {
+// Raised timeout + batch pacing so a full-day quota's worth of sends (~300)
+// completes instead of dying at the default 120s.
+export const sendNewsletterCampaign = onDocumentUpdated(
+  {
+    document: 'newsletterCampaigns/{campaignId}',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+  },
+  async (event) => {
   const before = event.data?.before?.data?.() as Record<string, unknown> | undefined
   const after = event.data?.after?.data?.() as Record<string, unknown> | undefined
 
@@ -330,21 +356,32 @@ export const sendNewsletterCampaign = onDocumentUpdated('newsletterCampaigns/{ca
     return
   }
 
-  // Build unsubscribe URL per recipient
-  const rendered = renderNewsletterContent({
-    email: recipients[0]?.email || '',
-    content,
-    subject,
-    unsubscribeUrl: undefined,
+  // ── Per-recipient unsubscribe link (CAN-SPAM/GDPR) ──
+  // Token = HMAC-SHA256(email, NEWSLETTER_UNSUBSCRIBE_SECRET) — the same
+  // secret signs/verifies in the Next.js /api/newsletter/unsubscribe route.
+  const siteUrl = process.env.SITE_URL || 'https://upisha.org'
+  const unsubSecret = process.env.NEWSLETTER_UNSUBSCRIBE_SECRET
+
+  const items: RenderedBulkEmail[] = recipients.map((recipient) => {
+    let unsubscribeUrl: string | undefined
+    if (unsubSecret && recipient.email) {
+      const token = crypto.createHmac('sha256', unsubSecret).update(recipient.email.toLowerCase()).digest('hex')
+      unsubscribeUrl = `${siteUrl}/api/newsletter/unsubscribe?email=${encodeURIComponent(recipient.email.toLowerCase())}&token=${token}`
+    }
+    const rendered = renderNewsletterContent({
+      email: recipient.email,
+      content,
+      subject,
+      unsubscribeUrl,
+    })
+    return { to: recipient, subject: rendered.subject, html: rendered.html, text: rendered.text }
   })
 
-  const result = await sendBulkEmails(
-    recipients,
-    rendered.subject,
-    rendered.html,
-    rendered.text,
-    ['newsletter-campaign']
-  )
+  if (!unsubSecret) {
+    functions.logger.error('NEWSLETTER_UNSUBSCRIBE_SECRET not set — campaign emails will go out WITHOUT an unsubscribe link')
+  }
+
+  const result = await sendBulkRenderedEmails(items, ['newsletter-campaign'])
 
   functions.logger.info('Newsletter campaign send complete:', result)
 
@@ -353,6 +390,7 @@ export const sendNewsletterCampaign = onDocumentUpdated('newsletterCampaigns/{ca
     sentAt: admin.firestore.FieldValue.serverTimestamp(),
     sentCount: result.successful,
     failedCount: result.failed,
+    skippedQuotaCount: result.skipped,
   })
 })
 
@@ -436,6 +474,13 @@ export const sendTransactionalEmail = onCall(async (request) => {
     throw new HttpsError('unauthenticated', 'You must be signed in to send emails.')
   }
 
+  // Admin-only (mirrors firestore.rules isAdmin() and requireAdmin() in
+  // the Next.js API layer): role is stored on users/{uid}.role.
+  const caller = await db.collection('users').doc(request.auth.uid).get()
+  if (caller.data()?.role !== 'admin') {
+    throw new HttpsError('permission-denied', 'Only admins can send emails.')
+  }
+
   const data = request.data as {
     to: EmailRecipient | EmailRecipient[]
     subject: string
@@ -479,6 +524,18 @@ export const sendTransactionalEmail = onCall(async (request) => {
       }
       case 'webinar-certificate': {
         const rendered = renderWebinarCertificateEmail(data.templateData as unknown as WebinarCertificateTemplateData)
+        subject = rendered.subject
+        html = rendered.html
+        break
+      }
+      case 'contact': {
+        const rendered = renderContactAcknowledgmentEmail(data.templateData as unknown as Parameters<typeof renderContactAcknowledgmentEmail>[0])
+        subject = rendered.subject
+        html = rendered.html
+        break
+      }
+      case 'newsletter-welcome': {
+        const rendered = renderNewsletterWelcomeEmail(data.templateData as unknown as Parameters<typeof renderNewsletterWelcomeEmail>[0])
         subject = rendered.subject
         html = rendered.html
         break
