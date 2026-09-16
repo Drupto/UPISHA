@@ -29,6 +29,7 @@ export default function WebinarRegisterPage() {
     email: '',
     phone: '',
     qualification: '',
+    rciCrrNumber: '',
     city: '',
     webinarId: preselectedWebinarId,
     webinarTitle: preselectedWebinarTitle,
@@ -79,6 +80,8 @@ export default function WebinarRegisterPage() {
   if (touched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = 'Please enter a valid email address'
   if (touched.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) errors.phone = 'Please enter a valid 10-digit phone number'
   if (touched.city && formData.city.trim().length === 0) errors.city = 'City is required'
+  if (touched.qualification && formData.qualification.trim().length < 2) errors.qualification = 'Education is required'
+  if (touched.rciCrrNumber && formData.rciCrrNumber.trim().length < 2) errors.rciCrrNumber = 'RCI-CRR Number is required'
   if (touched.webinarId && !formData.webinarId) errors.webinarId = 'Please select a webinar'
   if (!isFree && touched.transactionNumber && formData.transactionNumber.trim().length < 2) errors.transactionNumber = 'Transaction number is required'
   if (touched.declaration && !formData.declaration) errors.declaration = 'You must accept the declaration to submit'
@@ -88,6 +91,8 @@ export default function WebinarRegisterPage() {
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email),
     phone: /^\d{10}$/.test(formData.phone.replace(/\D/g, '')),
     city: formData.city.trim().length > 0,
+    qualification: formData.qualification.trim().length >= 2,
+    rciCrrNumber: formData.rciCrrNumber.trim().length >= 2,
     webinarId: !!formData.webinarId,
     transactionNumber: isFree ? true : formData.transactionNumber.trim().length >= 2,
     declaration: formData.declaration === true,
@@ -113,6 +118,7 @@ export default function WebinarRegisterPage() {
             email: typeof parsed.email === 'string' ? parsed.email : prev.email,
             phone: typeof parsed.phone === 'string' ? parsed.phone : prev.phone,
             qualification: typeof parsed.qualification === 'string' ? parsed.qualification : prev.qualification,
+            rciCrrNumber: typeof parsed.rciCrrNumber === 'string' ? parsed.rciCrrNumber : prev.rciCrrNumber,
             city: typeof parsed.city === 'string' ? parsed.city : prev.city,
             webinarId: typeof parsed.webinarId === 'string' ? parsed.webinarId : preselectedWebinarId,
             webinarTitle: typeof parsed.webinarTitle === 'string' ? parsed.webinarTitle : preselectedWebinarTitle,
@@ -179,6 +185,14 @@ export default function WebinarRegisterPage() {
       toast({ title: 'Declaration required', description: 'Please accept the declaration to submit your registration.', variant: 'destructive' })
       return
     }
+    if (formData.qualification.trim().length < 2) {
+      toast({ title: 'Education required', description: 'Please enter your educational qualification.', variant: 'destructive' })
+      return
+    }
+    if (formData.rciCrrNumber.trim().length < 2) {
+      toast({ title: 'RCI-CRR Number required', description: 'Please enter your RCI-CRR Number.', variant: 'destructive' })
+      return
+    }
     setIsSubmitting(true)
     try {
       const res = await fetch('/api/webinars/register', {
@@ -206,7 +220,7 @@ export default function WebinarRegisterPage() {
 
   const handleClearForm = () => {
     setFormData({
-      fullName: '', email: '', phone: '', qualification: '', city: '',
+      fullName: '', email: '', phone: '', qualification: '', rciCrrNumber: '', city: '',
       webinarId: '', webinarTitle: '', transactionNumber: '', message: '', declaration: false,
     })
     localStorage.removeItem('upisha-webinar-reg-form')
@@ -338,7 +352,7 @@ export default function WebinarRegisterPage() {
                   <Button variant="outline" onClick={() => {
                     setSubmitted(false)
                     setFormData({
-                      fullName: '', email: '', phone: '', qualification: '', city: '',
+                      fullName: '', email: '', phone: '', qualification: '', rciCrrNumber: '', city: '',
                       webinarId: '', webinarTitle: '', transactionNumber: '', message: '', declaration: false,
                     })
                   }}>
@@ -455,10 +469,29 @@ export default function WebinarRegisterPage() {
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Qualification</label>
-                  <Input placeholder="M.Sc. (Audiology) - Optional" value={formData.qualification}
-                    onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                    className="input-focus-ring" />
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Education *</label>
+                  <div className="relative">
+                    <Input required placeholder="e.g. M.Sc. (Audiology), BASLP" value={formData.qualification}
+                      onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                      onBlur={() => setTouched((prev) => ({ ...prev, qualification: true }))}
+                      className={fieldClass('qualification')} />
+                    {touched.qualification && valid.qualification && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
+                    {touched.qualification && errors.qualification && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                  </div>
+                  {touched.qualification && errors.qualification && <p className="text-xs text-red-500 mt-1">{errors.qualification}</p>}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">RCI-CRR Number *</label>
+                  <div className="relative">
+                    <Input required placeholder="Enter your RCI-CRR registration number" value={formData.rciCrrNumber}
+                      onChange={(e) => setFormData({ ...formData, rciCrrNumber: e.target.value })}
+                      onBlur={() => setTouched((prev) => ({ ...prev, rciCrrNumber: true }))}
+                      className={fieldClass('rciCrrNumber')} />
+                    {touched.rciCrrNumber && valid.rciCrrNumber && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
+                    {touched.rciCrrNumber && errors.rciCrrNumber && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                  </div>
+                  {touched.rciCrrNumber && errors.rciCrrNumber && <p className="text-xs text-red-500 mt-1">{errors.rciCrrNumber}</p>}
                 </div>
 
                 {!isFree && (

@@ -42,6 +42,7 @@ interface RegistrationItem {
   email: string
   phone: string
   qualification?: string | null
+  rciCrrNumber?: string | null
   city: string
   webinarId: string
   webinarTitle: string
@@ -56,6 +57,46 @@ interface RegistrationItem {
 
 type Tab = 'webinars' | 'registrations'
 type StatusFilter = 'all' | 'pending' | 'confirmed' | 'rejected'
+
+// ─── Time selector: uniform "h:mm AM/PM IST" options every 15 minutes ───
+const TIME_OPTIONS = Array.from({ length: 96 }, (_, i) => {
+  const h24 = Math.floor(i / 4)
+  const minutes = (i % 4) * 15
+  const ampm = h24 < 12 ? 'AM' : 'PM'
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12
+  return `${h12}:${String(minutes).padStart(2, '0')} ${ampm} IST`
+})
+
+/**
+ * Parses legacy free-text time values stored before the time selector was
+ * introduced (e.g. "4:00 PM - 6:00 PM IST", "4:00 PM", "16:00", "16:00:00")
+ * and snaps them to the nearest 15-minute option. Returns null when the
+ * value cannot be parsed, so the raw legacy string can be preserved.
+ */
+function parseLegacyTime(value: string): string | null {
+  if (!value) return null
+  const raw = value.trim()
+  let h24: number | null = null
+  let minutes: number | null = null
+  // 12-hour token, e.g. "4:00 PM" (optionally inside a range)
+  let match = raw.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i)
+  if (match) {
+    let h = parseInt(match[1], 10) % 12
+    if (match[3].toUpperCase() === 'PM') h += 12
+    h24 = h
+    minutes = parseInt(match[2], 10)
+  } else {
+    // 24-hour token, e.g. "16:00" or "16:00:00"
+    match = raw.match(/^(\d{1,2})(?::(\d{2}))?(?::\d{2})?/)
+    if (match) {
+      h24 = parseInt(match[1], 10)
+      minutes = match[2] ? parseInt(match[2], 10) : 0
+    }
+  }
+  if (h24 === null || minutes === null || isNaN(h24) || isNaN(minutes) || h24 < 0 || h24 > 23 || minutes < 0 || minutes > 59) return null
+  const slot = Math.round((h24 * 60 + minutes) / 15) % 96
+  return TIME_OPTIONS[slot]
+}
 
 const statusStyles: Record<string, { label: string; className: string }> = {
   pending: { label: 'Pending', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
@@ -252,7 +293,8 @@ export default function AdminWebinarsPage() {
     setWebinarForm({
       title: webinar.title,
       date: webinar.date,
-      time: webinar.time,
+      // Snap legacy free-text time values to the nearest uniform selector option
+      time: parseLegacyTime(webinar.time) || webinar.time,
       speaker: webinar.speaker,
       duration: webinar.duration,
       description: webinar.description || '',
@@ -369,7 +411,7 @@ export default function AdminWebinarsPage() {
 
   const exportRegistrationsCSV = () => {
     const rows = [
-      ['Name', 'Email', 'Phone', 'Qualification', 'City', 'Webinar', 'Reg No', 'Transaction No', 'Status', 'Date'],
+      ['Name', 'Email', 'Phone', 'Qualification', 'RCI-CRR No', 'City', 'Webinar', 'Reg No', 'Transaction No', 'Status', 'Date'],
       ...filteredRegistrations.map((r) => {
         const dateVal = r.createdAt && !isNaN(new Date(r.createdAt as any).getTime()) ? new Date(r.createdAt as any).toLocaleDateString() : ''
         return [
@@ -377,6 +419,7 @@ export default function AdminWebinarsPage() {
           r.email,
           r.phone,
           r.qualification || '',
+          r.rciCrrNumber || '',
           r.city,
           r.webinarTitle,
           r.registrationNumber || '',
@@ -540,12 +583,27 @@ export default function AdminWebinarsPage() {
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                               Time *
                             </label>
-                            <Input
-                              required
-                              placeholder="e.g. 4:00 PM IST"
+                            <Select
                               value={webinarForm.time}
-                              onChange={(e) => setWebinarForm({ ...webinarForm, time: e.target.value })}
-                            />
+                              onValueChange={(value) => setWebinarForm({ ...webinarForm, time: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select start time (IST)" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-72">
+                                {webinarForm.time && !TIME_OPTIONS.includes(webinarForm.time) && (
+                                  <SelectItem value={webinarForm.time}>
+                                    {webinarForm.time} (existing)
+                                  </SelectItem>
+                                )}
+                                {TIME_OPTIONS.map((t) => (
+                                  <SelectItem key={t} value={t}>
+                                    {t}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-gray-400 mt-1">Start time in IST (15-minute intervals)</p>
                           </div>
                           <div>
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
@@ -865,6 +923,7 @@ export default function AdminWebinarsPage() {
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Name</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Email</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Phone</th>
+                      <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">RCI-CRR No.</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">City</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Webinar</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">Reg No.</th>
@@ -882,6 +941,7 @@ export default function AdminWebinarsPage() {
                           <td className="py-3 px-3 font-medium text-upisha-navy dark:text-white">{reg.fullName}</td>
                           <td className="py-3 px-3 text-gray-600 dark:text-gray-300">{reg.email}</td>
                           <td className="py-3 px-3 text-gray-600 dark:text-gray-300">{reg.phone}</td>
+                          <td className="py-3 px-3 text-gray-600 dark:text-gray-300 text-xs font-mono">{reg.rciCrrNumber || '-'}</td>
                           <td className="py-3 px-3 text-gray-600 dark:text-gray-300">{reg.city}</td>
                           <td className="py-3 px-3 text-gray-600 dark:text-gray-300 max-w-[200px] truncate" title={reg.webinarTitle}>
                             {reg.webinarTitle}
@@ -996,6 +1056,10 @@ export default function AdminWebinarsPage() {
                   <div>
                     <p className="text-xs text-gray-400">Qualification</p>
                     <p className="text-gray-700 dark:text-gray-300">{selectedRegistration.qualification || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">RCI-CRR Number</p>
+                    <p className="text-gray-700 dark:text-gray-300 font-mono text-xs">{selectedRegistration.rciCrrNumber || '-'}</p>
                   </div>
                     <div>
                       <p className="text-xs text-gray-400 mb-1">Registered On</p>

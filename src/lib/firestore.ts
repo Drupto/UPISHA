@@ -86,8 +86,8 @@ const WEBINAR_UPDATE_FIELDS = [
 ] as const
 
 const WEBINAR_REG_UPDATE_FIELDS = [
-  'fullName', 'email', 'phone', 'qualification', 'city', 'webinarId', 'webinarTitle',
-  'webinarType', 'transactionNumber', 'registrationNumber', 'message', 'status',
+  'fullName', 'email', 'phone', 'qualification', 'rciCrrNumber', 'city', 'webinarId', 'webinarTitle',
+  'webinarDate', 'webinarTime', 'webinarType', 'transactionNumber', 'registrationNumber', 'message', 'status',
 ] as const
 
 const TESTIMONIAL_UPDATE_FIELDS = [
@@ -212,9 +212,12 @@ export interface WebinarRegistrationDoc {
   email: string
   phone: string
   qualification?: string | null
+  rciCrrNumber?: string | null
   city: string
   webinarId: string
   webinarTitle: string
+  webinarDate?: string | null
+  webinarTime?: string | null
   webinarType?: 'paid' | 'free'
   transactionNumber?: string | null
   registrationNumber?: string | null
@@ -1595,6 +1598,7 @@ export async function createWebinarRegistration(data: WebinarRegistrationDoc) {
     createdAt: data.createdAt ?? new Date(),
     updatedAt: data.updatedAt ?? new Date(),
     qualification: data.qualification ?? null,
+    rciCrrNumber: data.rciCrrNumber ?? null,
     transactionNumber: data.transactionNumber ?? null,
     message: data.message ?? null,
   })

@@ -133,6 +133,20 @@ export const sendMemberApprovalEmailTrigger = onDocumentUpdated('members/{member
   }
 })
 
+/**
+ * Formats a webinar date for display in emails. Webinar dates are stored as
+ * ISO "yyyy-MM-dd" (from the admin date picker), which reads poorly in emails —
+ * convert to "15 Jan 2026". Any other format passes through unchanged.
+ */
+function formatWebinarDate(value: string): string {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return value
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const month = parseInt(match[2], 10)
+  if (month < 1 || month > 12) return value
+  return `${parseInt(match[3], 10)} ${months[month - 1]} ${match[1]}`
+}
+
 // ─── Firestore Trigger: Webinar Registration Created ───
 export const onWebinarRegistrationCreated = onDocumentCreated('webinarRegistrations/{regId}', async (event) => {
   const reg = event.data?.data() as Record<string, unknown> | undefined
@@ -148,6 +162,8 @@ export const onWebinarRegistrationCreated = onDocumentCreated('webinarRegistrati
   let speaker: string | undefined
   let duration: string | undefined
   let price: number | undefined
+  let webinarDate: string | undefined
+  let webinarTime: string | undefined
 
   try {
     const webinarSnap = await db.collection('webinars').doc(webinarId).get()
@@ -157,6 +173,8 @@ export const onWebinarRegistrationCreated = onDocumentCreated('webinarRegistrati
       speaker = webinar.speaker ? String(webinar.speaker) : undefined
       duration = webinar.duration ? String(webinar.duration) : undefined
       price = typeof webinar.price === 'number' ? webinar.price : undefined
+      webinarDate = webinar.date ? formatWebinarDate(String(webinar.date)) : undefined
+      webinarTime = webinar.time ? String(webinar.time) : undefined
     }
   } catch (err) {
     functions.logger.warn('Failed to fetch webinar for registration email:', err)
@@ -165,8 +183,8 @@ export const onWebinarRegistrationCreated = onDocumentCreated('webinarRegistrati
   const templateData: WebinarConfirmationTemplateData = {
     fullName,
     webinarTitle: String(reg.webinarTitle || ''),
-    webinarDate: String(reg.webinarDate || reg['date'] || ''),
-    webinarTime: String(reg.webinarTime || reg['time'] || ''),
+    webinarDate: formatWebinarDate(String(reg.webinarDate || reg['date'] || webinarDate || '')),
+    webinarTime: String(reg.webinarTime || reg['time'] || webinarTime || ''),
     webinarSpeaker: speaker,
     webinarDuration: duration,
     webinarType: (reg.webinarType as 'paid' | 'free') || undefined,
@@ -215,6 +233,8 @@ export const onWebinarRegistrationUpdated = onDocumentUpdated('webinarRegistrati
   let speaker: string | undefined
   let duration: string | undefined
   let price: number | undefined
+  let webinarDate: string | undefined
+  let webinarTime: string | undefined
 
   try {
     const webinarSnap = await db.collection('webinars').doc(webinarId).get()
@@ -224,6 +244,8 @@ export const onWebinarRegistrationUpdated = onDocumentUpdated('webinarRegistrati
       speaker = webinar.speaker ? String(webinar.speaker) : undefined
       duration = webinar.duration ? String(webinar.duration) : undefined
       price = typeof webinar.price === 'number' ? webinar.price : undefined
+      webinarDate = webinar.date ? formatWebinarDate(String(webinar.date)) : undefined
+      webinarTime = webinar.time ? String(webinar.time) : undefined
     }
   } catch (err) {
     functions.logger.warn('Failed to fetch webinar for update email:', err)
@@ -232,8 +254,8 @@ export const onWebinarRegistrationUpdated = onDocumentUpdated('webinarRegistrati
   const templateData: WebinarConfirmationTemplateData = {
     fullName,
     webinarTitle: String(after.webinarTitle || ''),
-    webinarDate: String(after.webinarDate || after['date'] || ''),
-    webinarTime: String(after.webinarTime || after['time'] || ''),
+    webinarDate: formatWebinarDate(String(after.webinarDate || after['date'] || webinarDate || '')),
+    webinarTime: String(after.webinarTime || after['time'] || webinarTime || ''),
     webinarSpeaker: speaker,
     webinarDuration: duration,
     webinarType: (after.webinarType as 'paid' | 'free') || undefined,

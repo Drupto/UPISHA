@@ -319,9 +319,12 @@ export interface WebinarRegistrationDoc {
   email: string
   phone: string
   qualification?: string | null
+  rciCrrNumber?: string | null
   city: string
   webinarId: string
   webinarTitle: string
+  webinarDate?: string | null
+  webinarTime?: string | null
   webinarType?: 'paid' | 'free'
   transactionNumber?: string | null
   registrationNumber?: string | null
