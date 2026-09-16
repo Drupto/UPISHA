@@ -45,6 +45,7 @@ import {
 import {
   renderMemberApprovalEmail,
   MemberApprovalTemplateData,
+  MemberApprovalReceiptData,
 } from './email/templates.member'
 import {
   renderWebinarConfirmationEmail,
@@ -111,10 +112,37 @@ export const sendMemberApprovalEmailTrigger = onDocumentUpdated('members/{member
   const fullName = String(after.fullName || '')
   if (!email) return
 
+  // On approval, if the auto-generated membership receipt exists (it is
+  // written before the member update and flagged suppressEmail so the
+  // receipt trigger stays quiet), embed its details in this combined
+  // "approved + receipt" email instead of sending two separate emails.
+  let receipt: MemberApprovalReceiptData | undefined
+  if (newStatus === 'approved') {
+    try {
+      const receiptSnap = await db.collection('receipts').doc(`UPISHA-RCPT-${event.params.memberId}`).get()
+      if (receiptSnap.exists) {
+        const r = receiptSnap.data() as Record<string, unknown> | undefined
+        if (r && r.receiptNumber) {
+          receipt = {
+            receiptNumber: String(r.receiptNumber),
+            transactionType: String(r.transactionType || ''),
+            description: String(r.description || ''),
+            amount: typeof r.amount === 'number' ? r.amount : (Number(r.amount) || 0),
+            paidAt: formatDateValue(r.issuedAt) || formatDateValue(new Date()),
+          }
+        }
+      }
+    } catch (err) {
+      // Receipt lookup is best-effort; fall back to the plain approval email.
+      functions.logger.warn('Failed to fetch membership receipt for approval email:', err)
+    }
+  }
+
   const templateData: MemberApprovalTemplateData = {
     fullName,
     status: newStatus as 'approved' | 'rejected',
     loginUrl: process.env.SITE_URL ? `${process.env.SITE_URL}/login` : undefined,
+    receipt,
   }
 
   const rendered = renderMemberApprovalEmail(templateData)
@@ -138,13 +166,33 @@ export const sendMemberApprovalEmailTrigger = onDocumentUpdated('members/{member
  * ISO "yyyy-MM-dd" (from the admin date picker), which reads poorly in emails —
  * convert to "15 Jan 2026". Any other format passes through unchanged.
  */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 function formatWebinarDate(value: string): string {
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
   if (!match) return value
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const month = parseInt(match[2], 10)
   if (month < 1 || month > 12) return value
-  return `${parseInt(match[3], 10)} ${months[month - 1]} ${match[1]}`
+  return `${parseInt(match[3], 10)} ${MONTHS[month - 1]} ${match[1]}`
+}
+
+/**
+ * Formats a receipt issue date for display in emails. Firestore stores
+ * `issuedAt` as a Timestamp object — String() on it renders "[object Object]",
+ * so convert via .toDate() when available, format ISO strings, and pass
+ * anything else through unchanged.
+ */
+function formatDateValue(value: unknown): string {
+  if (!value) return ''
+  if (typeof value === 'object' && value !== null && typeof (value as { toDate?: unknown }).toDate === 'function') {
+    const d = (value as { toDate: () => Date }).toDate()
+    if (!isNaN(d.getTime())) return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
+  }
+  if (value instanceof Date) {
+    if (!isNaN(value.getTime())) return `${value.getDate()} ${MONTHS[value.getMonth()]} ${value.getFullYear()}`
+  }
+  if (typeof value === 'string') return formatWebinarDate(value)
+  return String(value)
 }
 
 // ─── Firestore Trigger: Webinar Registration Created ───
@@ -421,6 +469,11 @@ export const onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async 
   const receipt = event.data?.data() as Record<string, unknown> | undefined
   if (!receipt) return
 
+  // Receipts auto-generated during member approval are embedded in the
+  // combined approval email by sendMemberApprovalEmailTrigger — skip the
+  // standalone receipt email for those.
+  if (receipt.suppressEmail === true) return
+
   const email = String(receipt.memberEmail || '')
   const fullName = String(receipt.memberName || '')
   if (!email) return
@@ -431,7 +484,7 @@ export const onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async 
     amount: typeof receipt.amount === 'number' ? receipt.amount : 0,
     transactionType: String(receipt.transactionType || ''),
     description: String(receipt.description || ''),
-    paidAt: String(receipt.issuedAt || new Date().toISOString()),
+    paidAt: formatDateValue(receipt.issuedAt) || formatDateValue(new Date()),
   })
 
   const result = await sendSingleEmail(

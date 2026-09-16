@@ -107,6 +107,9 @@ export async function PUT(
                 paymentMethod: 'UPI',
                 status: 'paid',
                 issuedAt: new Date(),
+                // Approval trigger sends one combined "approved + receipt"
+                // email; suppress the standalone receipt email for this one.
+                suppressEmail: true,
               })
             }
           }

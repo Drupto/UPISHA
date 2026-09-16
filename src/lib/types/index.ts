@@ -479,6 +479,12 @@ export interface ReceiptDoc {
   paymentMethod?: string | null
   status: ReceiptStatus
   issuedAt: Date
+  /**
+   * Set to true on auto-generated membership receipts created during admin
+   * approval, so the standalone receipt email is suppressed and the approval
+   * trigger sends a single combined "approved + receipt" email instead.
+   */
+  suppressEmail?: boolean
   createdAt?: Date
   updatedAt?: Date
 }
