@@ -19,6 +19,7 @@ import type { CertificateTemplateDoc, CertificateTextBlock, CertificateHeaderFon
 interface TemplateForm {
   name: string
   accountType: string
+  category: string
   title: string
   subtitle: string
   titleFont: CertificateHeaderFont
@@ -69,6 +70,7 @@ const defaultSubtitleFont: CertificateHeaderFont = {
 const emptyForm: TemplateForm = {
   name: '',
   accountType: 'life',
+  category: 'membership',
   title: 'Certificate of Membership',
   subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
   titleFont: defaultTitleFont,
@@ -192,6 +194,7 @@ export default function AdminCertificateTemplates() {
     setForm({
       name: template.name || '',
       accountType: template.accountType || 'life',
+      category: template.category || 'membership',
       title: template.title || '',
       subtitle: template.subtitle || '',
       titleFont: template.titleFont || defaultTitleFont,
@@ -278,6 +281,7 @@ export default function AdminCertificateTemplates() {
     ? {
         name: form.name || 'Preview',
         accountType: (form.accountType as CertificateTemplateDoc['accountType']) || 'all',
+        category: (form.category as CertificateTemplateDoc['category']) || 'membership',
         title: form.title,
         subtitle: form.subtitle,
         titleFont: form.titleFont,
@@ -304,6 +308,10 @@ export default function AdminCertificateTemplates() {
     '{qualification} - member qualification',
     '{rciNumber} - member RCI number (members only)',
     '{certificateNumber} - certificate number',
+    '{webinarTitle} - webinar title (webinar certificates)',
+    '{webinarSpeaker} - webinar speaker (webinar certificates)',
+    '{webinarDate} - webinar date (webinar certificates)',
+    '{duration} - webinar duration (webinar certificates)',
   ]
 
   const renderHeaderFontControls = (fontKey: 'titleFont' | 'subtitleFont', label: string) => {
@@ -426,7 +434,7 @@ export default function AdminCertificateTemplates() {
             </CardHeader>
             <CardContent className="space-y-4">
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-3 gap-4">
                   <div>
                     <Label>Template Name *</Label>
                     <Input
@@ -448,6 +456,18 @@ export default function AdminCertificateTemplates() {
                         <SelectItem value="annual">Annual Member</SelectItem>
                         <SelectItem value="student">Student Member</SelectItem>
                         <SelectItem value="all">All Types</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Category *</Label>
+                    <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="membership">Membership</SelectItem>
+                        <SelectItem value="webinar">Webinar</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -806,6 +826,9 @@ export default function AdminCertificateTemplates() {
                       </CardTitle>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="outline">{template.accountType}</Badge>
+                        <Badge variant="outline" className={(template.category || 'membership') === 'webinar' ? 'border-upisha-teal text-upisha-teal' : ''}>
+                          {(template.category || 'membership') === 'webinar' ? 'Webinar' : 'Membership'}
+                        </Badge>
                         {template.isDefault && (
                           <Badge className="bg-upisha-gold text-white border-0">Default</Badge>
                         )}

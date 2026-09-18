@@ -1149,11 +1149,20 @@ export async function seedDefaultCertificateTemplates() {
     // the webinar template on a fresh database and then skipped full seeding
     // on later calls (because that template has isDefault: true), which left
     // the Life/Annual/Student membership templates permanently missing.
-    const existingNames = new Set(existing.map((t) => t.name))
+    const existingNames = new Map(existing.map((t) => [t.name, t]))
     let seeded = false
     for (const template of DEFAULT_CERTIFICATE_TEMPLATES) {
-      if (!existingNames.has(template.name)) {
+      const match = existingNames.get(template.name)
+      if (!match) {
         await createCertificateTemplate({ ...template })
+        seeded = true
+      } else if ((match.category || 'membership') !== (template.category || 'membership')) {
+        // Self-heal: repair the category on an existing seed template whose
+        // category is missing or wrong (e.g. a webinar template demoted to
+        // 'membership' by an admin-panel edit before the form exposed the
+        // category field). Without this, the webinar issue dialog would
+        // never find the seeded webinar template.
+        await updateCertificateTemplate(match.id!, { category: template.category })
         seeded = true
       }
     }
