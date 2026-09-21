@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Loader2, Award, Search, Trash2, Plus, Ban } from 'lucide-react'
+import { Loader2, Award, Search, Trash2, Plus, Ban, Eye, Link2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { csrfHeaders } from '@/lib/csrf'
 
@@ -40,6 +40,15 @@ interface MemberItem {
   membershipType: string
   status: string
   uid?: string | null
+}
+
+// Guarded date rendering — a missing/invalid issueDate renders as an em dash
+// instead of the literal "Invalid Date" (same pattern as the verify page).
+function formatDate(isoDate: string | null | undefined): string {
+  if (!isoDate) return '—'
+  const d = new Date(isoDate)
+  if (isNaN(d.getTime())) return '—'
+  return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 export default function AdminCertificates() {
@@ -130,16 +139,19 @@ export default function AdminCertificates() {
   const handleRevoke = async (id: string) => {
     if (!confirm('Are you sure you want to revoke this certificate?')) return
     try {
+      // PUT is CSRF-protected server-side — the x-csrf-token header must match
+      // the csrf-token cookie, otherwise the request 403s.
       const res = await fetch(`/api/certificates/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ status: 'revoked' }),
       })
       if (res.ok) {
         toast({ title: 'Certificate revoked', description: 'The certificate has been revoked.' })
         fetchAll()
       } else {
-        toast({ title: 'Error', description: 'Failed to revoke certificate', variant: 'destructive' })
+        const err = await res.json().catch(() => ({}))
+        toast({ title: 'Error', description: err.error || 'Failed to revoke certificate', variant: 'destructive' })
       }
     } catch {
       toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
@@ -149,16 +161,34 @@ export default function AdminCertificates() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this certificate?')) return
     try {
-      const res = await fetch(`/api/certificates/${id}`, { method: 'DELETE' })
+      // DELETE is CSRF-protected server-side (double-submit cookie pattern).
+      const res = await fetch(`/api/certificates/${id}`, { method: 'DELETE', headers: csrfHeaders() })
       if (res.ok) {
         toast({ title: 'Certificate deleted', description: 'The certificate has been removed.' })
         fetchAll()
       } else {
-        toast({ title: 'Error', description: 'Failed to delete certificate', variant: 'destructive' })
+        const err = await res.json().catch(() => ({}))
+        toast({ title: 'Error', description: err.error || 'Failed to delete certificate', variant: 'destructive' })
       }
     } catch {
       toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
     }
+  }
+
+  const handleCopyLink = (id: string) => {
+    const url = `${window.location.origin}/verify/${id}`
+    navigator.clipboard
+      .writeText(url)
+      .then(() =>
+        toast({ title: 'Link copied', description: 'Certificate verification link copied to clipboard.' })
+      )
+      .catch(() =>
+        toast({
+          title: 'Error',
+          description: 'Could not copy the link. View the certificate and copy it from the address bar instead.',
+          variant: 'destructive',
+        })
+      )
   }
 
   const filteredCertificates = certificates.filter((c) => {
@@ -255,7 +285,7 @@ export default function AdminCertificates() {
                     )}
                   </td>
                   <td className="py-3 pr-4 text-gray-500">
-                    {new Date(cert.issueDate).toLocaleDateString()}
+                    {formatDate(cert.issueDate)}
                   </td>
                   <td className="py-3 pr-4">
                     <Badge className={cert.status === 'revoked' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}>
@@ -264,6 +294,24 @@ export default function AdminCertificates() {
                   </td>
                   <td className="py-3">
                     <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => window.open(`/verify/${cert.id}`, '_blank', 'noopener,noreferrer')}
+                        title="View certificate"
+                      >
+                        <Eye className="h-3.5 w-3.5 text-upisha-teal" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleCopyLink(cert.id)}
+                        title="Copy verification link"
+                      >
+                        <Link2 className="h-3.5 w-3.5 text-gray-500" />
+                      </Button>
                       {cert.status !== 'revoked' && (
                         <Button
                           variant="outline"

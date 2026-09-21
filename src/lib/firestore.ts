@@ -401,16 +401,12 @@ export async function setDefaultCertificateTemplate(id: string, adminUid?: strin
 }
 
 // Certificate CRUD operations
-export async function createCertificate(data: CertificateDoc) {
-  const ref = await addDoc(collection(db(), 'certificates'), {
-    ...data,
-    status: data.status ?? 'issued',
-    qualification: data.qualification ?? null,
-    createdAt: data.createdAt ?? new Date(),
-    updatedAt: data.updatedAt ?? new Date(),
-  })
-  return { id: ref.id }
-}
+//
+// NOTE: there is deliberately no addDoc-based createCertificate() — every
+// certificate write must go through upsertCertificate() so the document ID
+// stays the deterministic `certificateNumber` (UPISHA-<memberId> /
+// UPISHA-WEB-<registrationId>). A randomly-ID'd certificate would break the
+// one-active-certificate-per-member invariant and duplicate lookups.
 
 /**
  * Idempotent certificate creation.
