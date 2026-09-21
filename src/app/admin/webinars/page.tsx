@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
+import { csrfHeaders } from '@/lib/csrf'
 
 interface WebinarItem {
   id: string
@@ -387,9 +388,12 @@ export default function AdminWebinarsPage() {
     }
     setCertIssuing(true)
     try {
+      // /api/certificates/webinar enforces CSRF double-submit — the
+      // x-csrf-token header must match the csrf-token cookie, otherwise the
+      // request 403s.
       const res = await fetch('/api/certificates/webinar', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           registrationId: certTargetRegistration.id,
           templateId: certSelectedTemplate,
@@ -397,13 +401,16 @@ export default function AdminWebinarsPage() {
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || 'Failed to issue certificate')
+        throw new Error(err.error || 'Could not issue the certificate. Please check your connection and try again.')
       }
-      toast({ title: 'Success', description: 'Webinar certificate issued. An email notification has been sent.' })
+      // The notification email is sent asynchronously by the Cloud Function
+      // Firestore trigger (onWebinarCertificateCreated), so phrase it as
+      // upcoming rather than already-delivered.
+      toast({ title: 'Success', description: 'Webinar certificate issued. The attendee will receive an email with a link to view and download their certificate.' })
       setCertIssueOpen(false)
       setCertTargetRegistration(null)
     } catch (err) {
-      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to issue certificate', variant: 'destructive' })
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Could not issue the certificate. Please check your connection and try again.', variant: 'destructive' })
     } finally {
       setCertIssuing(false)
     }

@@ -68,6 +68,7 @@ export async function PUT(
               if (memberUid) {
                 await upsertCertificate({
                   templateId: template.id,
+                  type: 'membership',
                   memberId: id,
                   memberUid,
                   memberName: sanitizeHtml(member.fullName),

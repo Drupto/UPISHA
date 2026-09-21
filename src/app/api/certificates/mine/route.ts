@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
           if (memberUid) {
             await upsertCertificate({
               templateId: template.id,
+              type: 'membership',
               memberId: memberId || '',
               memberUid,
               memberName: sanitizeHtml(member.fullName),

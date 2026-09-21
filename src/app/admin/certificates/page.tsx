@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, Award, Search, Trash2, Plus, Ban } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { csrfHeaders } from '@/lib/csrf'
 
 interface CertificateItem {
   id: string
@@ -38,6 +39,7 @@ interface MemberItem {
   email: string
   membershipType: string
   status: string
+  uid?: string | null
 }
 
 export default function AdminCertificates() {
@@ -67,15 +69,26 @@ export default function AdminCertificates() {
         fetch('/api/members'),
       ])
 
+      // Surface auth/server failures instead of silently rendering empty lists
+      if (!certRes.ok || !templateRes.ok || !memberRes.ok) {
+        throw new Error('Could not load certificates, templates, or members. Please refresh the page — if this keeps happening, sign in again and retry.')
+      }
+
       const certData = await certRes.json()
       const templateData = await templateRes.json()
       const memberData = await memberRes.json()
 
       setCertificates(certData.certificates || [])
       setTemplates(templateData.templates || [])
-      setMembers((memberData.members || []).filter((m: MemberItem) => m.status === 'approved'))
-    } catch {
-      toast({ title: 'Error', description: 'Failed to load data', variant: 'destructive' })
+      // Only approved members with a linked user account can be issued a
+      // certificate (the API rejects members without a uid with a 400).
+      setMembers((memberData.members || []).filter((m: MemberItem) => m.status === 'approved' && !!m.uid))
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Could not load the certificates page. Please refresh and try again.',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -89,24 +102,26 @@ export default function AdminCertificates() {
 
     setIssuing(true)
     try {
+      // /api/certificates enforces CSRF double-submit — the x-csrf-token header
+      // must match the csrf-token cookie, otherwise the request 403s.
       const res = await fetch('/api/certificates', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ memberId: selectedMember, templateId: selectedTemplate }),
       })
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || 'Failed to issue certificate')
+        throw new Error(err.error || 'Could not issue the certificate. Please check your connection and try again.')
       }
 
-      toast({ title: 'Success', description: 'Certificate issued successfully' })
+      toast({ title: 'Success', description: 'Certificate issued. The member can now view and download it from their profile.' })
       setIssueOpen(false)
       setSelectedMember('')
       setSelectedTemplate('')
       fetchAll()
     } catch (err) {
-      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to issue certificate', variant: 'destructive' })
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Could not issue the certificate. Please check your connection and try again.', variant: 'destructive' })
     } finally {
       setIssuing(false)
     }
@@ -160,6 +175,10 @@ export default function AdminCertificates() {
       (c.status || '').toLowerCase().includes(q)
     )
   })
+
+  const membershipTemplates = templates.filter(
+    (t) => t.isActive !== false && (t.category || 'membership') === 'membership'
+  )
 
   const activeCount = certificates.filter((c) => c.status !== 'revoked').length
   const revokedCount = certificates.length - activeCount
@@ -280,41 +299,58 @@ export default function AdminCertificates() {
           <DialogHeader>
             <DialogTitle>Issue Certificate</DialogTitle>
             <DialogDescription>
-              Select a member and certificate template to issue.
+              Pick an approved member and a membership certificate template. The certificate is saved immediately and appears in the member profile, where the member can view and download it. Each member can hold only one active certificate.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>Select Member</Label>
-              <Select value={selectedMember} onValueChange={setSelectedMember}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a member" />
-                </SelectTrigger>
-                <SelectContent>
-                  {members.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.fullName} ({m.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {members.length === 0 ? (
+                <div className="text-sm text-gray-500 border rounded-lg p-3 bg-gray-50 dark:bg-gray-900">
+                  No eligible members yet. Members appear here once their application is approved and they have registered a user account.
+                </div>
+              ) : (
+                <Select value={selectedMember} onValueChange={setSelectedMember}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.fullName} ({m.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <p className="text-xs text-gray-400">
+                If a member is missing from this list, check that their application is approved on the Members page and that they have registered an account. Certificates need a linked account so members can view them.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Select Template</Label>
-              <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a template" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates
-                    .filter((t) => t.isActive !== false && (t.category || 'membership') === 'membership')
-                    .map((t) => (
+              {membershipTemplates.length === 0 ? (
+                <div className="text-sm text-gray-500 border rounded-lg p-3 bg-gray-50 dark:bg-gray-900">
+                  No membership certificate templates found. Create one in{' '}
+                  <a href="/admin/certificates/templates" className="text-upisha-teal hover:underline">
+                    Certificate Templates
+                  </a>{' '}
+                  first.
+                </div>
+              ) : (
+                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {membershipTemplates.map((t) => (
                       <SelectItem key={t.id} value={t.id}>
                         {t.name} ({t.accountType})
                       </SelectItem>
                     ))}
-                </SelectContent>
-              </Select>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-2">

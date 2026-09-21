@@ -7,7 +7,10 @@ import {
   getCertificatesByEmail,
   seedDefaultCertificateTemplates,
 } from '@/lib/firestore'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
+import { checkRateLimitStrict, getClientIp } from '@/lib/firestore-rate-limit'
+import { logApiRequest } from '@/lib/request-logger'
+import { enforceBodySizeLimit } from '@/lib/validations'
 import { requireAdmin } from '@/lib/auth-helpers'
 import type { WebinarRegistrationDoc } from '@/lib/types'
 
@@ -22,6 +25,20 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
+
+  // CSRF protection for mutating requests (parity with templates endpoints)
+  const csrfError = withCsrfProtection(request)
+  if (csrfError) {
+    return withSecurityHeaders(csrfError)
+  }
+
+  // Reject oversized request bodies
+  if (!enforceBodySizeLimit(request.headers)) {
+    return withSecurityHeaders(NextResponse.json({ error: 'Request body too large' }, { status: 413 }))
+  }
+
+  const ip = getClientIp(request.headers)
 
   try {
     const body = await request.json()
@@ -29,14 +46,18 @@ export async function POST(request: NextRequest) {
 
     if (!registrationId || !templateId) {
       return withSecurityHeaders(NextResponse.json(
-        { error: 'Missing required fields: registrationId and templateId' },
+        { error: 'Please select both a confirmed registration and a certificate template before issuing.' },
         { status: 400 }
       ))
     }
 
-    if (!rateLimit(`certificate:webinar:create`, 20, 60 * 60 * 1000)) {
+    // Distributed per-admin rate limit (replaces the in-memory global limiter
+    // whose 20/hour budget was shared across ALL admins and reset on every
+    // serverless instance cold-start).
+    const rate = await checkRateLimitStrict(`certificate:webinar:create:${ip}:${admin.uid}`, 20, 60 * 60 * 1000)
+    if (!rate.allowed) {
       return withSecurityHeaders(NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
+        { error: 'Issuance limit reached (20 certificates per hour). Please wait a while before issuing more certificates.' },
         { status: 429 }
       ))
     }
@@ -49,7 +70,7 @@ export async function POST(request: NextRequest) {
     const registration = registrations.find((r) => r.id === registrationId) as (WebinarRegistrationDoc & { id: string }) | undefined
     if (!registration) {
       return withSecurityHeaders(NextResponse.json(
-        { error: 'Webinar registration not found' },
+        { error: 'This registration could not be found. It may have been deleted — refresh the page and try again.' },
         { status: 404 }
       ))
     }
@@ -57,7 +78,7 @@ export async function POST(request: NextRequest) {
     // Only confirmed registrations can receive a certificate
     if (registration.status !== 'confirmed') {
       return withSecurityHeaders(NextResponse.json(
-        { error: 'Only confirmed registrations can receive a certificate' },
+        { error: 'This registration has not been confirmed yet. Confirm it from the registrations list first, then issue the certificate.' },
         { status: 400 }
       ))
     }
@@ -66,13 +87,13 @@ export async function POST(request: NextRequest) {
     const template = await getCertificateTemplateById(templateId)
     if (!template) {
       return withSecurityHeaders(NextResponse.json(
-        { error: 'Certificate template not found' },
+        { error: 'The selected certificate template no longer exists. It may have been deleted — refresh the page and pick a different template.' },
         { status: 404 }
       ))
     }
     if ((template.category || 'membership') !== 'webinar') {
       return withSecurityHeaders(NextResponse.json(
-        { error: 'Please select a webinar certificate template' },
+        { error: 'The selected template is not a webinar template. Webinar certificates can only use templates in the "Webinar" category — pick a different template.' },
         { status: 400 }
       ))
     }
@@ -84,7 +105,7 @@ export async function POST(request: NextRequest) {
     )
     if (alreadyIssued) {
       return withSecurityHeaders(NextResponse.json(
-        { error: 'A certificate has already been issued for this registration' },
+        { error: 'This attendee already has a certificate for this webinar — each attendee can receive only one certificate per webinar. You can view it in the certificates list.' },
         { status: 409 }
       ))
     }
@@ -103,21 +124,33 @@ export async function POST(request: NextRequest) {
       webinarSpeaker: webinar?.speaker ? sanitizeHtml(webinar.speaker) : null,
       webinarDuration: webinar?.duration ? sanitizeHtml(webinar.duration) : null,
       qualification: registration.qualification ? sanitizeHtml(registration.qualification) : null,
+      registrationId,
       registrationNumber: registration.registrationNumber || null,
       certificateNumber: `UPISHA-WEB-${registrationId}`,
       issueDate: new Date().toISOString(),
       status: 'issued',
     })
 
+    // Audit log the issuance
+    await logApiRequest({
+      endpoint: '/api/certificates/webinar',
+      method: 'POST',
+      ip,
+      userId: admin.uid,
+      userAgent: request.headers.get('user-agent'),
+      status: 201,
+      timestamp: new Date(),
+    })
+
     return withSecurityHeaders(NextResponse.json({
       success: true,
       id: certificate.id,
-      message: 'Webinar certificate issued successfully',
+      message: 'Webinar certificate issued successfully. The attendee will receive an email with a link to view and download it.',
     }, { status: 201 }))
   } catch (error) {
     console.error('Error creating webinar certificate:', error)
     return withSecurityHeaders(NextResponse.json(
-      { error: 'Failed to issue webinar certificate' },
+      { error: 'Something went wrong while issuing the certificate. Please try again — if it keeps failing, refresh the page or sign in again.' },
       { status: 500 }
     ))
   }
