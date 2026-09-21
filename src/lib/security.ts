@@ -102,6 +102,16 @@ export function sanitizeHtml(input: string): string {
   return input.replace(/[&<>"']/g, c => map[c])
 }
 
+// Sanitize plain-text fields that are rendered as React children (React
+// escapes text at render time, so HTML-entity escaping here would
+// double-encode it on screen). Strips angle brackets without entity
+// escaping so characters like ampersand and apostrophes are stored
+// verbatim and displayed exactly as the admin typed them.
+export function sanitizePlainText(input: string): string {
+  if (!input) return input
+  return input.replace(/[<>]/g, '')
+}
+
 // Validate CSRF token using the Double Submit Cookie pattern:
 // The token must be present in BOTH the x-csrf-token header AND the csrf-token cookie,
 // and they must match. This prevents CSRF attacks because an attacker cannot set

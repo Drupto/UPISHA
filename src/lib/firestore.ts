@@ -23,6 +23,7 @@ import {
   FieldValue,
 } from './admin-firestore-compat'
 import type { TestimonialDoc, GalleryImageDoc, PublicationDoc, PublicationSubmissionDoc, CertificateTemplateDoc, CertificateDoc, ReceiptDoc } from '@/lib/types'
+import { planDefaultTemplateSeed } from '@/lib/certificate-seed'
 
 const db = () => getAdminDb()
 
@@ -49,7 +50,7 @@ const MEMBER_UPDATE_FIELDS = [
 const CERT_TEMPLATE_UPDATE_FIELDS = [
   'name', 'accountType', 'category', 'title', 'subtitle', 'titleFont', 'subtitleFont',
   'textBlocks', 'footerText', 'logoUrl', 'signatureUrl', 'stampUrl', 'backgroundUrl',
-  'borderColor', 'accentColor', 'fontFamily', 'isActive', 'isDefault',
+  'borderColor', 'accentColor', 'fontFamily', 'isActive', 'isDefault', 'seedKey',
 ] as const
 
 const CERT_UPDATE_FIELDS = [
@@ -805,6 +806,7 @@ export async function deleteReceipt(id: string) {
 export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 'createdAt' | 'updatedAt'>[] = [
   {
     name: 'Life Member Certificate',
+    seedKey: 'life-member',
     accountType: 'life',
     title: 'Certificate of Life Membership',
     subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
@@ -883,6 +885,7 @@ export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 
   },
   {
     name: 'Annual Member Certificate',
+    seedKey: 'annual-member',
     accountType: 'annual',
     title: 'Certificate of Annual Membership',
     subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
@@ -961,6 +964,7 @@ export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 
   },
   {
     name: 'Webinar Participation Certificate',
+    seedKey: 'webinar-participation',
     accountType: 'all',
     category: 'webinar',
     title: 'Certificate of Participation',
@@ -1062,6 +1066,7 @@ export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 
   },
   {
     name: 'Student Member Certificate',
+    seedKey: 'student-member',
     accountType: 'student',
     title: 'Certificate of Student Membership',
     subtitle: 'UP ISHA — Uttar Pradesh Indian Speech & Hearing Association',
@@ -1143,29 +1148,35 @@ export const DEFAULT_CERTIFICATE_TEMPLATES: Omit<CertificateTemplateDoc, 'id' | 
 export async function seedDefaultCertificateTemplates() {
   try {
     const existing = await getCertificateTemplates()
+    const plan = planDefaultTemplateSeed(existing, DEFAULT_CERTIFICATE_TEMPLATES)
+    let seeded = false
+
+    // One-time migration: claim pre-seedKey templates (matched by their
+    // original factory name) by writing their stable key. After this write
+    // the template is identified by seedKey and survives renames.
+    for (const backfill of plan.toBackfillSeedKey) {
+      await updateCertificateTemplate(backfill.id, { seedKey: backfill.seedKey })
+      seeded = true
+    }
+
+    // Self-heal: repair the category on an existing seed template whose
+    // category is missing or wrong (e.g. a webinar template demoted to
+    // 'membership' before the form exposed the category field).
+    for (const repair of plan.toRepairCategory) {
+      await updateCertificateTemplate(repair.id, { category: repair.category })
+      seeded = true
+    }
 
     // Idempotently create every missing default template (membership types
-    // AND webinar). No early return: previously this function created only
-    // the webinar template on a fresh database and then skipped full seeding
-    // on later calls (because that template has isDefault: true), which left
-    // the Life/Annual/Student membership templates permanently missing.
-    const existingNames = new Map(existing.map((t) => [t.name, t]))
-    let seeded = false
-    for (const template of DEFAULT_CERTIFICATE_TEMPLATES) {
-      const match = existingNames.get(template.name)
-      if (!match) {
-        await createCertificateTemplate({ ...template })
-        seeded = true
-      } else if ((match.category || 'membership') !== (template.category || 'membership')) {
-        // Self-heal: repair the category on an existing seed template whose
-        // category is missing or wrong (e.g. a webinar template demoted to
-        // 'membership' by an admin-panel edit before the form exposed the
-        // category field). Without this, the webinar issue dialog would
-        // never find the seeded webinar template.
-        await updateCertificateTemplate(match.id!, { category: template.category })
-        seeded = true
-      }
+    // AND webinar) so admins can always issue certificates on a fresh
+    // database. Existing templates are NEVER rewritten here: admin edits to
+    // names, titles, and text blocks are preserved, and renamed templates
+    // are not duplicated because matching is by stable seedKey, not name.
+    for (const template of plan.toCreate) {
+      await createCertificateTemplate({ ...template })
+      seeded = true
     }
+
     return { seeded }
   } catch (error) {
     console.error('Error seeding default certificate templates:', error)

@@ -238,6 +238,9 @@ export const certificateHeaderFontSchema = z.object({
 
 export const certificateTemplateSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(200),
+  // Stable seeder identity; not exposed in the admin form. Optional so
+  // legacy documents without a key still validate.
+  seedKey: z.string().max(100).optional(),
   accountType: z.enum(['life', 'annual', 'student', 'all']),
   category: z.enum(['membership', 'webinar']).optional().default('membership'),
   title: z.string().min(2, 'Title must be at least 2 characters').max(200),

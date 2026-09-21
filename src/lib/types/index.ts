@@ -413,6 +413,12 @@ export interface CertificateHeaderFont {
 export interface CertificateTemplateDoc {
   id?: string
   name: string
+  /**
+   * Stable identity used by the default-template seeder (e.g. life-member).
+   * Matching by this key instead of by name lets admins rename templates
+   * without the seeder recreating factory-default duplicates.
+   */
+  seedKey?: string
   accountType: CertificateAccountType
   category?: CertificateCategory
   title: string

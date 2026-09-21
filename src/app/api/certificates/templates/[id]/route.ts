@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateCertificateTemplate, deleteCertificateTemplate, getCertificateTemplateById, setDefaultCertificateTemplate } from '@/lib/firestore'
 import { certificateTemplateSchema, enforceBodySizeLimit } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, sanitizePlainText, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { checkRateLimitStrict, getClientIp } from '@/lib/firestore-rate-limit'
 import { logApiRequest } from '@/lib/request-logger'
@@ -46,18 +46,18 @@ export async function PUT(
     const validated = certificateTemplateSchema.parse(body)
 
     await updateCertificateTemplate(id, {
-      name: sanitizeHtml(validated.name),
+      name: sanitizePlainText(validated.name),
       accountType: validated.accountType,
       category: validated.category,
-      title: sanitizeHtml(validated.title),
-      subtitle: validated.subtitle ? sanitizeHtml(validated.subtitle) : '',
+      title: sanitizePlainText(validated.title),
+      subtitle: validated.subtitle ? sanitizePlainText(validated.subtitle) : '',
       titleFont: validated.titleFont,
       subtitleFont: validated.subtitleFont,
       textBlocks: validated.textBlocks.map((block) => ({
         ...block,
-        content: sanitizeHtml(block.content),
+        content: sanitizePlainText(block.content),
       })),
-      footerText: validated.footerText ? sanitizeHtml(validated.footerText) : '',
+      footerText: validated.footerText ? sanitizePlainText(validated.footerText) : '',
       logoUrl: validated.logoUrl ?? null,
       signatureUrl: validated.signatureUrl ?? null,
       stampUrl: validated.stampUrl ?? null,

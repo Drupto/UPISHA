@@ -7,17 +7,12 @@
  * Sanitize a string by trimming whitespace and removing potentially dangerous characters
  */
 export function sanitizeString(input: string): string {
-  return input
-    .trim()
-    .replace(/[<>]/g, '') // Remove HTML tags
-    .replace(/[&'"]/g, (char) => {
-      const map: Record<string, string> = {
-        '&': '&',
-        "'": '&#x27;',
-        '"': '"',
-      }
-      return map[char]
-    })
+  // Strip angle brackets only. Do NOT HTML-entity-escape here: these values
+  // are rendered as React children (React escapes at render time) and the
+  // server applies its own sanitization. Pre-escaping on the client caused
+  // double-encoded HTML entities to accumulate in saved certificate fields
+  // on every save.
+  return input.trim().replace(/[<>]/g, '')
 }
 
 /**
