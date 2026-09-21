@@ -3,59 +3,30 @@
 import { useRef, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ChevronDown, ChevronUp, Receipt as ReceiptIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { ChevronDown, ChevronUp, Receipt as ReceiptIcon, Trash2, Loader2 } from 'lucide-react'
 import type { ReceiptDoc } from '@/lib/types'
 import ReceiptPrintable from './ReceiptPrintable'
 import ReceiptDownload from './ReceiptDownload'
+import {
+  transactionTypeLabels,
+  statusColors,
+  statusLabels,
+  formatReceiptDate,
+  formatReceiptCurrency,
+} from './receipt-utils'
 
 interface ReceiptCardProps {
   receipt: ReceiptDoc
+  /** When provided, a delete action is rendered (admin view only). */
+  onDelete?: (receipt: ReceiptDoc) => void
+  /** Disables the delete button while its request is in flight. */
+  deleting?: boolean
 }
 
-const transactionTypeLabels: Record<string, string> = {
-  membership: 'Membership',
-  webinar: 'Webinar',
-  event: 'Event',
-  other: 'Other',
-}
-
-const statusColors: Record<string, string> = {
-  paid: 'bg-green-100 text-green-800',
-  pending: 'bg-yellow-100 text-yellow-800',
-  refunded: 'bg-red-100 text-red-800',
-}
-
-const statusLabels: Record<string, string> = {
-  paid: 'Paid',
-  pending: 'Pending',
-  refunded: 'Refunded',
-}
-
-export default function ReceiptCard({ receipt }: ReceiptCardProps) {
+export default function ReceiptCard({ receipt, onDelete, deleting }: ReceiptCardProps) {
   const [expanded, setExpanded] = useState(false)
   const receiptRef = useRef<HTMLDivElement | null>(null)
-
-  const formatDate = (val: Date | string | undefined | null) => {
-    if (!val) return 'N/A'
-    try {
-      return new Date(val).toLocaleDateString('en-IN', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      })
-    } catch {
-      return 'N/A'
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount || 0)
-  }
 
   return (
     <Card className="dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
@@ -76,8 +47,8 @@ export default function ReceiptCard({ receipt }: ReceiptCardProps) {
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <div className="text-right">
-              <p className="font-bold text-upisha-teal">{formatCurrency(receipt.amount)}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(receipt.issuedAt)}</p>
+              <p className="font-bold text-upisha-teal">{formatReceiptCurrency(receipt.amount)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{formatReceiptDate(receipt.issuedAt)}</p>
             </div>
             <Badge className={statusColors[receipt.status] || statusColors.paid}>
               {statusLabels[receipt.status] || 'Paid'}
@@ -107,11 +78,33 @@ export default function ReceiptCard({ receipt }: ReceiptCardProps) {
               <ReceiptPrintable receipt={receipt} ref={receiptRef} />
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-between items-center flex-wrap gap-2">
               <ReceiptDownload
                 receiptRef={receiptRef}
                 fileName={`${receipt.receiptNumber}`}
               />
+              {onDelete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDelete(receipt)}
+                  disabled={deleting}
+                  title="Delete receipt"
+                  className="text-red-500 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         )}

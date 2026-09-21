@@ -5,8 +5,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, Receipt as ReceiptIcon, IndianRupee, Search } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { csrfHeaders } from '@/lib/csrf'
 import type { ReceiptDoc } from '@/lib/types'
 import ReceiptCard from '@/components/receipts/ReceiptCard'
+import { formatReceiptCurrency } from '@/components/receipts/receipt-utils'
 
 export default function AdminReceipts() {
   const { toast } = useToast()
@@ -14,6 +16,7 @@ export default function AdminReceipts() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchReceipts()
@@ -38,6 +41,39 @@ export default function AdminReceipts() {
     }
   }
 
+  const handleDelete = async (receipt: ReceiptDoc) => {
+    if (!receipt.id) return
+    if (!confirm(`Delete receipt ${receipt.receiptNumber}? This permanently removes the financial record and cannot be undone.`)) return
+
+    setDeletingId(receipt.id)
+    try {
+      // DELETE is CSRF-protected server-side (double-submit cookie pattern) —
+      // the x-csrf-token header must match the csrf-token cookie or it 403s.
+      const res = await fetch(`/api/receipts/${receipt.id}`, {
+        method: 'DELETE',
+        headers: csrfHeaders(),
+      })
+      if (!res.ok) {
+        if (res.status === 403) {
+          throw new Error('Session expired or security check failed — refresh the page and try again')
+        }
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to delete receipt')
+      }
+      // Remove locally so the summary cards and count stay consistent.
+      setReceipts((prev) => prev.filter((r) => r.id !== receipt.id))
+      toast({ title: 'Receipt deleted', description: `Receipt ${receipt.receiptNumber} has been removed.` })
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to delete receipt',
+        variant: 'destructive',
+      })
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   const filteredReceipts = receipts.filter((r) => {
     const q = search.toLowerCase()
     if (!q) return true
@@ -53,15 +89,6 @@ export default function AdminReceipts() {
   const totalAmount = receipts
     .filter((r) => r.status === 'paid')
     .reduce((sum, r) => sum + (r.amount || 0), 0)
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount || 0)
-  }
 
   if (loading) {
     return (
@@ -105,7 +132,7 @@ export default function AdminReceipts() {
             </div>
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Total Paid</p>
-              <p className="text-xl font-bold text-upisha-navy dark:text-white">{formatCurrency(totalAmount)}</p>
+              <p className="text-xl font-bold text-upisha-navy dark:text-white">{formatReceiptCurrency(totalAmount)}</p>
             </div>
           </CardContent>
         </Card>
@@ -148,7 +175,12 @@ export default function AdminReceipts() {
       ) : (
         <div className="space-y-4">
           {filteredReceipts.map((receipt) => (
-            <ReceiptCard key={receipt.id} receipt={receipt} />
+            <ReceiptCard
+              key={receipt.id}
+              receipt={receipt}
+              onDelete={handleDelete}
+              deleting={!!receipt.id && deletingId === receipt.id}
+            />
           ))}
         </div>
       )}

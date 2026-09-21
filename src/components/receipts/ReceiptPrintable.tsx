@@ -2,47 +2,23 @@
 
 import { forwardRef } from 'react'
 import type { ReceiptDoc } from '@/lib/types'
+import {
+  transactionTypeLabels,
+  statusColors,
+  formatReceiptDate,
+  formatReceiptCurrency,
+} from './receipt-utils'
 
 interface ReceiptPrintableProps {
   receipt: ReceiptDoc
 }
 
-const transactionTypeLabels: Record<string, string> = {
-  membership: 'Membership',
-  webinar: 'Webinar',
-  event: 'Event',
-  other: 'Other',
-}
-
-const statusColors: Record<string, string> = {
-  paid: 'bg-green-100 text-green-800',
-  pending: 'bg-yellow-100 text-yellow-800',
-  refunded: 'bg-red-100 text-red-800',
-}
-
 const ReceiptPrintable = forwardRef<HTMLDivElement, ReceiptPrintableProps>(
   ({ receipt }, ref) => {
-    const formatDate = (val: Date | string | undefined | null) => {
-      if (!val) return 'N/A'
-      try {
-        return new Date(val).toLocaleDateString('en-IN', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        })
-      } catch {
-        return 'N/A'
-      }
-    }
+    const formatDate = (val: Date | string | undefined | null) =>
+      formatReceiptDate(val, 'long')
 
-    const formatCurrency = (amount: number) => {
-      return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(amount || 0)
-    }
+    const formatCurrency = (amount: number) => formatReceiptCurrency(amount)
 
     return (
       <div ref={ref} className="bg-white text-gray-900 p-8 rounded-lg border border-gray-200 max-w-2xl mx-auto">
