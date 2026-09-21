@@ -45,7 +45,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center mx-auto mb-4 bg-white border border-gray-200 shadow-md">
             <img
-              src="/images/mainlogo.jpeg"
+              src="/images/upishalogo.png"
               alt="UP ISHA Logo"
               className="h-full w-full object-contain"
             />

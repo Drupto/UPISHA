@@ -87,11 +87,14 @@ const fontFamilyMap: Record<string, string> = {
 
 // Defense-in-depth: only allow http(s) URLs for images/backgrounds
 // to prevent javascript:/data: injection into <img src> and CSS url().
-// Also allow the app's own main logo (relative path) as a safe fallback.
-const MAIN_LOGO_URL = '/images/mainlogo.jpeg'
+// Also allow the app's own main logo (relative path) as a safe fallback,
+// plus the legacy default logo still stored in existing Firestore templates.
+const MAIN_LOGO_URL = '/images/upishalogo.png'
+const LEGACY_LOGO_URLS = ['/images/mainlogo.jpeg']
 function isSafeUrl(url: string | null | undefined): url is string {
   if (!url) return false
   if (url === MAIN_LOGO_URL) return true
+  if (LEGACY_LOGO_URLS.includes(url)) return true
   return /^https?:\/\//i.test(url)
 }
 

@@ -19,10 +19,10 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "en-IN",
     dir: "ltr",
     icons: [
-      { src: "/icon", sizes: "192x192", type: "image/jpeg", purpose: "any" },
-      { src: "/icon", sizes: "512x512", type: "image/jpeg", purpose: "any" },
-      { src: "/icon", sizes: "192x192", type: "image/jpeg", purpose: "maskable" },
-      { src: "/icon", sizes: "512x512", type: "image/jpeg", purpose: "maskable" },
+      { src: "/icon", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icon", sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "maskable" },
       { src: "/favicon.ico", sizes: "any", type: "image/x-icon" },
     ],
     shortcuts: [

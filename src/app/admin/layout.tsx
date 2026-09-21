@@ -42,7 +42,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link href="/admin" className="flex items-center gap-2 font-bold text-upisha-teal text-lg">
           <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-gray-200 shrink-0">
             <img
-              src="/images/mainlogo.jpeg"
+              src="/images/upishalogo.png"
               alt="UP ISHA Logo"
               className="h-full w-full object-contain"
             />
@@ -61,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-gray-200 shrink-0">
                   <img
-                    src="/images/mainlogo.jpeg"
+                    src="/images/upishalogo.png"
                     alt="UP ISHA Logo"
                     className="h-full w-full object-contain"
                   />

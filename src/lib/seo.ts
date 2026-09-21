@@ -25,7 +25,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://upisha.org";
 const SITE_NAME = "UP ISHA - Uttar Pradesh Speech & Hearing Association";
 const SITE_DESCRIPTION =
   "Uttar Pradesh Speech & Hearing Association (UP ISHA) — Dedicated to advancing the professions of audiology and speech-language pathology in Uttar Pradesh, India.";
-const LOGO_URL = `${SITE_URL}/images/mainlogo.jpeg`;
+const LOGO_URL = `${SITE_URL}/images/upishalogo.png`;
 
 /* ─── Organization Schema ─── */
 export function getOrganizationSchema() {
@@ -39,8 +39,8 @@ export function getOrganizationSchema() {
     logo: {
       "@type": "ImageObject",
       url: LOGO_URL,
-      width: 512,
-      height: 512,
+      width: 1254,
+      height: 1254,
     },
     image: LOGO_URL,
     description: SITE_DESCRIPTION,
@@ -351,7 +351,7 @@ export function getPageMetadata({
   noIndex?: boolean;
 }): Metadata {
   const url = `${SITE_URL}${path}`;
-  const ogImage = image || "/images/mainlogo.jpeg";
+  const ogImage = image || "/images/upishalogo.png";
 
   return {
     title,
@@ -405,7 +405,7 @@ export const siteConfig = {
   shortName: "UP ISHA",
   url: SITE_URL,
   description: SITE_DESCRIPTION,
-  ogImage: "/images/mainlogo.jpeg",
+  ogImage: "/images/upishalogo.png",
   links: {
     facebook: "https://www.facebook.com/profile.php?id=61594269153694",
     x: "https://x.com/OfficialUPISHA",

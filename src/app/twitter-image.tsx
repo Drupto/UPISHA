@@ -8,10 +8,10 @@ export const contentType = "image/png";
 
 export default async function TwitterImage() {
   const logoFile = await readFile(
-    path.join(process.cwd(), "public/images/mainlogo.jpeg")
+    path.join(process.cwd(), "public/images/upishalogo.png")
   );
   const logoBase64 = Buffer.from(logoFile).toString("base64");
-  const logoUrl = `data:image/jpeg;base64,${logoBase64}`;
+  const logoUrl = `data:image/png;base64,${logoBase64}`;
 
   return new ImageResponse(
     (

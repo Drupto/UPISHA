@@ -61,7 +61,7 @@ function RequestDocumentContent() {
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-12">
           <div className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center mx-auto mb-4 bg-white border border-gray-200 shadow-md">
-            <img src="/images/mainlogo.jpeg" alt="UP ISHA Logo" className="h-full w-full object-contain" />
+            <img src="/images/upishalogo.png" alt="UP ISHA Logo" className="h-full w-full object-contain" />
           </div>
           <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">Resource Library</Badge>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white">

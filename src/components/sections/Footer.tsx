@@ -71,7 +71,7 @@ export function Footer() {
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-white shrink-0">
                   <img
-                    src="/images/mainlogo.jpeg"
+                    src="/images/upishalogo.png"
                     alt="UP ISHA Logo"
                     className="h-full w-full object-contain"
                   />

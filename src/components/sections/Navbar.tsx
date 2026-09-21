@@ -62,7 +62,7 @@ export function Navbar({
           >
             <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all bg-white">
               <img
-                src="/images/mainlogo.jpeg"
+                src="/images/upishalogo.png"
                 alt="UP ISHA logo"
                 className="h-full w-full object-contain"
               />
