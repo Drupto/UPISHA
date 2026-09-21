@@ -3,7 +3,10 @@
 **Audit Date:** July 31, 2026  
 **Auditor:** Automated Security Review  
 **Scope:** Full codebase (`src/`, config files, deployment files)  
-**Commit:** `745987329532b6a43f967a5c015e07626cff68d3`
+**Commit:** `745987329532b6a43f967a5c015e07626cff68d3`  
+**Re-Audit Date:** September 22, 2026  
+**Re-Audit Commit:** `101e342` (branch `Production-Final`)  
+**Re-Audit Scope:** Per-handler scan of all 50 API routes + per-call scan of all admin pages (CSRF rollout completeness — follow-up on H4; see the "Re-Audit: Partial CSRF Rollout" section at the end of this report)
 
 ---
 
@@ -303,6 +306,8 @@ Furthermore, **this function is never called** in any API route. All POST/PUT/DE
 
 **Fix:** Implement proper CSRF protection using synchronizer tokens or double-submit cookies. Use a library like `next-csrf` or implement server-side session-based CSRF tokens.
 
+**Status update (2026-09-22 re-audit):** A proper double-submit CSRF system was implemented (`withCsrfProtection()` in `src/lib/security.ts` + client `csrfHeaders()` in `src/lib/csrf.ts`), but the rollout was **partial** — 28 admin mutating handlers across 17 route files, 6 public/auth mutations, and 22 client-side calls in 8 admin pages remain unprotected. See the **"Re-Audit: Partial CSRF Rollout"** section at the end of this report for the full inventory.
+
 ---
 
 ### H5. Email Enumeration via Registration
@@ -492,3 +497,123 @@ password: z.string().min(8, 'Password must be at least 8 characters')
 8. **High:** Implement proper CSRF protection
 9. **High:** Move to Redis-based distributed rate limiting
 10. **Medium:** Strengthen CSP, add HSTS, disable poweredByHeader
+
+---
+
+## 🔁 Re-Audit: Partial CSRF Rollout & Endpoint Hardening Gaps (September 22, 2026)
+
+**Commit:** `101e342` (branch `Production-Final`)  
+**Method:** Automated per-handler scan of all 50 `src/app/api/**/route.ts` files (each POST/PUT/PATCH/DELETE handler checked for `withCsrfProtection`, auth, audit logging, body-size limit) plus a per-call scan of all admin pages (each mutating `fetch` checked for `csrfHeaders`).  
+**Finding H4 status:** PARTIALLY REMEDIATED. There is no global CSRF gate in middleware — any route not explicitly calling `withCsrfProtection()` accepts cross-site mutations from an authenticated admin session. The double-submit infra itself (`src/lib/security.ts` / `src/lib/csrf.ts`) works; only its coverage is incomplete.
+
+### A. Admin-only mutations with NO server-side CSRF — HIGH (28 handlers / 17 files)
+
+Any malicious page can silently perform these actions while an admin's session cookie is active.
+
+| # | Route file | Unprotected handlers | Impact |
+|---|------------|---------------------|--------|
+| 1 | `src/app/api/announcements/[id]/route.ts` | `PUT`, `DELETE` | Fake/edit/delete announcements site-wide |
+| 2 | `src/app/api/contact/[id]/route.ts` | `PATCH`, `DELETE` | Mark contact messages read / delete them |
+| 3 | `src/app/api/events/[id]/route.ts` | `PUT`, `DELETE` | Edit/delete events |
+| 4 | `src/app/api/gallery/route.ts` | `POST`, `PUT`, `DELETE` | Deface photo gallery |
+| 5 | `src/app/api/members/route.ts` | `POST` | Create member records |
+| 6 | `src/app/api/members/[id]/route.ts` | **`PUT` (includes member APPROVAL)**, `DELETE` | Approve applications, alter admin-assigned membership IDs, delete members — triggers cascading certificate/receipt auto-issuance |
+| 7 | `src/app/api/newsletter/campaigns/route.ts` | `POST` | Send email campaigns |
+| 8 | `src/app/api/newsletter/campaigns/[id]/route.ts` | `PUT`, `DELETE` | Edit/delete campaigns |
+| 9 | `src/app/api/newsletter/[id]/route.ts` | `DELETE` | Delete subscribers |
+| 10 | `src/app/api/publications/route.ts` | `POST`, `PUT`, `DELETE` | Manipulate publications |
+| 11 | `src/app/api/publications/submissions/[id]/route.ts` | `PATCH`, `DELETE` | Approve/reject/delete submissions |
+| 12 | `src/app/api/receipts/route.ts` | `POST` | Forge receipts |
+| 13 | `src/app/api/receipts/[id]/route.ts` | `PATCH`, `DELETE` | Alter payment records |
+| 14 | `src/app/api/webinars/route.ts` | `POST` | Create webinars |
+| 15 | `src/app/api/webinars/[id]/route.ts` | `PUT`, `DELETE` | Edit/delete webinars |
+| 16 | `src/app/api/webinars/register/[id]/route.ts` | `PATCH`, `DELETE` | Confirm/reject/delete registrations |
+| 17 | `src/app/api/webinars/register/[id]/receipt/route.ts` | `POST` | Issue webinar receipts |
+
+For contrast, CSRF is already enforced on: `join` POST, `contact` POST, `auth/register` POST, `upload` POST, `testimonials` POST/PUT/DELETE, `announcements` POST, `events` POST, and all 6 certificate endpoints (incl. `certificates/[id]` PUT/DELETE fixed in commit `101e342`).
+
+### B. Public/member mutations with NO CSRF — MEDIUM (6 handlers / 5 files)
+
+The codebase's own convention enforces CSRF on public forms (`join`, `contact`, `auth/register`) — these break that convention:
+
+| # | Route | Handler | Concern |
+|---|-------|---------|---------|
+| 18 | `src/app/api/newsletter/route.ts` | `POST` (subscribe) | Mail-bombing abuse |
+| 19 | `src/app/api/publications/submissions/route.ts` | `POST` | Spam submissions |
+| 20 | `src/app/api/webinars/register/route.ts` | `POST` | Spam registrations |
+| 21 | `src/app/api/auth/login/route.ts` | `POST` | **Login CSRF** — attacker can silently log a victim into an attacker-controlled account |
+| 22 | `src/app/api/auth/logout/route.ts` | `POST` | Forced logout nuisance (low) |
+| 23 | `src/app/api/auth/verify/route.ts` | `POST` | Inspect before fixing — may be acceptable if token-bearing (one-time-token semantics) |
+
+Note: `newsletter/unsubscribe` mutates via `GET` (email-link constraint — different class of issue; document, don't auto-fix).
+
+### C. Client-side gaps — admin pages that would 403 once the server fixes land — HIGH
+
+Must be fixed in the same pass as A, or admin create/edit/delete/toggle actions will break:
+
+| Page | Mutating fetches | Carrying `csrfHeaders` | Missing |
+|------|-----------------|------------------------|---------|
+| `src/app/admin/members/page.tsx` | 3 (approve PUT, edit, delete) | 0 — does not even import `csrfHeaders` | 3 |
+| `src/app/admin/publications/page.tsx` | 4 | 0 — no import | 4 |
+| `src/app/admin/messages/page.tsx` | 2 | 0 — no import | 2 |
+| `src/app/admin/newsletter/page.tsx` | 3 | 0 — no import | 3 |
+| `src/app/admin/webinars/page.tsx` | 6 | 1 (create only) | 5 |
+| `src/app/admin/announcements/page.tsx` | 2 (delete, toggle) | 0 — imports `csrfHeaders` but doesn't use it on these calls | 2 |
+| `src/app/admin/events/page.tsx` | 2 (delete, toggle) | 0 — same pattern | 2 |
+| `src/app/admin/gallery/page.tsx` | 2 | 1 (create only) | 1 |
+
+(Reference implementations: `admin/certificates/page.tsx` and `admin/certificates/templates/page.tsx` — all mutating calls use `csrfHeaders()`. Note that certificate revocation/deletion previously suffered from this exact gap and was fixed in commit `101e342`.)
+
+### D. Secondary hardening gaps replicating on `[id]` routes (same family as the certificates fixes)
+
+Verified by code inspection:
+
+- **`members/[id]` PUT**: `if (body.status)` accepts **any** status string (no whitelist) → member-status corruption with cascading certificate/receipt auto-issuance effects; empty body = silent "updated successfully" no-op; no 404 on missing member; no audit log.
+- **`receipts/[id]` PATCH**: status whitelist ✅ but no CSRF, no empty-update rejection, no 404-on-not-found, no audit.
+- **`webinars/register/[id]` PATCH**: status whitelist ✅, no CSRF, no audit log.
+- General rule for the remaining Group A `[id]` routes: check for field/status whitelists, empty-update rejection, 404-on-not-found, and `logApiRequest` audit — the certificates `[id]` route (commit `101e342`) is the reference pattern.
+
+### Re-Audit Remediation Plan (for follow-up work)
+
+1. **Phase 1 — Server CSRF parity:** add `withCsrfProtection` to all 28 Group A handlers, mirroring `certificates/[id]/route.ts` (admin auth → CSRF → handler).
+2. **Phase 2 — Client fixes:** add `csrfHeaders()` to all 22 missing client calls in the 8 Group C pages (import where missing) so nothing 403s after Phase 1.
+3. **Phase 3 — Public/auth endpoints (Group B):** add CSRF to `newsletter` POST, `publications/submissions` POST, `webinars/register` POST (public pages already ship the token — same pattern as `join`/`contact`). `auth/login`: add + update login page client. `auth/logout`: add. `auth/verify`: inspect first.
+4. **Phase 4 — Secondary hardening (Group D):** field/status whitelists, empty-update rejection, 404-on-not-found, `logApiRequest` audit on admin mutations — conservatively, mirroring the certificates `[id]` pattern.
+5. **Phase 5 — Verification:** `tsc --noEmit`, eslint on touched files, `npm test`, `next build`, plus a page-by-page sanity check of every admin create/edit/delete/toggle.
+
+### Re-Audit Summary of Affected Files
+
+| File | Issue |
+|------|-------|
+| `src/app/api/announcements/[id]/route.ts` | A (PUT, DELETE no CSRF) |
+| `src/app/api/contact/[id]/route.ts` | A (PATCH, DELETE) |
+| `src/app/api/events/[id]/route.ts` | A (PUT, DELETE) |
+| `src/app/api/gallery/route.ts` | A (POST, PUT, DELETE) |
+| `src/app/api/members/route.ts` | A (POST) |
+| `src/app/api/members/[id]/route.ts` | A (PUT, DELETE) + D (no status whitelist, silent no-op, no 404/audit) |
+| `src/app/api/newsletter/campaigns/route.ts` | A (POST) |
+| `src/app/api/newsletter/campaigns/[id]/route.ts` | A (PUT, DELETE) |
+| `src/app/api/newsletter/[id]/route.ts` | A (DELETE) |
+| `src/app/api/publications/route.ts` | A (POST, PUT, DELETE) |
+| `src/app/api/publications/submissions/route.ts` | B (POST no CSRF) |
+| `src/app/api/publications/submissions/[id]/route.ts` | A (PATCH, DELETE) |
+| `src/app/api/receipts/route.ts` | A (POST) |
+| `src/app/api/receipts/[id]/route.ts` | A (PATCH, DELETE) + D (no 404/audit) |
+| `src/app/api/webinars/route.ts` | A (POST) |
+| `src/app/api/webinars/[id]/route.ts` | A (PUT, DELETE) |
+| `src/app/api/webinars/register/route.ts` | B (POST no CSRF) |
+| `src/app/api/webinars/register/[id]/route.ts` | A (PATCH, DELETE) + D (no audit) |
+| `src/app/api/webinars/register/[id]/receipt/route.ts` | A (POST) |
+| `src/app/api/newsletter/route.ts` | B (POST no CSRF) |
+| `src/app/api/auth/login/route.ts` | B (login CSRF) |
+| `src/app/api/auth/logout/route.ts` | B (low) |
+| `src/app/api/auth/verify/route.ts` | B (inspect first) |
+| `src/app/admin/members/page.tsx` | C (3 calls, no csrfHeaders import) |
+| `src/app/admin/publications/page.tsx` | C (4 calls, no import) |
+| `src/app/admin/messages/page.tsx` | C (2 calls, no import) |
+| `src/app/admin/newsletter/page.tsx` | C (3 calls, no import) |
+| `src/app/admin/webinars/page.tsx` | C (5 of 6 calls missing) |
+| `src/app/admin/announcements/page.tsx` | C (2 calls missing despite import) |
+| `src/app/admin/events/page.tsx` | C (2 calls missing despite import) |
+| `src/app/admin/gallery/page.tsx` | C (1 call missing) |
+| `src/middleware.ts` (absent) | Note: no global CSRF gate — every route must opt in explicitly |
