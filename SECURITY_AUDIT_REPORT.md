@@ -6,7 +6,8 @@
 **Commit:** `745987329532b6a43f967a5c015e07626cff68d3`  
 **Re-Audit Date:** September 22, 2026  
 **Re-Audit Commit:** `101e342` (branch `Production-Final`)  
-**Re-Audit Scope:** Per-handler scan of all 50 API routes + per-call scan of all admin pages (CSRF rollout completeness — follow-up on H4; see the "Re-Audit: Partial CSRF Rollout" section at the end of this report)
+**Re-Audit Scope:** Per-handler scan of all 50 API routes + per-call scan of all admin pages (CSRF rollout completeness — follow-up on H4; see the "Re-Audit: Partial CSRF Rollout" section at the end of this report)  
+**Status Review:** September 23, 2026 — Commit `5f67740` (branch `Production-Final`) — verifies remediation progress and re-orders the remaining work; see the **"Priority Remediation Roadmap"** section at the end (this supersedes the older "Re-Audit Remediation Plan")
 
 ---
 
@@ -487,16 +488,20 @@ password: z.string().min(8, 'Password must be at least 8 characters')
 
 ## 🛠️ Recommended Priority Fixes
 
-1. **Immediate:** Remove the SSRF handler from the `Caddyfile`
-2. **Immediate:** Add authentication to `GET /api/join` (or remove it)
-3. **Immediate:** Install `firebase-admin` and implement proper token verification with custom claims
-4. **Immediate:** Create `middleware.ts` for server-side admin route protection
-5. **Immediate:** Remove open registration / add admin approval workflow
-6. **High:** Implement `requireAdmin()` helper and apply to all admin API routes
-7. **High:** Fix mass assignment by whitelisting fields in update operations
-8. **High:** Implement proper CSRF protection
-9. **High:** Move to Redis-based distributed rate limiting
-10. **Medium:** Strengthen CSP, add HSTS, disable poweredByHeader
+> **STATUS (2026-09-23 code review @ `5f67740`): ALL 10 items below are COMPLETE.**
+> This list is retained for historical reference only — **do not follow it**.
+> The current, ordered to-do list is the **"Priority Remediation Roadmap"** at the end of this report.
+
+1. ~~**Immediate:** Remove the SSRF handler from the `Caddyfile`~~ ✅ Done
+2. ~~**Immediate:** Add authentication to `GET /api/join` (or remove it)~~ ✅ Done — GET handler removed entirely
+3. ~~**Immediate:** Install `firebase-admin` and implement proper token verification with custom claims~~ ✅ Done — `firebase-admin@12` + `verifyIdToken(checkRevoked=true)`
+4. ~~**Immediate:** Create `middleware.ts` for server-side admin route protection~~ ✅ Done — guards `/admin/*` + `/member/*` via httpOnly session cookie
+5. ~~**Immediate:** Remove open registration / add admin approval workflow~~ ✅ Done — register link removed from login; new users default to `role: 'user'`
+6. ~~**High:** Implement `requireAdmin()` helper and apply to all admin API routes~~ ✅ Done
+7. ~~**High:** Fix mass assignment by whitelisting fields in update operations~~ ✅ Done — routes destructure whitelisted fields (e.g. `members/[id]` PUT)
+8. ~~**High:** Implement proper CSRF protection~~ 🔶 Partial — double-submit infra done; rollout incomplete (Roadmap item 1)
+9. ~~**High:** Move to Redis-based distributed rate limiting~~ 🔶 Partial — Firestore-transaction limiter done on `join`/`upload`/certificates; in-memory limiter remains on `login`/`register`/`newsletter`/`gallery` (Roadmap item 4)
+10. ~~**Medium:** Strengthen CSP, add HSTS, disable poweredByHeader~~ ✅ Done — HSTS + `poweredByHeader: false` + prod/dev CSP split; `'unsafe-inline'` for scripts remains in prod CSP (Roadmap item 6)
 
 ---
 
@@ -575,6 +580,15 @@ Verified by code inspection:
 
 ### Re-Audit Remediation Plan (for follow-up work)
 
+> **SUPERSEDED (2026-09-23, commit `5f67740`):** the plan below was written at commit
+> `101e342`. Much of it has since landed (audit logging, `receipts`/`teach-requests`/
+> `testimonials` CSRF, distributed rate limiting on `join`/`upload`/certificates,
+> CSP/HSTS/session fixes). **Do not follow it.**
+> The current, ordered to-do list is the **"Priority Remediation Roadmap"** at the end
+> of this report.
+
+#### Historical plan (as written 2026-09-22)
+
 1. **Phase 1 — Server CSRF parity:** add `withCsrfProtection` to all 28 Group A handlers, mirroring `certificates/[id]/route.ts` (admin auth → CSRF → handler).
 2. **Phase 2 — Client fixes:** add `csrfHeaders()` to all 22 missing client calls in the 8 Group C pages (import where missing) so nothing 403s after Phase 1.
 3. **Phase 3 — Public/auth endpoints (Group B):** add CSRF to `newsletter` POST, `publications/submissions` POST, `webinars/register` POST (public pages already ship the token — same pattern as `join`/`contact`). `auth/login`: add + update login page client. `auth/logout`: add. `auth/verify`: inspect first.
@@ -617,3 +631,155 @@ Verified by code inspection:
 | `src/app/admin/events/page.tsx` | C (2 calls missing despite import) |
 | `src/app/admin/gallery/page.tsx` | C (1 call missing) |
 | `src/middleware.ts` (absent) | Note: no global CSRF gate — every route must opt in explicitly |
+
+---
+
+## 🗺️ Priority Remediation Roadmap (ordered to-do list — follow this)
+
+**Added:** September 23, 2026 · **Verified against:** commit `5f67740` (branch `Production-Final`) · **Supersedes:** the "Re-Audit Remediation Plan" and the old "Recommended Priority Fixes" list.
+
+Method: every original finding was re-checked against the code at `5f67740` by
+inspection. The original C1–C7, H1, H2, H5 (register part), M2, M3, M4, L2 and L3 are
+all **fixed**. What remains, in the order it should be worked:
+
+### ✅ Completed before this roadmap (no action needed)
+
+- **C1 (SSRF):** `Caddyfile` is now a plain reverse proxy to `localhost:3000` — no query-param ports.
+- **C2/C6 (RBAC + real Admin SDK):** `firebase-admin@12` in `package.json`; `src/lib/firebase-server.ts` (server-only, fail-fast); `requireAuth()` uses `verifyIdToken(token, checkRevoked=true)`; `requireAdmin()` + `requireVerifiedMember()` enforce role/approval from the Firestore `users` collection.
+- **C3 (PII dump):** `GET /api/join` no longer exists (POST-only route).
+- **C4/C5 (open admin):** `middleware.ts` guards `/admin/*` + `/member/*` server-side via the httpOnly `session` cookie; login page no longer links to registration; new users default to `role: 'user'` in `/api/auth/verify`.
+- **C7 (Firestore rules):** `firestore.rules` + `storage.rules` exist (deny-by-default); data flows through the Admin SDK behind the API layer.
+- **H1 (mass assignment):** mutation routes destructure whitelisted fields (e.g. `members/[id]` PUT builds `updateData` explicitly).
+- **H2 (token in body):** `login`/`register` return no token; httpOnly session cookie minted by `/api/auth/verify` (maxAge aligned to the 1-hour token); `useAuth` re-mints it automatically.
+- **H5 (register):** generic "Registration failed" response; no `auth/email-already-in-use` disclosure.
+- **M2/M3 (HSTS, poweredByHeader):** done in `next.config.ts`.
+- **M4 (URL validation):** `z.string().url()` on photo/RCI-certificate URL fields.
+- **L2 (email as id):** newsletter response no longer returns the subscriber id/email.
+- **L3 (password policy):** uppercase + lowercase + digit requirements added.
+- **H3 (partial):** `firestore-rate-limit.ts` — distributed, transactional, fail-closed — used by `join`, `upload`, certificates.
+- **H4 (partial) + Group D (partial):** CSRF now enforced on `receipts`, `receipts/[id]`, `teach-requests`, `teach-requests/[id]`, `testimonials`, `upload` and all certificate endpoints; `logAdminAction` audit logging added broadly.
+
+### 1. 🔴 Finish the CSRF rollout — server + client in one pass (H4, HIGH)
+
+**Why first:** the only HIGH-severity gap with a live exploit path (cross-site state
+changes while an admin's session cookie is active), and the infra already exists —
+this is pure rollout. Server and client must land together or admin actions will 403.
+
+**1a. Server — add `withCsrfProtection(request)` to every remaining admin mutation
+handler, mirroring `src/app/api/receipts/[id]/route.ts` (admin auth → CSRF → handler):**
+
+| Route file | Handlers to cover |
+|---|---|
+| `src/app/api/announcements/[id]/route.ts` | `PUT`, `DELETE` |
+| `src/app/api/contact/[id]/route.ts` | `PATCH`, `DELETE` |
+| `src/app/api/events/[id]/route.ts` | `PUT`, `DELETE` |
+| `src/app/api/gallery/route.ts` | `POST`, `PUT`, `DELETE` |
+| `src/app/api/members/route.ts` | `POST` |
+| `src/app/api/members/[id]/route.ts` | `PUT`, `DELETE` (includes member **approval**) |
+| `src/app/api/newsletter/campaigns/route.ts` | `POST` |
+| `src/app/api/newsletter/campaigns/[id]/route.ts` | `PUT`, `DELETE` |
+| `src/app/api/newsletter/[id]/route.ts` | `DELETE` |
+| `src/app/api/publications/route.ts` | `POST`, `PUT`, `DELETE` |
+| `src/app/api/publications/submissions/[id]/route.ts` | `PATCH`, `DELETE` |
+| `src/app/api/webinars/route.ts` | `POST` |
+| `src/app/api/webinars/[id]/route.ts` | `PUT`, `DELETE` |
+| `src/app/api/webinars/register/[id]/route.ts` | `PATCH`, `DELETE` |
+| `src/app/api/webinars/register/[id]/receipt/route.ts` | `POST` |
+
+*(Already done since the re-audit — do not re-touch: `receipts`, `receipts/[id]`, `teach-requests`, `teach-requests/[id]`, `testimonials`, `upload`, all `certificates` endpoints.)*
+
+**1b. Client — add `csrfHeaders()` to every mutating fetch in the 8 admin pages (import
+where missing), mirroring `src/app/admin/certificates/page.tsx`:**
+
+| Page | Missing calls |
+|---|---|
+| `src/app/admin/members/page.tsx` | 3 (no import yet) |
+| `src/app/admin/publications/page.tsx` | 4 (no import yet) |
+| `src/app/admin/messages/page.tsx` | 2 (no import yet) |
+| `src/app/admin/newsletter/page.tsx` | 3 (no import yet) |
+| `src/app/admin/webinars/page.tsx` | 5 of 6 |
+| `src/app/admin/announcements/page.tsx` | 2 (import exists, unused) |
+| `src/app/admin/events/page.tsx` | 2 (import exists, unused) |
+| `src/app/admin/gallery/page.tsx` | 1 |
+
+**1c. Public/auth endpoints (Group B) — decide per endpoint:**
+
+- `src/app/api/webinars/register` POST, `src/app/api/publications/submissions` POST: add CSRF (public pages already ship the token — same pattern as `join`/`contact`).
+- `src/app/api/auth/login` POST: add CSRF + update `src/app/login/page.tsx` (login CSRF → attacker silently logs the victim into an attacker-controlled account).
+- `src/app/api/auth/logout` POST: add CSRF (low impact, cheap to do).
+- `src/app/api/auth/verify` POST: **inspect first** — token-bearing body may make CSRF moot; document the decision.
+- `src/app/api/newsletter` POST: currently *intentionally* excluded (code comment: "no authenticated session to protect"). Revisit consciously; mail-bombing is bounded by rate limiting.
+
+**1d. Regression guard:** consider a global CSRF gate in `middleware.ts` (with an
+opt-out list) or a test asserting every mutating handler calls `withCsrfProtection`,
+so coverage can never silently regress again.
+
+### 2. 🟠 Ship Firebase App Check end-to-end (per `APP_CHECK.md`)
+
+`APP_CHECK.md` says: **"Status: NOT YET CONFIGURED — App Check has zero presence in the
+codebase today."** The full design is already written there — execute it in order:
+Phase 0 console/billing prerequisites → `src/lib/app-check.ts` + `fetchWithAppCheck()`
+(client) → `verifyAppCheckToken()` wired into `requireAuth()` / `withCsrfProtection()`
+(server, `APP_CHECK_MODE=monitor`) → `useAuth` init → env vars + CI → Jest tests →
+monitor 1–2 weeks → flip to `enforce`. Follow `APP_CHECK.md` §4–§9 exactly.
+
+### 3. 🟠 Harden `members/[id]` PUT (Group D — highest-impact remaining D item)
+
+The approval path triggers cascading certificate/receipt issuance, so this PUT is the
+one D-item with real certificate/money consequences:
+
+- Whitelist `body.status` (e.g. only `pending` / `approved` / `rejected`) — currently any string is accepted.
+- Reject empty updates (`if (Object.keys(updateData).length === 0) return 400`).
+- Return **404** when the member does not exist (currently a silent "updated successfully" no-op is possible).
+- Audit log exists ✅ — keep it.
+
+### 4. 🟡 Move the remaining sensitive endpoints to the distributed rate limiter (H3 residual)
+
+`auth/login` (brute-force), `auth/register`, `newsletter` POST and `gallery` GET still
+use the in-memory `Map` in `security.ts`, which resets on every serverless cold start
+and does not share state across instances. Switch them to `checkRateLimitStrict()`
+from `firestore-rate-limit.ts` (pattern proven on `join`/`upload`/certificates).
+**Login is the priority.** Optionally remove the legacy in-memory limiter once nothing
+uses it.
+
+### 5. 🟡 Close the email-enumeration oracle on `POST /api/join` (H5 residual)
+
+`join/route.ts` still returns *"An account with this email already exists. Please sign
+in instead of submitting a new application."* (`EMAIL_EXISTS` branch). Intentional UX
+for the apply flow, but it confirms which emails hold accounts. Either accept and
+document the risk, or respond generically ("If your application can be processed you
+will hear from us") and rely on the existing email-notification flow. **Decide and
+document.**
+
+### 6. 🟡 Remove `'unsafe-inline'` from the production CSP (M1 residual)
+
+`next.config.ts` / `security.ts`: production `script-src` is
+`'self' 'unsafe-inline' + gtag domains`. Add Next.js nonce support (middleware-generated
+nonce propagated via the CSP request header) so inline bootstrap scripts are nonce'd
+instead of blanket-allowed. `style-src 'unsafe-inline'` is acceptable short-term.
+
+### 7. 🟢 Adopt the Admin SDK session-cookie pattern (L1 residual)
+
+`/api/auth/verify` still stores the raw 1-hour ID token in the cookie (maxAge is now
+correctly aligned, and clients re-mint via `useAuth`). Full fix per the original L1:
+`createSessionCookie()` from the Admin SDK with a configurable multi-hour expiry and a
+server-side refresh path, so the cookie no longer dead-fails at exactly 60 minutes.
+
+### 8. 🟢 Clean up direct `console.error` in routes (M5 residual)
+
+`createErrorResponse()` is production-gated, but many routes still call
+`console.error(...)` directly (`newsletter`, `gallery`, `members/[id]`, `announcements/[id]`, …).
+Funnel them through the gated helper (or a small `logError()` wrapper) and sanitize
+what's logged.
+
+### 9. ⚪ Low-priority / deferred
+
+- `newsletter/unsubscribe` mutates via `GET` (email-link constraint — different class of issue; document, don't auto-fix).
+- `members/[id]` DELETE: verify Firestore delete of a missing doc fails gracefully (no 404 check).
+- Re-verify the secondary-hardening matrix (empty-update rejection, 404-on-not-found, status whitelists) on the remaining Group A `[id]` routes after item 1 lands: `receipts/[id]` (CSRF ✅, check 404/audit), `webinars/register/[id]`, `announcements/[id]`, `events/[id]`, `publications/submissions/[id]`.
+
+### 10. ✅ Verification gate (run after each item)
+
+`tsc --noEmit` · eslint on touched files · `npm test` · `next build` · page-by-page
+sanity check of every admin create/edit/delete/toggle · re-run the per-handler CSRF
+scan that produced the re-audit (expect 0 unprotected admin mutations).
