@@ -17,6 +17,14 @@ import { onSchedule } from 'firebase-functions/v2/scheduler'
 import * as admin from 'firebase-admin'
 import * as functions from 'firebase-functions'
 
+// Initialize Firebase Admin SDK.
+// IMPORTANT: this module is imported by index.ts BEFORE its own
+// initializeApp() call executes (imports are hoisted in the compiled JS),
+// so the guard must live here too — same pattern as email/brevo.service.
+if (!admin.apps.length) {
+  admin.initializeApp()
+}
+
 const db = admin.firestore()
 
 const AUDIT_COLLECTION = 'admin_audit_logs'
