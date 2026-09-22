@@ -3,6 +3,7 @@ import { uploadDataUrl } from '@/lib/storage'
 import { withSecurityHeaders, withCsrfProtection } from '@/lib/security'
 import { requireVerifiedMember, requireAdmin } from '@/lib/auth-helpers'
 import { checkRateLimitStrict, getClientIp } from '@/lib/firestore-rate-limit'
+import { logAdminAction } from '@/lib/audit-log'
 import { validateDataUrl, MAX_IMAGE_BYTES, MAX_FILE_BYTES, DOC_MIME_TYPES } from '@/lib/upload-validation'
 
 // Allowed storage path prefixes — prevents path traversal / writing to arbitrary locations
@@ -88,6 +89,20 @@ export async function POST(request: NextRequest) {
     }
 
     const downloadUrl = await uploadDataUrl(dataUrl, path)
+
+    // Audit-log ADMIN-path uploads only. Member uploads (publications/) are
+    // self-service actions, not admin actions — they stay unlogged here.
+    if (!isMemberPath) {
+      await logAdminAction({
+        action: 'storage.upload',
+        resourceType: 'storageObject',
+        resourceId: path,
+        actor: user,
+        ip,
+        request,
+        details: { byteSize: dataUrl.length },
+      })
+    }
 
     return withSecurityHeaders(NextResponse.json({ url: downloadUrl }))
   } catch (error) {

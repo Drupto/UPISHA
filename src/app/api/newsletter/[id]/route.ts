@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { deleteNewsletterSubscriber } from '@/lib/firestore'
 import { withSecurityHeaders } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function DELETE(
   request: NextRequest,
@@ -12,9 +13,19 @@ export async function DELETE(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     await deleteNewsletterSubscriber(id)
+
+    await logAdminAction({
+      action: 'subscriber.delete',
+      resourceType: 'newsletterSubscriber',
+      resourceId: id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({
       success: true,
       message: 'Subscriber deleted successfully',

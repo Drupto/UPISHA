@@ -4,7 +4,7 @@ import { certificateTemplateSchema, enforceBodySizeLimit } from '@/lib/validatio
 import { withSecurityHeaders, sanitizePlainText, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { checkRateLimitStrict, getClientIp } from '@/lib/firestore-rate-limit'
-import { logApiRequest } from '@/lib/request-logger'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function PUT(
   request: NextRequest,
@@ -76,14 +76,14 @@ export async function PUT(
     }
 
     // Audit log the update
-    await logApiRequest({
-      endpoint: `/api/certificates/templates/${id}`,
-      method: 'PUT',
+    await logAdminAction({
+      action: 'template.update',
+      resourceType: 'certificateTemplate',
+      resourceId: id,
+      actor: admin,
       ip,
-      userId: admin.uid,
       userAgent: request.headers.get('user-agent'),
-      status: 200,
-      timestamp: new Date(),
+      details: { name: validated.name, category: validated.category, isDefault: validated.isDefault },
     })
 
     return withSecurityHeaders(NextResponse.json({
@@ -130,14 +130,13 @@ export async function DELETE(
     await deleteCertificateTemplate(id)
 
     // Audit log the deletion
-    await logApiRequest({
-      endpoint: `/api/certificates/templates/${id}`,
-      method: 'DELETE',
+    await logAdminAction({
+      action: 'template.delete',
+      resourceType: 'certificateTemplate',
+      resourceId: id,
+      actor: admin,
       ip,
-      userId: admin.uid,
       userAgent: request.headers.get('user-agent'),
-      status: 200,
-      timestamp: new Date(),
     })
 
     return withSecurityHeaders(NextResponse.json({

@@ -5,6 +5,7 @@ import { upsertMembershipReceipt, getReceiptsByMemberId } from '@/lib/firestore'
 import { membershipFees } from '@/lib/static-data'
 import { withSecurityHeaders, sanitizeHtml } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function PUT(
   request: NextRequest,
@@ -15,6 +16,7 @@ export async function PUT(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -123,6 +125,15 @@ export async function PUT(
 
     await updateMember(id, updateData)
 
+    await logAdminAction({
+      action: body.status === 'approved' ? 'member.approve' : 'member.update',
+      resourceType: 'member',
+      resourceId: id,
+      actor: admin,
+      request,
+      details: { status: body.status ?? null, certificateIssued: body.status === 'approved' },
+    })
+
     return withSecurityHeaders(NextResponse.json({
       success: true,
       message: 'Member updated successfully',
@@ -143,9 +154,19 @@ export async function DELETE(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     await deleteMember(id)
+
+    await logAdminAction({
+      action: 'member.delete',
+      resourceType: 'member',
+      resourceId: id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({
       success: true,
       message: 'Member deleted successfully',

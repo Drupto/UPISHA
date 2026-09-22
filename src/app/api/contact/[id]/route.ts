@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { updateContactMessage, deleteContactMessage } from '@/lib/firestore'
 import { withSecurityHeaders } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function PATCH(
   request: NextRequest,
@@ -12,6 +13,7 @@ export async function PATCH(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -19,6 +21,15 @@ export async function PATCH(
     if (body.isRead !== undefined) updateData.isRead = Boolean(body.isRead)
 
     await updateContactMessage(id, updateData)
+
+    await logAdminAction({
+      action: 'message.update',
+      resourceType: 'contactMessage',
+      resourceId: id,
+      actor: admin,
+      request,
+      details: { isRead: updateData.isRead ?? null },
+    })
 
     return withSecurityHeaders(NextResponse.json({
       success: true,
@@ -39,9 +50,19 @@ export async function DELETE(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     await deleteContactMessage(id)
+
+    await logAdminAction({
+      action: 'message.delete',
+      resourceType: 'contactMessage',
+      resourceId: id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({
       success: true,
       message: 'Message deleted successfully',

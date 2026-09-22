@@ -4,7 +4,7 @@ import { certificateTemplateSchema, enforceBodySizeLimit } from '@/lib/validatio
 import { withSecurityHeaders, sanitizePlainText, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { checkRateLimitStrict, getClientIp } from '@/lib/firestore-rate-limit'
-import { logApiRequest } from '@/lib/request-logger'
+import { logAdminAction } from '@/lib/audit-log'
 
 const MAX_TEMPLATES = 50
 
@@ -105,14 +105,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Audit log the creation
-    await logApiRequest({
-      endpoint: '/api/certificates/templates',
-      method: 'POST',
+    await logAdminAction({
+      action: 'template.create',
+      resourceType: 'certificateTemplate',
+      resourceId: template.id,
+      actor: admin,
       ip,
-      userId: admin.uid,
       userAgent: request.headers.get('user-agent'),
-      status: 201,
-      timestamp: new Date(),
+      details: { name: validated.name, category: validated.category, isDefault: validated.isDefault },
     })
 
     return withSecurityHeaders(NextResponse.json({

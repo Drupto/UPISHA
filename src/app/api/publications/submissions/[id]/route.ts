@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { updatePublicationSubmission, deletePublicationSubmission, createPublication, getPublicationSubmissions } from '@/lib/firestore'
 import { withSecurityHeaders, sanitizeHtml } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 import type { PublicationSubmissionDoc } from '@/lib/types'
 
 export async function PATCH(
@@ -13,6 +14,7 @@ export async function PATCH(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -40,6 +42,16 @@ export async function PATCH(
     }
 
     await updatePublicationSubmission(id, { status })
+
+    await logAdminAction({
+      action: 'submission.review',
+      resourceType: 'publicationSubmission',
+      resourceId: id,
+      actor: admin,
+      request,
+      details: { status, publicationCreated: status === 'approved' },
+    })
+
     return withSecurityHeaders(NextResponse.json({ success: true, id, message: `Submission ${status}` }))
   } catch (error) {
     console.error('Error updating publication submission:', error)
@@ -56,9 +68,19 @@ export async function DELETE(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     await deletePublicationSubmission(id)
+
+    await logAdminAction({
+      action: 'submission.delete',
+      resourceType: 'publicationSubmission',
+      resourceId: id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({ success: true, id, message: 'Submission deleted successfully' }))
   } catch (error) {
     console.error('Error deleting publication submission:', error)

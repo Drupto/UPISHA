@@ -4,6 +4,7 @@ import { createAnnouncement } from '@/lib/firestore'
 import { announcementSchema } from '@/lib/validations'
 import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   // CSRF protection
   const csrfError = withCsrfProtection(request)
@@ -48,6 +50,15 @@ export async function POST(request: NextRequest) {
       type: sanitizeHtml(validated.type),
       content: validated.content ? sanitizeHtml(validated.content) : null,
       isActive: validated.isActive,
+    })
+
+    await logAdminAction({
+      action: 'announcement.create',
+      resourceType: 'announcement',
+      resourceId: announcement.id,
+      actor: admin,
+      request,
+      details: { title: validated.title, type: validated.type },
     })
 
     return withSecurityHeaders(NextResponse.json({

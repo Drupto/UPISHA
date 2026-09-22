@@ -8,7 +8,7 @@ import {
 } from '@/lib/firestore'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { checkRateLimitStrict, getClientIp } from '@/lib/firestore-rate-limit'
-import { logApiRequest } from '@/lib/request-logger'
+import { logAdminAction } from '@/lib/audit-log'
 import { enforceBodySizeLimit } from '@/lib/validations'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { getMemberById } from './helpers'
@@ -122,14 +122,14 @@ export async function POST(request: NextRequest) {
     })
 
     // Audit log the issuance
-    await logApiRequest({
-      endpoint: '/api/certificates',
-      method: 'POST',
+    await logAdminAction({
+      action: 'certificate.issue',
+      resourceType: 'certificate',
+      resourceId: certificate.id,
+      actor: admin,
       ip,
-      userId: admin.uid,
       userAgent: request.headers.get('user-agent'),
-      status: 201,
-      timestamp: new Date(),
+      details: { memberId, memberName: member.fullName, certificateNumber: `UPISHA-${memberId}` },
     })
 
     return withSecurityHeaders(NextResponse.json({

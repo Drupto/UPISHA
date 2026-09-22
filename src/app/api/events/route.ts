@@ -4,6 +4,7 @@ import { createEvent } from '@/lib/firestore'
 import { eventSchema } from '@/lib/validations'
 import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   // CSRF protection
   const csrfError = withCsrfProtection(request)
@@ -53,6 +55,15 @@ export async function POST(request: NextRequest) {
       badgeLabel: validated.badgeLabel ? sanitizeHtml(validated.badgeLabel) : null,
       registrationLink: validated.registrationLink,
       registrationLabel: validated.registrationLabel ? sanitizeHtml(validated.registrationLabel) : null,
+    })
+
+    await logAdminAction({
+      action: 'event.create',
+      resourceType: 'event',
+      resourceId: event.id,
+      actor: admin,
+      request,
+      details: { title: validated.title, date: validated.date },
     })
 
     return withSecurityHeaders(NextResponse.json({

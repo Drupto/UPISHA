@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getMembers, createMember, normalizeMembershipId, isValidMembershipId, getMemberByMembershipId } from '@/lib/firestore'
 import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 import { joinSchema } from '@/lib/validations'
 
 export async function GET(request: NextRequest) {
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -84,6 +86,15 @@ export async function POST(request: NextRequest) {
       registrationDate: validated.registrationDate ?? null,
       declaration: validated.declaration,
       status: 'pending',
+    })
+
+    await logAdminAction({
+      action: 'member.create',
+      resourceType: 'member',
+      resourceId: member.id,
+      actor: admin,
+      request,
+      details: { email: validated.email.toLowerCase(), membershipId, membershipType: validated.membershipType },
     })
 
     return withSecurityHeaders(NextResponse.json({

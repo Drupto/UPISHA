@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withSecurityHeaders } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 import { ensureWebinarReceipt, webinarReceiptNumber } from '@/lib/webinar-receipts'
 import { getReceiptByReceiptNumber } from '@/lib/firestore'
 
@@ -44,6 +45,7 @@ export async function POST(
 ) {
   const auth = await requireAdmin(request)
   if (auth instanceof NextResponse) return withSecurityHeaders(auth)
+  const admin = auth as { uid: string; email: string | null }
 
   const { id } = await params
   try {
@@ -60,6 +62,16 @@ export async function POST(
     if (!result.receipt) {
       return withSecurityHeaders(NextResponse.json({ error: 'Failed to generate receipt' }, { status: 500 }))
     }
+
+    await logAdminAction({
+      action: 'webinar_receipt.generate',
+      resourceType: 'receipt',
+      resourceId: result.receipt.receiptNumber,
+      actor: admin,
+      request,
+      details: { registrationId: id, created: result.created },
+    })
+
     return withSecurityHeaders(NextResponse.json({
       success: true,
       created: result.created,

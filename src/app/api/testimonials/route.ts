@@ -3,6 +3,7 @@ import { getTestimonials as fetchTestimonials } from '@/lib/data'
 import { createTestimonial, updateTestimonial, deleteTestimonial } from '@/lib/firestore'
 import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,6 +29,8 @@ export async function POST(request: NextRequest) {
     return withSecurityHeaders(auth)
   }
 
+  const admin = auth as { uid: string; email: string | null }
+
   const csrfError = withCsrfProtection(request)
   if (csrfError) return csrfError
 
@@ -39,6 +42,15 @@ export async function POST(request: NextRequest) {
       content: sanitizeHtml(body.content),
       rating: body.rating,
       isActive: body.isActive ?? true,
+    })
+
+    await logAdminAction({
+      action: 'testimonial.create',
+      resourceType: 'testimonial',
+      resourceId: id,
+      actor: admin,
+      request,
+      details: { name: body.name },
     })
 
     return withSecurityHeaders(NextResponse.json({ success: true, id, message: 'Testimonial created successfully' }, { status: 201 }))
@@ -54,6 +66,8 @@ export async function PUT(request: NextRequest) {
     return withSecurityHeaders(auth)
   }
 
+  const admin = auth as { uid: string; email: string | null }
+
   const csrfError = withCsrfProtection(request)
   if (csrfError) return csrfError
 
@@ -65,6 +79,13 @@ export async function PUT(request: NextRequest) {
       content: sanitizeHtml(body.content),
       rating: body.rating,
       isActive: body.isActive,
+    })
+    await logAdminAction({
+      action: 'testimonial.update',
+      resourceType: 'testimonial',
+      resourceId: body.id,
+      actor: admin,
+      request,
     })
     return withSecurityHeaders(NextResponse.json({ success: true, id: body.id, message: 'Testimonial updated successfully' }))
   } catch (error) {
@@ -79,12 +100,23 @@ export async function DELETE(request: NextRequest) {
     return withSecurityHeaders(auth)
   }
 
+  const admin = auth as { uid: string; email: string | null }
+
   const csrfError = withCsrfProtection(request)
   if (csrfError) return csrfError
 
   try {
     const body = await request.json()
     await deleteTestimonial(body.id)
+
+    await logAdminAction({
+      action: 'testimonial.delete',
+      resourceType: 'testimonial',
+      resourceId: body.id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({ success: true, id: body.id, message: 'Testimonial deleted successfully' }))
   } catch (error) {
     console.error('Error deleting testimonial:', error)

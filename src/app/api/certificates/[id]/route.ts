@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { updateCertificate, deleteCertificate } from '@/lib/firestore'
 import { withSecurityHeaders, withCsrfProtection } from '@/lib/security'
 import { getClientIp } from '@/lib/firestore-rate-limit'
-import { logApiRequest } from '@/lib/request-logger'
+import { logAdminAction } from '@/lib/audit-log'
 import { enforceBodySizeLimit } from '@/lib/validations'
 import { requireAdmin } from '@/lib/auth-helpers'
 
@@ -67,14 +67,14 @@ export async function PUT(
     await updateCertificate(id, updateData)
 
     // Audit log the status change
-    await logApiRequest({
-      endpoint: `/api/certificates/${id}`,
-      method: 'PUT',
+    await logAdminAction({
+      action: 'certificate.update',
+      resourceType: 'certificate',
+      resourceId: id,
+      actor: admin,
       ip,
-      userId: admin.uid,
       userAgent: request.headers.get('user-agent'),
-      status: 200,
-      timestamp: new Date(),
+      details: { status: updateData.status },
     })
 
     return withSecurityHeaders(NextResponse.json({
@@ -114,14 +114,13 @@ export async function DELETE(
     await deleteCertificate(id)
 
     // Audit log the deletion
-    await logApiRequest({
-      endpoint: `/api/certificates/${id}`,
-      method: 'DELETE',
+    await logAdminAction({
+      action: 'certificate.delete',
+      resourceType: 'certificate',
+      resourceId: id,
+      actor: admin,
       ip,
-      userId: admin.uid,
       userAgent: request.headers.get('user-agent'),
-      status: 200,
-      timestamp: new Date(),
     })
 
     return withSecurityHeaders(NextResponse.json({

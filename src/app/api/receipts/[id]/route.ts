@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getReceiptById, updateReceipt, deleteReceipt } from '@/lib/firestore'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { getClientIp } from '@/lib/firestore-rate-limit'
-import { logApiRequest } from '@/lib/request-logger'
+import { logAdminAction } from '@/lib/audit-log'
 import { requireAdmin } from '@/lib/auth-helpers'
 import type { ReceiptStatus } from '@/lib/types'
 
@@ -97,14 +97,14 @@ export async function PATCH(
     await updateReceipt(id, updateData)
 
     // Audit log the change
-    await logApiRequest({
-      endpoint: `/api/receipts/${id}`,
-      method: 'PATCH',
+    await logAdminAction({
+      action: 'receipt.update',
+      resourceType: 'receipt',
+      resourceId: id,
+      actor: admin,
       ip,
-      userId: admin.uid,
       userAgent: request.headers.get('user-agent'),
-      status: 200,
-      timestamp: new Date(),
+      details: { fields: Object.keys(updateData), status: updateData.status ?? null },
     })
 
     return withSecurityHeaders(NextResponse.json({ success: true, message: 'Receipt updated successfully' }))
@@ -141,14 +141,13 @@ export async function DELETE(
     await deleteReceipt(id)
 
     // Audit log the deletion (financial record — keep a trail of who removed it)
-    await logApiRequest({
-      endpoint: `/api/receipts/${id}`,
-      method: 'DELETE',
+    await logAdminAction({
+      action: 'receipt.delete',
+      resourceType: 'receipt',
+      resourceId: id,
+      actor: admin,
       ip,
-      userId: admin.uid,
       userAgent: request.headers.get('user-agent'),
-      status: 200,
-      timestamp: new Date(),
     })
 
     return withSecurityHeaders(NextResponse.json({ success: true, message: 'Receipt deleted successfully' }))

@@ -3,6 +3,7 @@ import { getGalleryImages as fetchGalleryImages } from '@/lib/data'
 import { createGalleryImage, updateGalleryImage, deleteGalleryImage } from '@/lib/firestore'
 import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,6 +28,7 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -35,6 +37,15 @@ export async function POST(request: NextRequest) {
       title: sanitizeHtml(body.title),
       category: sanitizeHtml(body.category),
       isActive: body.isActive ?? true,
+    })
+
+    await logAdminAction({
+      action: 'gallery.create',
+      resourceType: 'galleryImage',
+      resourceId: id,
+      actor: admin,
+      request,
+      details: { title: body.title, category: body.category },
     })
 
     return withSecurityHeaders(NextResponse.json({ success: true, id, message: 'Gallery image created successfully' }, { status: 201 }))
@@ -49,6 +60,7 @@ export async function PUT(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -58,6 +70,15 @@ export async function PUT(request: NextRequest) {
       category: sanitizeHtml(body.category),
       isActive: body.isActive,
     })
+
+    await logAdminAction({
+      action: 'gallery.update',
+      resourceType: 'galleryImage',
+      resourceId: body.id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({ success: true, id: body.id, message: 'Gallery image updated successfully' }))
   } catch (error) {
     console.error('Error updating gallery image:', error)
@@ -70,10 +91,20 @@ export async function DELETE(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
     await deleteGalleryImage(body.id)
+
+    await logAdminAction({
+      action: 'gallery.delete',
+      resourceType: 'galleryImage',
+      resourceId: body.id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({ success: true, id: body.id, message: 'Gallery image deleted successfully' }))
   } catch (error) {
     console.error('Error deleting gallery image:', error)

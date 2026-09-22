@@ -167,6 +167,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Admin action audit trail (src/lib/audit-log.ts). Server-only and
+    // append-only — clients get nothing.
+    match /admin_audit_logs/{logId} {
+      allow read, write: if false;
+    }
+
     // ============ Explicit deny-all fallback ============
     // Any collection not explicitly allowed above is closed. (Firestore
     // denies by default; this block documents that and guards against

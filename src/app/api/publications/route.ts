@@ -3,6 +3,7 @@ import { getPublications as fetchPublications } from '@/lib/data'
 import { createPublication, updatePublication, deletePublication } from '@/lib/firestore'
 import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 import { publicationSchema } from '@/lib/validations'
 
 export async function GET(request: NextRequest) {
@@ -28,6 +29,7 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -42,6 +44,15 @@ export async function POST(request: NextRequest) {
       isActive: validated.isActive ?? true,
     })
 
+    await logAdminAction({
+      action: 'publication.create',
+      resourceType: 'publication',
+      resourceId: id,
+      actor: admin,
+      request,
+      details: { title: validated.title, type: validated.type },
+    })
+
     return withSecurityHeaders(NextResponse.json({ success: true, id, message: 'Publication created successfully' }, { status: 201 }))
   } catch (error) {
     console.error('Error creating publication:', error)
@@ -54,6 +65,7 @@ export async function PUT(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -67,6 +79,15 @@ export async function PUT(request: NextRequest) {
       link: validated.link ? sanitizeHtml(validated.link) : null,
       isActive: validated.isActive,
     })
+
+    await logAdminAction({
+      action: 'publication.update',
+      resourceType: 'publication',
+      resourceId: body.id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({ success: true, id: body.id, message: 'Publication updated successfully' }))
   } catch (error) {
     console.error('Error updating publication:', error)
@@ -79,10 +100,20 @@ export async function DELETE(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
     await deletePublication(body.id)
+
+    await logAdminAction({
+      action: 'publication.delete',
+      resourceType: 'publication',
+      resourceId: body.id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({ success: true, id: body.id, message: 'Publication deleted successfully' }))
   } catch (error) {
     console.error('Error deleting publication:', error)

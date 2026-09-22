@@ -3,6 +3,7 @@ import { updateWebinar, deleteWebinar } from '@/lib/firestore'
 import { webinarSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function PUT(
   request: NextRequest,
@@ -13,6 +14,7 @@ export async function PUT(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -25,6 +27,15 @@ export async function PUT(
       description: validated.description ? sanitizeHtml(validated.description) : undefined,
       registrationLink: validated.registrationLink ? sanitizeHtml(validated.registrationLink) : undefined,
       meetingLink: validated.meetingLink ? sanitizeHtml(validated.meetingLink) : undefined,
+    })
+
+    await logAdminAction({
+      action: 'webinar.update',
+      resourceType: 'webinar',
+      resourceId: id,
+      actor: admin,
+      request,
+      details: { fields: Object.keys(validated) },
     })
 
     return withSecurityHeaders(NextResponse.json({
@@ -49,9 +60,19 @@ export async function DELETE(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     await deleteWebinar(id)
+
+    await logAdminAction({
+      action: 'webinar.delete',
+      resourceType: 'webinar',
+      resourceId: id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({
       success: true,
       message: 'Webinar deleted successfully',

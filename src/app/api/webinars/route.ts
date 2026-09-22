@@ -4,6 +4,7 @@ import { createWebinar, getWebinarRegistrationCount } from '@/lib/firestore'
 import { webinarSchema } from '@/lib/validations'
 import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -64,6 +66,15 @@ export async function POST(request: NextRequest) {
       price: validated.price ?? null,
       isActive: validated.isActive,
       maxAttendees: validated.maxAttendees ?? null,
+    })
+
+    await logAdminAction({
+      action: 'webinar.create',
+      resourceType: 'webinar',
+      resourceId: webinar.id,
+      actor: admin,
+      request,
+      details: { title: validated.title, date: validated.date, type: validated.type ?? 'paid' },
     })
 
     return withSecurityHeaders(NextResponse.json({

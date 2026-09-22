@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getReceipts, createReceipt, getReceiptByReceiptNumber } from '@/lib/firestore'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 import type { ReceiptDoc, ReceiptTransactionType, ReceiptStatus } from '@/lib/types'
 
 export async function GET(request: NextRequest) {
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   // CSRF protection for mutating requests (parity with the certificates
   // endpoints).
@@ -102,6 +104,22 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await createReceipt(receiptData)
+
+    await logAdminAction({
+      action: 'receipt.create',
+      resourceType: 'receipt',
+      resourceId: result.id,
+      actor: admin,
+      request,
+      details: {
+        receiptNumber: receiptData.receiptNumber,
+        memberId: receiptData.memberId,
+        amount: receiptData.amount,
+        transactionType: receiptData.transactionType,
+        status: receiptData.status,
+      },
+    })
+
     return withSecurityHeaders(NextResponse.json({ success: true, id: result.id }, { status: 201 }))
   } catch (error) {
     console.error('Error creating receipt:', error)

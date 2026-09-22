@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { deleteWebinarRegistration, updateWebinarRegistration } from '@/lib/firestore'
 import { withSecurityHeaders } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 import { ensureWebinarReceipt } from '@/lib/webinar-receipts'
 
 export async function PATCH(
@@ -13,6 +14,7 @@ export async function PATCH(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -26,6 +28,15 @@ export async function PATCH(
     }
 
     await updateWebinarRegistration(id, { status })
+
+    await logAdminAction({
+      action: 'webinar_registration.update',
+      resourceType: 'webinarRegistration',
+      resourceId: id,
+      actor: admin,
+      request,
+      details: { status },
+    })
 
     // Auto-generate the payment receipt when a paid webinar registration is
     // confirmed. Idempotent and non-fatal: a failure here is logged but does
@@ -57,9 +68,19 @@ export async function DELETE(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     await deleteWebinarRegistration(id)
+
+    await logAdminAction({
+      action: 'webinar_registration.delete',
+      resourceType: 'webinarRegistration',
+      resourceId: id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({
       success: true,
       message: 'Registration deleted successfully',

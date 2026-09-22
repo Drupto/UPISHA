@@ -3,6 +3,7 @@ import { updateNewsletterCampaign, deleteNewsletterCampaign } from '@/lib/firest
 import { newsletterCampaignSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function PUT(
   request: NextRequest,
@@ -13,6 +14,7 @@ export async function PUT(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -27,6 +29,15 @@ export async function PUT(
       subject: validated.subject ? sanitizeHtml(validated.subject) : undefined,
       content: validated.content ? sanitizeHtml(validated.content) : undefined,
       sentAt,
+    })
+
+    await logAdminAction({
+      action: validated.status === 'sent' ? 'campaign.send' : 'campaign.update',
+      resourceType: 'newsletterCampaign',
+      resourceId: id,
+      actor: admin,
+      request,
+      details: { status: validated.status ?? null, fields: Object.keys(validated) },
     })
 
     return withSecurityHeaders(NextResponse.json({
@@ -51,9 +62,19 @@ export async function DELETE(
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     await deleteNewsletterCampaign(id)
+
+    await logAdminAction({
+      action: 'campaign.delete',
+      resourceType: 'newsletterCampaign',
+      resourceId: id,
+      actor: admin,
+      request,
+    })
+
     return withSecurityHeaders(NextResponse.json({
       success: true,
       message: 'Newsletter campaign deleted successfully',

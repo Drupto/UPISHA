@@ -3,6 +3,7 @@ import { createNewsletterCampaign, getNewsletterCampaigns } from '@/lib/firestor
 import { newsletterCampaignSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request)
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   try {
     const body = await request.json()
@@ -38,6 +40,15 @@ export async function POST(request: NextRequest) {
       subject: sanitizeHtml(validated.subject),
       content: sanitizeHtml(validated.content),
       status: validated.status,
+    })
+
+    await logAdminAction({
+      action: 'campaign.create',
+      resourceType: 'newsletterCampaign',
+      resourceId: campaign.id,
+      actor: admin,
+      request,
+      details: { title: validated.title, subject: validated.subject, status: validated.status },
     })
 
     return withSecurityHeaders(NextResponse.json({
