@@ -280,6 +280,26 @@ export interface ProfessionalDoc {
   updatedAt?: Date
 }
 
+export interface TeachRequestDoc {
+  id?: string
+  name: string
+  email: string
+  phone: string
+  qualification: string
+  expertise: string
+  topic: string
+  experience: string
+  format: string
+  city?: string | null
+  links?: string | null
+  message?: string | null
+  status: 'new' | 'contacted' | 'accepted' | 'rejected'
+  adminNotes?: string | null
+  isRead?: boolean
+  createdAt?: Date
+  updatedAt?: Date
+}
+
 // Webinar-related types
 export interface WebinarDoc {
   id?: string

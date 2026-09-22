@@ -17,6 +17,7 @@ import {
   PublicationsSection,
   WebinarsSection,
   JoinSection,
+  TeachSection,
   TestimonialsSection,
   GallerySection,
   NewsletterSection,
@@ -192,6 +193,8 @@ export function HomeShell({
         <PublicationsSection initialPublications={publications} />
         <WebinarsSection initialWebinars={webinars} />
         <JoinSection />
+        <WaveDivider color="#c7923e" />
+        <TeachSection />
         <TestimonialsSection initialTestimonials={testimonials} />
         <GallerySection initialImages={galleryImages} />
         <WaveDivider color="#0d7377" />

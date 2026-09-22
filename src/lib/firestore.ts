@@ -68,6 +68,10 @@ const CONTACT_UPDATE_FIELDS = [
   'name', 'email', 'subject', 'message', 'isRead',
 ] as const
 
+const TEACH_REQUEST_UPDATE_FIELDS = [
+  'status', 'adminNotes', 'isRead',
+] as const
+
 const ANNOUNCEMENT_UPDATE_FIELDS = [
   'title', 'date', 'type', 'content', 'isActive',
 ] as const
@@ -138,6 +142,26 @@ export interface ContactMessageDoc {
   email: string
   subject: string
   message: string
+  isRead?: boolean
+  createdAt?: FieldValue | Date
+  updatedAt?: FieldValue | Date
+}
+
+export interface TeachRequestDoc {
+  id?: string
+  name: string
+  email: string
+  phone: string
+  qualification: string
+  expertise: string
+  topic: string
+  experience: string
+  format: string
+  city?: string | null
+  links?: string | null
+  message?: string | null
+  status: 'new' | 'contacted' | 'accepted' | 'rejected'
+  adminNotes?: string | null
   isRead?: boolean
   createdAt?: FieldValue | Date
   updatedAt?: FieldValue | Date
@@ -1352,6 +1376,49 @@ export async function updateContactMessage(id: string, data: Partial<ContactMess
 
 export async function deleteContactMessage(id: string) {
   const ref = doc(db(), 'contactMessages', id)
+  await deleteDoc(ref)
+  return { id }
+}
+
+export async function createTeachRequest(data: TeachRequestDoc) {
+  const ref = await addDoc(collection(db(), 'teachRequests'), {
+    ...data,
+    status: data.status ?? 'new',
+    isRead: data.isRead ?? false,
+    city: data.city ?? null,
+    links: data.links ?? null,
+    message: data.message ?? null,
+    adminNotes: data.adminNotes ?? null,
+    createdAt: data.createdAt ?? new Date(),
+    updatedAt: data.updatedAt ?? new Date(),
+  })
+  return { id: ref.id }
+}
+
+export async function getTeachRequests() {
+  const snapshot = await getDocs(query(collection(db(), 'teachRequests'), orderBy('createdAt', 'desc')))
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
+    }
+  })
+}
+
+export async function updateTeachRequest(id: string, data: Partial<TeachRequestDoc>) {
+  const ref = doc(db(), 'teachRequests', id)
+  await updateDoc(ref, {
+    ...pickFields(data, TEACH_REQUEST_UPDATE_FIELDS),
+    updatedAt: new Date(),
+  })
+  return { id }
+}
+
+export async function deleteTeachRequest(id: string) {
+  const ref = doc(db(), 'teachRequests', id)
   await deleteDoc(ref)
   return { id }
 }

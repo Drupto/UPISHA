@@ -114,6 +114,15 @@ service cloud.firestore {
       allow create: if false;
     }
 
+    // ============ Teach requests ("Teach on UP ISHA" applications) ============
+    // Created by the server (Admin SDK) via /api/teach-requests; reviewed by
+    // admins in /admin/teach-requests who contact the applicant manually.
+    // Client surface is closed to prevent spam writes.
+    match /teachRequests/{requestId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if false;
+    }
+
     // ============ Newsletter ============
     // Subscribed via /api/newsletter (server, Admin SDK). The welcome-email
     // trigger fires on create — client writes would be an email-bomb vector.

@@ -22,6 +22,41 @@ export const contactSchema = z.object({
   message: z.string().min(10, 'Message must be at least 10 characters').max(5000),
 })
 
+export const teachRequestSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/, 'Invalid phone number'),
+  qualification: z.string().min(2, 'Qualification is required').max(200),
+  expertise: z.string().min(2, 'Area of expertise is required').max(200),
+  topic: z.string().min(10, 'Please describe what you would like to teach (at least 10 characters)').max(2000),
+  experience: z.string().min(2, 'Please briefly describe your experience').max(1000),
+  format: z.enum(['webinar', 'workshop', 'course', 'other'], {
+    message: 'Please choose a format',
+  }),
+  city: z.string().max(100).optional().nullable(),
+  links: z.string().max(500).optional().nullable(),
+  message: z.string().max(2000).optional().nullable(),
+})
+
+/**
+ * Human-friendly labels for teach-request form fields, used to turn
+ * server-side validation errors into messages users can act on
+ * (same pattern as JOIN_FIELD_LABELS).
+ */
+export const TEACH_FIELD_LABELS: Record<string, string> = {
+  name: 'Full Name',
+  email: 'Email',
+  phone: 'Phone',
+  qualification: 'Qualification',
+  expertise: 'Area of Expertise',
+  topic: 'What You Want to Teach',
+  experience: 'Experience',
+  format: 'Format',
+  city: 'City',
+  links: 'Profile / Portfolio Links',
+  message: 'Additional Message',
+}
+
 export const joinSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
   email: z.string().email('Invalid email address'),
