@@ -17,6 +17,7 @@ interface CertificatePreviewProps {
   date?: string
   qualification?: string
   rciNumber?: string
+  showMembershipId?: boolean
   certificateNumber?: string
   verificationUrl?: string
   scale?: number
@@ -106,6 +107,7 @@ export default function CertificatePreview({
   date,
   qualification,
   rciNumber,
+  showMembershipId = false,
   certificateNumber,
   verificationUrl,
   scale: externalScale,
@@ -361,6 +363,24 @@ export default function CertificatePreview({
               }}
             >
               RCI Reg. No.: {rciNumber}
+            </p>
+          )}
+          {/* Membership ID — rendered directly below the RCI number on
+              membership certificates when enabled via showMembershipId.
+              Only renders when a real member ID is supplied, so public
+              pages never print placeholder text. */}
+          {showMembershipId && memberId && (
+            <p
+              className="text-center"
+              style={{
+                fontSize: 14,
+                fontWeight: 'normal',
+                fontStyle: 'normal',
+                color: '#6b7280',
+                letterSpacing: '0.02em',
+              }}
+            >
+              Membership ID: {memberId}
             </p>
           )}
 

@@ -12,6 +12,7 @@ interface VerificationResult {
   id: string
   type?: string
   memberName: string
+  memberId?: string
   certificateNumber: string
   membershipType: string
   issueDate: string
@@ -137,6 +138,8 @@ export default function VerifyCertificatePage({ params }: { params: Promise<{ id
                     template={state.data.template}
                     memberName={state.data.memberName}
                     membershipType={state.data.membershipType || 'all'}
+                    memberId={state.data.memberId || ''}
+                    showMembershipId={state.data.type !== 'webinar'}
                     certificateNumber={state.data.certificateNumber}
                     verificationUrl={typeof window !== 'undefined' ? `${window.location.origin}/verify/${state.data.id}` : ''}
                     certificateRef={certRef}

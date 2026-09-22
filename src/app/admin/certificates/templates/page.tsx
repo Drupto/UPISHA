@@ -796,6 +796,7 @@ export default function AdminCertificateTemplates() {
                 memberName="Dr. Sample Member"
                 membershipType={form.accountType === 'life' ? 'life' : form.accountType === 'annual' ? 'annual' : form.accountType === 'student' ? 'student' : 'life'}
                 memberId="a1b2c3d4e5"
+                showMembershipId
                 date={new Date().toISOString()}
                 qualification="M.Sc. Audiology & Speech-Language Pathology"
                 verificationUrl={`${window.location.origin}/verify/sample`}

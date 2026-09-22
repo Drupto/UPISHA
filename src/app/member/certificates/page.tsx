@@ -145,6 +145,7 @@ export default function MemberCertificates() {
                     date={cert.issueDate}
                     qualification={cert.qualification || undefined}
                     rciNumber={cert.rciNumber || undefined}
+                    showMembershipId={cert.type !== 'webinar'}
                     certificateNumber={cert.certificateNumber}
                     verificationUrl={`${window.location.origin}/verify/${cert.id}`}
                     webinarTitle={cert.webinarTitle || undefined}

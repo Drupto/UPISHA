@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCertificateById, getCertificateTemplateById } from '@/lib/firestore'
+import { getCertificateById, getCertificateTemplateById, getMemberById } from '@/lib/firestore'
 import { withSecurityHeaders, rateLimit } from '@/lib/security'
 
 /**
@@ -34,17 +34,30 @@ export async function GET(
       ))
     }
 
-    // Only expose safe public verification data — never memberId, memberUid,
-    // email, phone, qualification, or any other private information.
+    // Only expose safe public verification data — never memberUid, email,
+    // phone, qualification, RCI number, or any other private information.
+    // The display Membership ID IS returned: it is printed on the certificate
+    // itself (the {memberId} placeholder) and is already embedded in the
+    // public UPISHA-<id> certificate number, so resolving it here lets the
+    // verify page render an exact match of the member copy.
     // Fetch the template so the verify page can render the actual certificate
     const template = certificate?.templateId
       ? await getCertificateTemplateById(certificate.templateId).catch(() => null)
       : null
 
+    // Resolve the display Membership ID (same rule as /api/certificates/mine:
+    // admin-assigned membership ID wins, Firestore doc ID is the fallback).
+    let memberId = certificate.memberId || ''
+    if (certificate.type !== 'webinar' && memberId) {
+      const member = await getMemberById(memberId).catch(() => null)
+      if (member?.membershipId) memberId = member.membershipId
+    }
+
     return withSecurityHeaders(NextResponse.json({
       id: certificate.id,
       type: certificate.type || 'membership',
       memberName: certificate.memberName,
+      memberId,
       certificateNumber: certificate.certificateNumber,
       membershipType: certificate.membershipType,
       issueDate: certificate.issueDate,
