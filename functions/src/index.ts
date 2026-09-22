@@ -5,6 +5,7 @@ import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/fire
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { defineSecret } from 'firebase-functions/params'
 import { setGlobalOptions } from 'firebase-functions/v2'
+import { auditLogRetention } from './audit-retention'
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
@@ -33,6 +34,10 @@ setGlobalOptions({
   timeoutSeconds: 120,
   secrets: [BREVO_API_KEY, BREVO_SENDER_EMAIL, BREVO_SENDER_NAME, SITE_URL, NEWSLETTER_UNSUBSCRIBE_SECRET],
 })
+
+// Re-export the scheduled audit-log retention function so the Firebase CLI
+// picks it up on `firebase deploy --only functions`.
+export { auditLogRetention }
 
 // ─── Email service imports ───
 import {
