@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { loginUser } from '@/lib/auth'
 import { loginSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit, getClientIp } from '@/lib/security'
+import { withSecurityHeaders, rateLimit, getClientIp, withCsrfProtection } from '@/lib/security'
 
 export async function POST(request: Request) {
   try {
@@ -14,6 +14,14 @@ export async function POST(request: Request) {
     if (!rateLimit(`login:${clientId}`, 5, 15 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
+
+    // CSRF protection (defense-in-depth): no client currently calls this
+    // route (login goes through the Firebase client SDK + /api/auth/verify),
+    // but if it is ever wired up it must not be cross-site callable
+    // (login CSRF would let an attacker log the victim into a
+    // attacker-controlled account).
+    const csrfError = withCsrfProtection(request)
+    if (csrfError) return csrfError
 
     const { user } = await loginUser(validated.email, validated.password)
     // Do NOT return the token in the response body (H2).

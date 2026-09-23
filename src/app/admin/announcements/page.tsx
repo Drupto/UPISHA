@@ -123,7 +123,10 @@ export default function AdminAnnouncementsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this announcement?')) return
     try {
-      const res = await fetch(`/api/announcements/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: 'DELETE',
+        headers: csrfHeaders(),
+      })
       if (res.ok) {
         toast({ title: 'Announcement deleted', description: 'The announcement has been removed.' })
         fetchAnnouncements()
@@ -356,7 +359,7 @@ export default function AdminAnnouncementsPage() {
                           try {
                             const res = await fetch(`/api/announcements/${announcement.id}`, {
                               method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
+                              headers: csrfHeaders({ 'Content-Type': 'application/json' }),
                               body: JSON.stringify({ isActive: checked }),
                             })
                             if (res.ok) {

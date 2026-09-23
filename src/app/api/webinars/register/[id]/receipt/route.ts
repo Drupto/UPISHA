@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withSecurityHeaders } from '@/lib/security'
+import { withSecurityHeaders, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
 import { ensureWebinarReceipt, webinarReceiptNumber } from '@/lib/webinar-receipts'
@@ -46,6 +46,13 @@ export async function POST(
   const auth = await requireAdmin(request)
   if (auth instanceof NextResponse) return withSecurityHeaders(auth)
   const admin = auth as { uid: string; email: string | null }
+
+  // CSRF protection for mutating requests (parity with the certificates [id]
+  // endpoints).
+  const csrfError = withCsrfProtection(request)
+  if (csrfError) {
+    return withSecurityHeaders(csrfError)
+  }
 
   const { id } = await params
   try {

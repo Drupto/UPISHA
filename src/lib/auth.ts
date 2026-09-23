@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth'
 import { getApps } from 'firebase/app'
 import { initializeApp } from 'firebase/app'
+import { csrfHeaders } from './csrf'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -52,7 +53,9 @@ export async function registerUser(email: string, password: string, displayName:
 
 export async function logoutUser() {
   await signOut(getAuthInstance())
-  await fetch('/api/auth/logout', { method: 'POST' })
+  // /api/auth/logout enforces CSRF double-submit — the x-csrf-token header
+  // must match the csrf-token cookie, otherwise the request 403s.
+  await fetch('/api/auth/logout', { method: 'POST', headers: csrfHeaders() })
 }
 
 export async function resetPassword(email: string) {

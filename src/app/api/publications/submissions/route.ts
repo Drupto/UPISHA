@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPublicationSubmission, getPublicationSubmissions } from '@/lib/firestore'
-import { withSecurityHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { publicationSubmissionSchema } from '@/lib/validations'
 
@@ -14,6 +14,11 @@ export async function POST(request: NextRequest) {
     if (!rateLimit(`pub-sub:${email}`, 5, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many submissions. Please try again later.' }, { status: 429 }))
     }
+
+    // CSRF protection (double-submit) — same pattern as /api/join and
+    // /api/contact; the client (PublicationsSection) already ships the token.
+    const csrfError = withCsrfProtection(request)
+    if (csrfError) return csrfError
 
     const submission = await createPublicationSubmission({
       title: sanitizeHtml(validated.title),

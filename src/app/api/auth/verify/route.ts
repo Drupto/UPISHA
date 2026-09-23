@@ -3,6 +3,12 @@ import { verifyIdToken } from '@/lib/firebase-server'
 import { createUserRecord, getUserByUid } from '@/lib/firestore'
 
 export async function POST(request: NextRequest) {
+  // CSRF note (re-audit Group B decision — no change required): deliberately
+  // NOT CSRF-protected. This endpoint is token-bearing: it requires a valid
+  // Firebase ID token in the JSON body and only 401s without one. A
+  // cross-site attacker can neither read nor force-attach that token (the
+  // session cookie is SameSite=Strict, so it is not sent on cross-site
+  // requests either), so a CSRF check would add no protection here.
   try {
     const body = await request.json()
     const { token } = body

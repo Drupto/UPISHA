@@ -4,7 +4,7 @@
  * Pure-logic tests for src/lib/security.ts. Node environment is required
  * because the module imports next/server (needs the global Request class).
  */
-import { rateLimit, resetRateLimit, sanitizeHtml, getClientIp, validateCsrfToken } from '@/lib/security'
+import { rateLimit, resetRateLimit, sanitizeHtml, getClientIp, validateCsrfToken, withCsrfProtection, withSecurityHeaders } from '@/lib/security'
 
 describe('rateLimit (in-memory)', () => {
   it('allows up to maxRequests then blocks, and resets on demand', () => {
@@ -77,5 +77,37 @@ describe('validateCsrfToken (double-submit cookie)', () => {
   it('rejects when either part is missing', () => {
     expect(validateCsrfToken(req({ 'x-csrf-token': 'abc123' }))).toBe(false)
     expect(validateCsrfToken(req({ cookie: 'csrf-token=abc123' }))).toBe(false)
+  })
+})
+
+describe('withCsrfProtection (403 gate used by every mutating handler)', () => {
+  const req = (headers: Record<string, string>) => new Request('https://x.test/api', { headers })
+
+  it('returns null (allow) when the header matches the cookie', () => {
+    const result = withCsrfProtection(
+      req({ 'x-csrf-token': 'tok', cookie: 'csrf-token=tok' })
+    )
+    expect(result).toBeNull()
+  })
+
+  it('returns a 403 NextResponse when the token is missing', () => {
+    const result = withCsrfProtection(req({}))
+    expect(result).not.toBeNull()
+    expect(result!.status).toBe(403)
+  })
+
+  it('returns a 403 NextResponse on a mismatched pair', () => {
+    const result = withCsrfProtection(
+      req({ 'x-csrf-token': 'tok', cookie: 'csrf-token=other' })
+    )
+    expect(result).not.toBeNull()
+    expect(result!.status).toBe(403)
+  })
+
+  it('the 403 response carries security headers (matches handler pattern withSecurityHeaders(csrfError))', () => {
+    const blocked = withCsrfProtection(req({}))!
+    const wrapped = withSecurityHeaders(blocked)
+    expect(wrapped.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(wrapped.headers.get('strict-transport-security')).toContain('max-age=31536000')
   })
 })

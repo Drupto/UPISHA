@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AnimatedSection } from '@/components/sections'
+import { csrfHeaders } from '@/lib/csrf'
 import type { Webinar } from '@/lib/types'
 
 export default function WebinarRegisterPage() {
@@ -197,7 +198,7 @@ export default function WebinarRegisterPage() {
     try {
       const res = await fetch('/api/webinars/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(formData),
       })
       if (res.ok) {

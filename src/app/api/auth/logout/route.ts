@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withSecurityHeaders } from '@/lib/security'
+import { withSecurityHeaders, withCsrfProtection } from '@/lib/security'
 import { verifyIdToken } from '@/lib/firebase-server'
 import { logAdminAction } from '@/lib/audit-log'
 
@@ -10,6 +10,12 @@ import { logAdminAction } from '@/lib/audit-log'
  * clearing — the response is identical to the previous version.
  */
 export async function POST(request: NextRequest) {
+  // CSRF protection for mutating requests (prevents cross-site forced-logout).
+  const csrfError = withCsrfProtection(request)
+  if (csrfError) {
+    return withSecurityHeaders(csrfError)
+  }
+
   try {
     const sessionToken =
       request.headers.get('authorization')?.replace('Bearer ', '') ||

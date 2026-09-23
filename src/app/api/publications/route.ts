@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPublications as fetchPublications } from '@/lib/data'
 import { createPublication, updatePublication, deletePublication } from '@/lib/firestore'
-import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
 import { publicationSchema } from '@/lib/validations'
@@ -30,6 +30,13 @@ export async function POST(request: NextRequest) {
     return withSecurityHeaders(auth)
   }
   const admin = auth as { uid: string; email: string | null }
+
+  // CSRF protection for mutating requests (parity with the certificates [id]
+  // endpoints).
+  const csrfError = withCsrfProtection(request)
+  if (csrfError) {
+    return withSecurityHeaders(csrfError)
+  }
 
   try {
     const body = await request.json()
@@ -67,6 +74,13 @@ export async function PUT(request: NextRequest) {
   }
   const admin = auth as { uid: string; email: string | null }
 
+  // CSRF protection for mutating requests (parity with the certificates [id]
+  // endpoints).
+  const csrfError = withCsrfProtection(request)
+  if (csrfError) {
+    return withSecurityHeaders(csrfError)
+  }
+
   try {
     const body = await request.json()
     const validated = publicationSchema.parse(body)
@@ -101,6 +115,13 @@ export async function DELETE(request: NextRequest) {
     return withSecurityHeaders(auth)
   }
   const admin = auth as { uid: string; email: string | null }
+
+  // CSRF protection for mutating requests (parity with the certificates [id]
+  // endpoints).
+  const csrfError = withCsrfProtection(request)
+  if (csrfError) {
+    return withSecurityHeaders(csrfError)
+  }
 
   try {
     const body = await request.json()

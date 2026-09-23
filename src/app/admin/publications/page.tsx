@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
+import { csrfHeaders } from '@/lib/csrf'
 
 interface PublicationItem {
   id: string
@@ -153,7 +154,7 @@ export default function AdminPublicationsPage() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
       })
 
@@ -195,7 +196,7 @@ export default function AdminPublicationsPage() {
     try {
       const res = await fetch('/api/publications', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ id }),
       })
       if (res.ok) {
@@ -213,7 +214,7 @@ export default function AdminPublicationsPage() {
     try {
       const res = await fetch(`/api/publications/submissions/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ status }),
       })
       if (res.ok) {
@@ -234,7 +235,10 @@ export default function AdminPublicationsPage() {
   const handleDeleteSubmission = async (id: string) => {
     if (!confirm('Are you sure you want to delete this submission?')) return
     try {
-      const res = await fetch(`/api/publications/submissions/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/publications/submissions/${id}`, {
+        method: 'DELETE',
+        headers: csrfHeaders(),
+      })
       if (res.ok) {
         toast({ title: 'Submission deleted', description: 'The submission has been removed.' })
         fetchSubmissions()
@@ -500,7 +504,7 @@ export default function AdminPublicationsPage() {
                                 try {
                                   const res = await fetch('/api/publications', {
                                     method: 'PUT',
-                                    headers: { 'Content-Type': 'application/json' },
+                                    headers: csrfHeaders({ 'Content-Type': 'application/json' }),
                                     body: JSON.stringify({ ...pub, isActive: checked }),
                                   })
                                   if (res.ok) {

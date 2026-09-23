@@ -147,7 +147,10 @@ export default function AdminEventsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this event?')) return
     try {
-      const res = await fetch(`/api/events/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/events/${id}`, {
+        method: 'DELETE',
+        headers: csrfHeaders(),
+      })
       if (res.ok) {
         toast({ title: 'Event deleted', description: 'The event has been removed.' })
         fetchEvents()
@@ -425,7 +428,7 @@ export default function AdminEventsPage() {
                           try {
                             const res = await fetch(`/api/events/${event.id}`, {
                               method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
+                              headers: csrfHeaders({ 'Content-Type': 'application/json' }),
                               body: JSON.stringify({ isActive: checked }),
                             })
                             if (res.ok) {

@@ -659,11 +659,43 @@ all **fixed**. What remains, in the order it should be worked:
 - **H3 (partial):** `firestore-rate-limit.ts` — distributed, transactional, fail-closed — used by `join`, `upload`, certificates.
 - **H4 (partial) + Group D (partial):** CSRF now enforced on `receipts`, `receipts/[id]`, `teach-requests`, `teach-requests/[id]`, `testimonials`, `upload` and all certificate endpoints; `logAdminAction` audit logging added broadly.
 
-### 1. 🔴 Finish the CSRF rollout — server + client in one pass (H4, HIGH)
+### 1. ✅ FINISHED — Finish the CSRF rollout — server + client in one pass (H4, HIGH)
+
+**COMPLETED 2026-09-23 (verified: `tsc --noEmit` clean, `npm test` 58/58 pass, eslint
+0 issues on touched files, per-handler re-scan shows 0 unprotected admin mutations).**
+
+- **1a Server ✅** — `withCsrfProtection(request)` added to all remaining Group A
+  admin mutation handlers, mirroring `receipts/[id]/route.ts` (admin auth → CSRF →
+  handler): `announcements/[id]` PUT/DELETE, `contact/[id]` PATCH/DELETE,
+  `events/[id]` PUT/DELETE, `gallery` POST/PUT/DELETE, `members` POST,
+  `members/[id]` PUT/DELETE, `newsletter/campaigns` POST, `newsletter/campaigns/[id]`
+  PUT/DELETE, `newsletter/[id]` DELETE, `publications` POST/PUT/DELETE,
+  `publications/submissions/[id]` PATCH/DELETE, `webinars` POST, `webinars/[id]`
+  PUT/DELETE, `webinars/register/[id]` PATCH/DELETE,
+  `webinars/register/[id]/receipt` POST.
+- **1b Client ✅** — `csrfHeaders()` added to every mutating fetch in the 8 admin
+  pages (import added where missing): `members` (3), `publications` (5),
+  `messages` (2), `newsletter` (3), `webinars` (6 — incl. the PUT toggles at the
+  Switch components), `announcements` (2 — delete + toggle), `events` (2 — delete +
+  toggle), `gallery` (2). Verified by scanning for bare
+  `headers: { 'Content-Type': ... }` in mutating fetches — none remain.
+- **1c Public/auth (Group B) ✅** — CSRF added to `webinars/register` POST (+
+  client fix in `webinars/register/page.tsx`), `publications/submissions` POST
+  (client already shipped the token), `auth/login` POST (defense-in-depth — no
+  client calls it today; login goes via the Firebase SDK + `auth/verify`), and
+  `auth/logout` POST (+ client fix in `src/lib/auth.ts` `logoutUser()`).
+  `auth/verify` POST: documented as intentionally NOT CSRF-protected in the route
+  (token-bearing body + SameSite=Strict cookie make CSRF moot).
+  `newsletter` POST: remains intentionally excluded (unauthenticated form,
+  rate-limit-bounded) — revisit consciously if desired.
+- **1d Regression guard ⚪ deferred** — the middleware-level global CSRF gate or
+  per-handler test remains optional follow-up (roadmap item 9).
 
 **Why first:** the only HIGH-severity gap with a live exploit path (cross-site state
 changes while an admin's session cookie is active), and the infra already exists —
 this is pure rollout. Server and client must land together or admin actions will 403.
+
+<details><summary>Original scope (historical)</summary>
 
 **1a. Server — add `withCsrfProtection(request)` to every remaining admin mutation
 handler, mirroring `src/app/api/receipts/[id]/route.ts` (admin auth → CSRF → handler):**
@@ -713,6 +745,8 @@ where missing), mirroring `src/app/admin/certificates/page.tsx`:**
 **1d. Regression guard:** consider a global CSRF gate in `middleware.ts` (with an
 opt-out list) or a test asserting every mutating handler calls `withCsrfProtection`,
 so coverage can never silently regress again.
+
+</details>
 
 ### 2. 🟠 Ship Firebase App Check end-to-end (per `APP_CHECK.md`)
 

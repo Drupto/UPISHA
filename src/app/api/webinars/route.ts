@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getWebinars } from '@/lib/data'
 import { createWebinar, getWebinarRegistrationCount } from '@/lib/firestore'
 import { webinarSchema } from '@/lib/validations'
-import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
 
@@ -43,6 +43,13 @@ export async function POST(request: NextRequest) {
     return withSecurityHeaders(auth)
   }
   const admin = auth as { uid: string; email: string | null }
+
+  // CSRF protection for mutating requests (parity with the certificates [id]
+  // endpoints).
+  const csrfError = withCsrfProtection(request)
+  if (csrfError) {
+    return withSecurityHeaders(csrfError)
+  }
 
   try {
     const body = await request.json()

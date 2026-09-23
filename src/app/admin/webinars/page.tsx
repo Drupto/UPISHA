@@ -160,7 +160,10 @@ export default function AdminWebinarsPage() {
     if (!selectedRegistration) return
     setReceiptGenerating(true)
     try {
-      const res = await fetch(`/api/webinars/register/${selectedRegistration.id}/receipt`, { method: 'POST' })
+      const res = await fetch(`/api/webinars/register/${selectedRegistration.id}/receipt`, {
+        method: 'POST',
+        headers: csrfHeaders(),
+      })
       const data = await res.json()
       if (res.ok) {
         toast({
@@ -265,7 +268,7 @@ export default function AdminWebinarsPage() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
       })
 
@@ -311,7 +314,10 @@ export default function AdminWebinarsPage() {
   const handleDeleteWebinar = async (id: string) => {
     if (!confirm('Are you sure you want to delete this webinar?')) return
     try {
-      const res = await fetch(`/api/webinars/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/webinars/${id}`, {
+        method: 'DELETE',
+        headers: csrfHeaders(),
+      })
       if (res.ok) {
         toast({ title: 'Webinar deleted', description: 'The webinar has been removed.' })
         fetchWebinars()
@@ -326,7 +332,10 @@ export default function AdminWebinarsPage() {
   const handleDeleteRegistration = async (id: string) => {
     if (!confirm('Are you sure you want to delete this registration?')) return
     try {
-      const res = await fetch(`/api/webinars/register/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/webinars/register/${id}`, {
+        method: 'DELETE',
+        headers: csrfHeaders(),
+      })
       if (res.ok) {
         toast({ title: 'Registration deleted', description: 'The registration has been removed.' })
         fetchRegistrations()
@@ -343,7 +352,7 @@ export default function AdminWebinarsPage() {
     try {
       const res = await fetch(`/api/webinars/register/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ status }),
       })
       if (res.ok) {
@@ -825,7 +834,7 @@ export default function AdminWebinarsPage() {
                                   try {
                                     const res = await fetch(`/api/webinars/${webinar.id}`, {
                                       method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json' },
+                                      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
                                       body: JSON.stringify({ isActive: checked }),
                                     })
                                     if (res.ok) {

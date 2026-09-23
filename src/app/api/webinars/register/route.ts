@@ -7,7 +7,7 @@ import {
   getWebinarRegistrationCount,
 } from '@/lib/firestore'
 import { webinarRegistrationSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, resetRateLimit } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, resetRateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
@@ -20,6 +20,11 @@ export async function POST(request: NextRequest) {
     if (!rateLimit(`webinar-reg:${email}`, 10, 60 * 60 * 1000)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
+
+    // CSRF protection (double-submit) — same pattern as /api/join and
+    // /api/contact so this public form cannot be cross-site submitted.
+    const csrfError = withCsrfProtection(request)
+    if (csrfError) return csrfError
 
     // Duplicate registration check: same email + same webinar
     const existing = await getWebinarRegistrationsByEmail(email)
