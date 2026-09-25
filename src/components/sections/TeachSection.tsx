@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  GraduationCap, Globe2, BadgeCheck, IndianRupee, Presentation,
+  GraduationCap, Globe2, BadgeCheck, Users, Presentation,
   Send, Loader2, CheckCircle2,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
@@ -56,9 +56,9 @@ const benefits = [
     description: 'Get featured on the UP ISHA platform and strengthen your professional profile as a subject-matter expert.',
   },
   {
-    icon: IndianRupee,
-    title: 'Earn from Your Expertise',
-    description: 'Approved educators are supported with honorariums for eligible sessions and courses.',
+    icon: Users,
+    title: 'Grow Your Professional Profile',
+    description: 'Build your reputation as an educator and connect with peers across the field.',
   },
 ]
 
