@@ -4,7 +4,7 @@
   "description": "Firebase Cloud Functions for UP ISHA email notifications via Brevo",
   "main": "lib/index.js",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "scripts": {
     "build": "tsc",

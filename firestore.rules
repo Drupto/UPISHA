@@ -182,6 +182,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Email send idempotency markers (functions/src/index.ts claimEmailSend).
+    // Written by Cloud Functions via Admin SDK only — clients get nothing.
+    // (Covered by the deny-all fallback below; documented here explicitly.)
+    match /emailSends/{markerId} {
+      allow read, write: if false;
+    }
+
     // ============ Explicit deny-all fallback ============
     // Any collection not explicitly allowed above is closed. (Firestore
     // denies by default; this block documents that and guards against

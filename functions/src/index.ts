@@ -26,6 +26,11 @@ export const SITE_URL = defineSecret('SITE_URL')
 // HMAC secret for per-recipient newsletter unsubscribe links — must match
 // NEWSLETTER_UNSUBSCRIBE_SECRET in the Next.js app environment.
 export const NEWSLETTER_UNSUBSCRIBE_SECRET = defineSecret('NEWSLETTER_UNSUBSCRIBE_SECRET')
+// NOTE: BREVO_DAILY_LIMIT is intentionally NOT a params declaration —
+// `defineString` demands a dotenv value at deploy time and breaks
+// non-interactive deploys when unset. functions/src/email/brevo.service.ts
+// already reads process.env.BREVO_DAILY_LIMIT with a safe 300 fallback, so
+// set it via functions/.env only when upgrading the Brevo plan.
 
 // Set region to match the project
 setGlobalOptions({
@@ -66,11 +71,43 @@ import {
   renderReceiptEmail,
 } from './email/templates.misc'
 
+// ─── Email send idempotency guard ───
+// Firestore triggers are at-least-once: a retry must not send a duplicate
+// email. Each send claims a deterministic marker doc in `emailSends` via a
+// create-if-absent transaction. Returns true when this invocation won the
+// claim and should send; false when a previous attempt already sent/skipped.
+async function claimEmailSend(markerId: string): Promise<boolean> {
+  const ref = db.collection('emailSends').doc(markerId)
+  try {
+    let claimed = false
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref)
+      if (snap.exists) return
+      tx.set(ref, {
+        claimedAt: admin.firestore.FieldValue.serverTimestamp(),
+      })
+      claimed = true
+    })
+    if (!claimed) {
+      functions.logger.log(`Duplicate trigger delivery skipped (marker ${markerId} already claimed)`)
+    }
+    return claimed
+  } catch (err) {
+    // Fail open: a Firestore hiccup must not silently drop transactional email.
+    // The duplicate-send risk on concurrent claims is far smaller than the
+    // lost-email risk of bailing out here.
+    functions.logger.warn(`Idempotency claim failed for ${markerId}, proceeding with send:`, err)
+    return true
+  }
+}
+
 // ─── Firestore Trigger: Member Created (Join Form) ───
 // When a new member doc is created via /api/join, send application received email.
 export const sendJoinApplicationEmail = onDocumentCreated('members/{memberId}', async (event) => {
   const member = event.data?.data() as Record<string, unknown> | undefined
   if (!member) return
+
+  if (!(await claimEmailSend(`join-application:${event.params.memberId}`))) return
 
   const email = String(member.email || '')
   const fullName = String(member.fullName || '')
@@ -116,6 +153,10 @@ export const sendMemberApprovalEmailTrigger = onDocumentUpdated('members/{member
   const email = String(after.email || '')
   const fullName = String(after.fullName || '')
   if (!email) return
+
+  // Idempotency: member status updates can redeliver; only the first delivery
+  // for a given member+status transition sends.
+  if (!(await claimEmailSend(`member-approval:${event.params.memberId}:${newStatus}`))) return
 
   // On approval, if the auto-generated membership receipt exists (it is
   // written before the member update and flagged suppressEmail so the
@@ -209,6 +250,8 @@ export const onWebinarRegistrationCreated = onDocumentCreated('webinarRegistrati
   const fullName = String(reg.fullName || '')
   if (!email) return
 
+  if (!(await claimEmailSend(`webinar-registration:${event.params.regId}`))) return
+
   // Fetch webinar details for meeting link
   const webinarId = String(reg.webinarId || '')
   let meetingLink: string | undefined
@@ -280,6 +323,8 @@ export const onWebinarRegistrationUpdated = onDocumentUpdated('webinarRegistrati
   const fullName = String(after.fullName || '')
   if (!email) return
 
+  if (!(await claimEmailSend(`webinar-status:${event.params.regId}:${newStatus}`))) return
+
   // Fetch webinar for meeting link
   const webinarId = String(after.webinarId || '')
   let meetingLink: string | undefined
@@ -344,6 +389,8 @@ export const onContactMessageCreated = onDocumentCreated('contactMessages/{messa
   const name = String(msg.name || '')
   if (!email) return
 
+  if (!(await claimEmailSend(`contact-ack:${event.params.messageId}`))) return
+
   const rendered = renderContactAcknowledgmentEmail({
     name,
     subject: String(msg.subject || ''),
@@ -372,6 +419,8 @@ export const onNewsletterSubscriberCreated = onDocumentCreated('newsletterSubscr
 
   const email = String(sub.email || '')
   if (!email) return
+
+  if (!(await claimEmailSend(`newsletter-welcome:${event.params.subId}`))) return
 
   const rendered = renderNewsletterWelcomeEmail({ email })
 
@@ -412,18 +461,29 @@ export const sendNewsletterCampaign = onDocumentUpdated(
   const subject = String(after.subject || '')
   const content = String(after.content || '')
 
-  // Fetch all active subscribers
-  const subscribersSnapshot = await db.collection('newsletterSubscribers')
-    .where('isActive', '==', true)
-    .get()
+  // Idempotency: campaign redelivery must not resend to the whole list.
+  if (!(await claimEmailSend(`newsletter-campaign:${event.params.campaignId}:${newStatus}`))) return
 
+  // Fetch active subscribers in pages so a large list never OOMs the function.
   const recipients: EmailRecipient[] = []
-  for (const doc of subscribersSnapshot.docs) {
-    const data = doc.data() as Record<string, unknown>
-    const email = String(data.email || '')
-    if (email) {
-      recipients.push({ email })
+  let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined
+  for (;;) {
+    let query = db.collection('newsletterSubscribers')
+      .where('isActive', '==', true)
+      .orderBy(admin.firestore.FieldPath.documentId())
+      .limit(500)
+    if (lastDoc) query = query.startAfter(lastDoc)
+    const page = await query.get()
+    if (page.empty) break
+    for (const doc of page.docs) {
+      const data = doc.data() as Record<string, unknown>
+      const email = String(data.email || '')
+      if (email) {
+        recipients.push({ email })
+      }
     }
+    lastDoc = page.docs[page.docs.length - 1]
+    if (page.size < 500) break
   }
 
   if (recipients.length === 0) {
@@ -453,7 +513,14 @@ export const sendNewsletterCampaign = onDocumentUpdated(
   })
 
   if (!unsubSecret) {
-    functions.logger.error('NEWSLETTER_UNSUBSCRIBE_SECRET not set — campaign emails will go out WITHOUT an unsubscribe link')
+    // Compliance: never send bulk mail without an unsubscribe mechanism.
+    functions.logger.error('NEWSLETTER_UNSUBSCRIBE_SECRET not set — campaign aborted, no emails sent')
+    await db.collection('newsletterCampaigns').doc(event.params.campaignId).update({
+      failedCount: recipients.length,
+      skippedQuotaCount: 0,
+      error: 'NEWSLETTER_UNSUBSCRIBE_SECRET not configured',
+    })
+    return
   }
 
   const result = await sendBulkRenderedEmails(items, ['newsletter-campaign'])
@@ -482,6 +549,8 @@ export const onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async 
   const email = String(receipt.memberEmail || '')
   const fullName = String(receipt.memberName || '')
   if (!email) return
+
+  if (!(await claimEmailSend(`receipt:${event.params.receiptId}`))) return
 
   const rendered = renderReceiptEmail({
     fullName,
@@ -519,6 +588,8 @@ export const onWebinarCertificateCreated = onDocumentCreated('certificates/{cert
   const email = String(cert.email || '')
   const fullName = String(cert.memberName || '')
   if (!email) return
+
+  if (!(await claimEmailSend(`webinar-certificate:${event.params.certId}`))) return
 
   const siteUrl = process.env.SITE_URL || 'https://upisha.org'
   const certificateUrl = `${siteUrl}/verify/${event.params.certId}`
@@ -575,6 +646,16 @@ export const sendTransactionalEmail = onCall(async (request) => {
 
   const recipients = Array.isArray(data.to) ? data.to : [data.to]
 
+  // Abuse guard: a compromised/stolen admin token must not turn this into an
+  // unbounded spam cannon. Manual sends are for single/recipient-list resends.
+  const MAX_MANUAL_RECIPIENTS = 50
+  if (recipients.length === 0 || recipients.length > MAX_MANUAL_RECIPIENTS) {
+    throw new HttpsError('invalid-argument', `Recipient count must be 1-${MAX_MANUAL_RECIPIENTS}`)
+  }
+  if (typeof data.subject !== 'string' || data.subject.length === 0 || data.subject.length > 200) {
+    throw new HttpsError('invalid-argument', 'Subject must be 1-200 characters')
+  }
+
   // Basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   for (const r of recipients) {
@@ -623,6 +704,13 @@ export const sendTransactionalEmail = onCall(async (request) => {
       default:
         throw new HttpsError('invalid-argument', `Unknown template: ${data.template}`)
     }
+  }
+
+  // Payload guard: Brevo + Firestore stay healthy with a bounded message size.
+  // 500KB HTML is far above any legitimate transactional template.
+  const MAX_HTML_BYTES = 500 * 1024
+  if (Buffer.byteLength(html, 'utf8') > MAX_HTML_BYTES) {
+    throw new HttpsError('invalid-argument', 'HTML content exceeds 500KB limit')
   }
 
   const result = await sendBulkEmails(
