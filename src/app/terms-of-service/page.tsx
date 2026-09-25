@@ -22,7 +22,7 @@ export default function TermsOfServicePage() {
 
       <PolicySection title="2. About UP ISHA & Our Services">
         <p>
-          The Uttar Pradesh Speech & Hearing Association (UP ISHA) is a professional association
+          The Uttar Pradesh Indian Speech & Hearing Association (UP ISHA) is a professional association
           of audiologists and speech-language pathologists in Uttar Pradesh, India. We provide:
         </p>
         <ul className="list-disc pl-5 space-y-2">

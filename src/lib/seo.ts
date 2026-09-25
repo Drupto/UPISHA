@@ -22,9 +22,9 @@ import type {
 } from "@/lib/types";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://upisha.org";
-const SITE_NAME = "UP ISHA - Uttar Pradesh Speech & Hearing Association";
+const SITE_NAME = "UP ISHA - Uttar Pradesh Indian Speech & Hearing Association";
 const SITE_DESCRIPTION =
-  "Uttar Pradesh Speech & Hearing Association (UP ISHA) — Dedicated to advancing the professions of audiology and speech-language pathology in Uttar Pradesh, India.";
+  "Uttar Pradesh Indian Speech & Hearing Association (UP ISHA) — Dedicated to advancing the professions of audiology and speech-language pathology in Uttar Pradesh, India.";
 const LOGO_URL = `${SITE_URL}/images/upishalogo.png`;
 
 /* ─── Organization Schema ─── */
@@ -33,7 +33,7 @@ export function getOrganizationSchema() {
     "@context": "https://schema.org",
     "@type": "MedicalBusiness",
     "@id": `${SITE_URL}/#organization`,
-    name: "Uttar Pradesh Speech & Hearing Association",
+    name: "Uttar Pradesh Indian Speech & Hearing Association",
     alternateName: "UP ISHA",
     url: SITE_URL,
     logo: {
@@ -161,7 +161,7 @@ export function getEventSchema(event: TimelineEvent) {
     },
     organizer: {
       "@type": "Organization",
-      name: "Uttar Pradesh Speech & Hearing Association",
+      name: "Uttar Pradesh Indian Speech & Hearing Association",
       url: SITE_URL,
     },
     performer: event.speakers.map((speaker) => ({
@@ -186,7 +186,7 @@ export function getPersonSchema(member: ExecutiveMember) {
     image: `${SITE_URL}${member.image}`,
     worksFor: {
       "@type": "Organization",
-      name: "Uttar Pradesh Speech & Hearing Association",
+      name: "Uttar Pradesh Indian Speech & Hearing Association",
     },
     knowsAbout: member.speciality || undefined,
   };
@@ -239,7 +239,7 @@ export function getReviewSchema(testimonial: Testimonial) {
     reviewBody: testimonial.content,
     itemReviewed: {
       "@type": "Organization",
-      name: "Uttar Pradesh Speech & Hearing Association",
+      name: "Uttar Pradesh Indian Speech & Hearing Association",
     },
   };
 }
@@ -260,7 +260,7 @@ export function getAggregateRatingSchema(
     worstRating: "1",
     itemReviewed: {
       "@type": "Organization",
-      name: "Uttar Pradesh Speech & Hearing Association",
+      name: "Uttar Pradesh Indian Speech & Hearing Association",
     },
   };
 }

@@ -4,7 +4,7 @@ import { getPageMetadata } from "@/lib/seo";
 export const metadata: Metadata = getPageMetadata({
   title: "Announcements",
   description:
-    "Stay informed with the latest news and announcements from UP ISHA — Uttar Pradesh Speech & Hearing Association. Updates on conferences, workshops, webinars, and community programs.",
+    "Stay informed with the latest news and announcements from UP ISHA — Uttar Pradesh Indian Speech & Hearing Association. Updates on conferences, workshops, webinars, and community programs.",
   path: "/announcements",
   keywords: [
     "UP ISHA announcements",

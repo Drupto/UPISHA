@@ -4,7 +4,7 @@ import { getPageMetadata } from "@/lib/seo";
 export const metadata: Metadata = getPageMetadata({
   title: "Apply for Membership",
   description:
-    "Apply for UP ISHA membership. Join the Uttar Pradesh Speech & Hearing Association to access professional development, networking, conferences, journals, and more benefits for audiologists and speech-language pathologists.",
+    "Apply for UP ISHA membership. Join the Uttar Pradesh Indian Speech & Hearing Association to access professional development, networking, conferences, journals, and more benefits for audiologists and speech-language pathologists.",
   path: "/apply",
   keywords: [
     "UP ISHA membership",

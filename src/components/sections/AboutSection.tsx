@@ -201,11 +201,11 @@ export function AboutSection() {
           <div>
             <Badge className="bg-upisha-teal/10 text-upisha-teal mb-3">About Us</Badge>
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-upisha-navy dark:text-white mb-6">
-              Uttar Pradesh Speech & Hearing Association
+              Uttar Pradesh Indian Speech & Hearing Association
             </h2>
             <div className="h-1 w-16 bg-gradient-to-r from-upisha-teal to-upisha-gold rounded-full mb-6" />
             <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed mb-4">
-              The Uttar Pradesh Speech & Hearing Association (UP ISHA) is the premier professional
+              The Uttar Pradesh Indian Speech & Hearing Association (UP ISHA) is the premier professional
               body representing audiologists and speech-language pathologists in Uttar Pradesh,
               India. Established in 2025, UP ISHA has been at the forefront of advancing the
               professions of audiology and speech-language pathology in the state.

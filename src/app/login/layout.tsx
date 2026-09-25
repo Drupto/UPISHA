@@ -4,7 +4,7 @@ import { getPageMetadata } from "@/lib/seo";
 export const metadata: Metadata = getPageMetadata({
   title: "Login",
   description:
-    "Login to your UP ISHA account to access member features, manage your profile, and register for webinars with the Uttar Pradesh Speech & Hearing Association.",
+    "Login to your UP ISHA account to access member features, manage your profile, and register for webinars with the Uttar Pradesh Indian Speech & Hearing Association.",
   path: "/login",
   noIndex: true,
 });

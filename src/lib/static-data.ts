@@ -28,7 +28,7 @@ export const navLinks: NavLink[] = [
 export const heroSlides: HeroSlide[] = [
   {
     image: '/images/hero-1.png',
-    title: 'Uttar Pradesh Speech & Hearing Association',
+    title: 'Uttar Pradesh Indian Speech & Hearing Association',
     subtitle: 'Dedicated to Excellence in Audiology & Speech-Language Pathology',
     cta: 'Join UP ISHA',
     ctaLink: '#join',
@@ -58,7 +58,7 @@ export const announcements: Announcement[] = [
 ]
 
 export const features: Feature[] = [
-  { icon: BookOpen, title: 'UP ISHA Newsletter', description: 'Stay updated with activities, events, and developments from the Uttar Pradesh Speech & Hearing Association.' },
+  { icon: BookOpen, title: 'UP ISHA Newsletter', description: 'Stay updated with activities, events, and developments from the Uttar Pradesh Indian Speech & Hearing Association.' },
   { icon: Users, title: 'Executive Council', description: 'Meet the dedicated team of professionals governing UP ISHA and guiding its mission forward.' },
   { icon: GraduationCap, title: 'Webinars & Workshops', description: 'Access recordings and schedules of professional development webinars and hands-on workshops.' },
   { icon: Globe, title: 'Regional Chapters', description: 'UP ISHA has chapters across Lucknow, Varanasi, Agra, Kanpur, and other major cities in Uttar Pradesh.' },

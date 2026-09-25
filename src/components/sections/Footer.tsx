@@ -82,7 +82,7 @@ export function Footer() {
                 </div>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed mb-5">
-                The Uttar Pradesh Speech & Hearing Association is dedicated to advancing audiology and
+                The Uttar Pradesh Indian Speech & Hearing Association is dedicated to advancing audiology and
                 speech-language pathology in Uttar Pradesh, India.
               </p>
               {/* Social media icons row */}
@@ -205,7 +205,7 @@ export function Footer() {
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-gray-500">
-              © {new Date().getFullYear()} Uttar Pradesh Speech & Hearing Association. All rights
+              © {new Date().getFullYear()} Uttar Pradesh Indian Speech & Hearing Association. All rights
               reserved.
             </p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   keywords: [
     "UP ISHA",
-    "Uttar Pradesh Speech & Hearing Association",
+    "Uttar Pradesh Indian Speech & Hearing Association",
     "Uttar Pradesh",
     "Speech",
     "Hearing",
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
         url: siteConfig.ogImage,
         width: 1200,
         height: 630,
-        alt: "UP ISHA - Uttar Pradesh Speech & Hearing Association",
+        alt: "UP ISHA - Uttar Pradesh Indian Speech & Hearing Association",
       },
     ],
     locale: "en_IN",

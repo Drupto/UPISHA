@@ -1,6 +1,6 @@
 # UP ISHA (UPISHA) — Association Website
 
-Production website for **Uttar Pradesh Speech & Hearing Association (UP ISHA)** — membership management, webinars, certificates, receipts, newsletter, and public content, built on:
+Production website for **Uttar Pradesh Indian Speech & Hearing Association (UP ISHA)** — membership management, webinars, certificates, receipts, newsletter, and public content, built on:
 
 - **Next.js 16** (App Router, Turbopack) + React 19 + TypeScript
 - **Firebase** — Auth (email verification + role-based access), Firestore, Storage, Cloud Functions (Brevo transactional email)

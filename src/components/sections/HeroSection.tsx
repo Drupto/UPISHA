@@ -155,7 +155,7 @@ export function HeroSection() {
                   onClick={() => {
                     if (navigator.share) {
                       navigator.share({
-                        title: 'Uttar Pradesh Speech & Hearing Association',
+                        title: 'Uttar Pradesh Indian Speech & Hearing Association',
                         text: 'Learn about UP ISHA - dedicated to excellence in audiology & speech-language pathology.',
                         url: window.location.href,
                       }).catch(() => {})

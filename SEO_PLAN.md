@@ -1,4 +1,4 @@
-# 📋 Complete SEO Plan — UP ISHA (Uttar Pradesh Speech & Hearing Association)
+# 📋 Complete SEO Plan — UP ISHA (Uttar Pradesh Indian Speech & Hearing Association)
 
 > **Project:** Next.js 16 App Router website for UP ISHA  
 > **Domain:** `https://upisha.org`  

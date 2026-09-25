@@ -303,7 +303,7 @@ export default function VerifyCertificatePage({ params }: { params: Promise<{ id
             <Link href="/" className="text-upisha-teal hover:underline font-medium">
               {siteConfig.shortName}
             </Link>{' '}
-            — Uttar Pradesh Speech & Hearing Association
+            — Uttar Pradesh Indian Speech & Hearing Association
           </p>
         </div>
       </div>

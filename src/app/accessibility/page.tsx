@@ -10,7 +10,7 @@ export default function AccessibilityPage() {
     >
       <PolicySection title="1. Our Commitment">
         <p>
-          The Uttar Pradesh Speech &amp; Hearing Association (UP ISHA) believes that information
+          The Uttar Pradesh Indian Speech &amp; Hearing Association (UP ISHA) believes that information
           about hearing and communication health should be available to everyone. We aim to conform
           to the <strong>Web Content Accessibility Guidelines (WCAG) 2.1, Level AA</strong>, and we
           design new features with accessibility in mind from the start.

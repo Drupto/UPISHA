@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-export const alt = "UP ISHA - Uttar Pradesh Speech & Hearing Association";
+export const alt = "UP ISHA - Uttar Pradesh Indian Speech & Hearing Association";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -53,7 +53,7 @@ export default async function OpenGraphImage() {
             marginBottom: 20,
           }}
         >
-          Uttar Pradesh Speech & Hearing Association
+          Uttar Pradesh Indian Speech & Hearing Association
         </div>
 
         {/* Subtitle */}

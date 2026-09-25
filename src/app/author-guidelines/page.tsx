@@ -11,7 +11,7 @@ export default function AuthorGuidelinesPage() {
       <PolicySection title="1. About the Journal">
         <p>
           The UP Journal of Speech & Hearing is the official peer-reviewed publication of the Uttar
-          Pradesh Speech & Hearing Association (UP ISHA). It publishes original research, case
+          Pradesh Indian Speech & Hearing Association (UP ISHA). It publishes original research, case
           studies, clinical reports, and review articles in audiology, speech-language pathology,
           and allied areas.
         </p>

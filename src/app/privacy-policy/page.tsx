@@ -5,12 +5,12 @@ export default function PrivacyPolicyPage() {
     <PolicyPage
       badge="Privacy Policy"
       title="Privacy Policy"
-      description="This policy explains how Uttar Pradesh Speech & Hearing Association (UP ISHA) collects, uses, stores, and protects your personal information when you use our website, register for membership, attend webinars, or contact us."
+      description="This policy explains how Uttar Pradesh Indian Speech & Hearing Association (UP ISHA) collects, uses, stores, and protects your personal information when you use our website, register for membership, attend webinars, or contact us."
       updated="09 September 2026"
     >
       <PolicySection title="1. Who We Are">
         <p>
-          The Uttar Pradesh Speech & Hearing Association (UP ISHA) is a professional body
+          The Uttar Pradesh Indian Speech & Hearing Association (UP ISHA) is a professional body
           representing audiologists and speech-language pathologists in Uttar Pradesh, India.
           Our registered office is located at 110 Raghu Raj Nagar, Patel Nagar, Lucknow -
           226016, Uttar Pradesh, India.

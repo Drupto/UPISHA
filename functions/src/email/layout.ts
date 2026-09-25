@@ -42,7 +42,7 @@ export function wrapTemplate(title: string, bodyHtml: string, unsubscribeLink?: 
 </head>
 <body>
   <div class="container">
-    <div class="header"><h1>UP ISHA</h1><p>Indian Speech & Hearing Association - Uttar Pradesh</p></div>
+    <div class="header"><h1>UP ISHA</h1><p>Uttar Pradesh Indian Speech & Hearing Association</p></div>
     <div class="content">${bodyHtml}</div>
     <div class="footer">
       <p>UP ISHA - Uttar Pradesh Indian Speech & Hearing Association</p>

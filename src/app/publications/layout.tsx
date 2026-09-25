@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Publications | UP ISHA',
-  description: 'Explore the UP Journal of Speech & Hearing, clinical monographs, and research contributions from the Uttar Pradesh Speech & Hearing Association.',
+  description: 'Explore the UP Journal of Speech & Hearing, clinical monographs, and research contributions from the Uttar Pradesh Indian Speech & Hearing Association.',
 }
 
 export default function PublicationsLayout({

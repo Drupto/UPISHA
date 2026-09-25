@@ -4,10 +4,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://upisha.org";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "UP ISHA - Uttar Pradesh Speech & Hearing Association",
+    name: "UP ISHA - Uttar Pradesh Indian Speech & Hearing Association",
     short_name: "UP ISHA",
     description:
-      "Uttar Pradesh Speech & Hearing Association — Dedicated to advancing audiology and speech-language pathology in Uttar Pradesh, India.",
+      "Uttar Pradesh Indian Speech & Hearing Association — Dedicated to advancing audiology and speech-language pathology in Uttar Pradesh, India.",
     start_url: "/",
     scope: "/",
     display: "standalone",
