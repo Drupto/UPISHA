@@ -123,7 +123,21 @@ export function HeroSection() {
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-5 leading-[1.1] text-shadow-hero">
                 {heroSlides[current].title}
               </h1>
-              <div className="h-1 w-24 bg-gradient-to-r from-upisha-gold to-upisha-teal rounded-full mb-6" />
+              <div className="h-1 w-24 bg-gradient-to-r from-upisha-gold to-upisha-teal rounded-full mb-4" />
+              <a
+                href="https://www.ishaindia.org.in/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Visit Indian Speech and Hearing Association website (opens in new tab)"
+                className="mb-4 flex w-fit max-w-xl flex-wrap items-center gap-x-1.5 gap-y-1 text-sm md:text-[15px] font-medium text-white/90 drop-shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-upisha-gold focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
+              >
+                <Shield className="h-4 w-4 shrink-0 text-upisha-gold" aria-hidden="true" />
+                <span>Recognised as UP State Branch by</span>
+                <span className="inline-flex items-center gap-1 font-semibold text-white underline decoration-upisha-gold decoration-2 underline-offset-4 transition-colors hover:text-upisha-gold">
+                  Indian Speech &amp; Hearing Association (ISHA)
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+              </a>
               <p className="text-base md:text-xl text-gray-100 mb-8 leading-relaxed max-w-xl drop-shadow-md typewriter-cursor">
                 {heroSlides[current].subtitle}
               </p>
@@ -140,16 +154,18 @@ export function HeroSection() {
                   {heroSlides[current].cta}
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
-                <Button
-                  size="default"
-                  variant="outline"
-                  className="border-white/50 text-white/90 hover:bg-white/15 hover:border-white/70 backdrop-blur-sm bg-white/5 h-10 px-5"
-                  onClick={() =>
-                    document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
-                  }
-                >
-                  Learn More
-                </Button>
+                {heroSlides[current].ctaLink !== '#about' && (
+                  <Button
+                    size="default"
+                    variant="outline"
+                    className="border-white/50 text-white/90 hover:bg-white/15 hover:border-white/70 backdrop-blur-sm bg-white/5 h-10 px-5"
+                    onClick={() =>
+                      document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
+                    }
+                  >
+                    Learn More
+                  </Button>
+                )}
                 <button
                   className="w-9 h-9 rounded-full border border-white/30 text-white/70 hover:text-white hover:bg-white/15 hover:border-white/50 flex items-center justify-center transition-all backdrop-blur-sm"
                   onClick={() => {
@@ -174,17 +190,17 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows — hidden on mobile to avoid covering text; dots remain for navigation */}
       <button
         onClick={goPrev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/15 hover:bg-white/35 backdrop-blur-md border border-white/20 rounded-full p-2.5 text-white transition-all"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden md:block bg-white/15 hover:bg-white/35 backdrop-blur-md border border-white/20 rounded-full p-2.5 text-white transition-all"
         aria-label="Previous slide"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
       <button
         onClick={goNext}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/15 hover:bg-white/35 backdrop-blur-md border border-white/20 rounded-full p-2.5 text-white transition-all"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden md:block bg-white/15 hover:bg-white/35 backdrop-blur-md border border-white/20 rounded-full p-2.5 text-white transition-all"
         aria-label="Next slide"
       >
         <ChevronRight className="h-6 w-6" />

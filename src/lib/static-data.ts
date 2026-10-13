@@ -71,9 +71,7 @@ export const executiveCouncil: ExecutiveMember[] = [
   { name: 'Dr. Sankalp Shukla', role: 'Treasurer', image: '/images/Treasurer.png', speciality: 'Speech-Language Pathology' },
   { name: 'Ms. Sneha Bansal', role: 'Member', image: '/images/MsSnehaBansal.png', speciality: 'Neuro-Audiology' },
   { name: 'Mr. Shiv Shanker Dwivedi', role: 'Member', image: '/images/MrShivShankerDwivedi.png', speciality: 'Pediatric Audiology' },
-  { name: 'Mr. Lavkush Mishra', role: 'Member', image: '/images/LavkushMishraMember.png', speciality: '' },
-  { name: 'Mr. Adarsh Kumar Mishra', role: 'Member', image: '/images/MrAdarshKumarMishra.jpeg', speciality: 'Audiologist' },
-  { name: 'Mr. Rajanikant Bharti', role: 'Member', image: '/images/RajanikantBharti.jpeg', speciality: 'Audiologist' },
+  { name: 'Mr. Lavkush Mishra', role: 'Member', image: '/images/LavkushMishraMember.png', speciality: 'Audiologist' },
 ]
 
 export const documents: Document[] = [
