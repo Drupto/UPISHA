@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPublicationSubmission, getPublicationSubmissions } from '@/lib/firestore'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { publicationSubmissionSchema } from '@/lib/validations'
 
@@ -19,6 +19,12 @@ export async function POST(request: NextRequest) {
     // /api/contact; the client (PublicationsSection) already ships the token.
     const csrfError = withCsrfProtection(request)
     if (csrfError) return csrfError
+
+    // Firebase App Check (APP_CHECK.md §5): bot defense for this public
+    // form. Verified before the Firestore write. Monitor logs-and-allows;
+    // enforce 403s.
+    const appCheckError = await withAppCheckProtection(request)
+    if (appCheckError) return appCheckError
 
     const submission = await createPublicationSubmission({
       title: sanitizeHtml(validated.title),

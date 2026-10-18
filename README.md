@@ -20,6 +20,8 @@ npm run dev            # http://localhost:3000
 | Variable | Where | Purpose |
 |---|---|---|
 | `NEXT_PUBLIC_FIREBASE_*` (6) | `.env` / Netlify | Public Firebase web config (safe to expose — protected by security rules) |
+| `NEXT_PUBLIC_APP_CHECK_SITE_KEY` | `.env` / Netlify | Public reCAPTCHA Enterprise site key for App Check attestation (safe to expose — enforcement is server-side) |
+| `APP_CHECK_MODE` | `.env` / Netlify (`off` in CI) | API-layer App Check: `off` (default) / `monitor` (verify + log to `api_logs`, always allow) / `enforce` (403 on failure). Kill-switch: flip `enforce → monitor` without a redeploy |
 | `FIREBASE_ADMIN_PROJECT_ID` | `.env` / Netlify (**secret**) | Server Admin SDK — `project_id` from the service-account JSON |
 | `FIREBASE_ADMIN_CLIENT_EMAIL` | `.env` / Netlify (**secret**) | Server Admin SDK — `client_email` |
 | `FIREBASE_ADMIN_PRIVATE_KEY` | `.env` / Netlify (**secret**) | `private_key` — single line, `\n` escapes preserved, no quotes |
@@ -68,5 +70,6 @@ GitHub Actions (`.github/workflows/ci.yml`) gates every PR and push: lint → ty
 - Firestore/Storage rules are deny-by-default; public reads are granted per-collection
 - Role model: `users/{uid}.role` = `user` | `member` | `admin` (admin approval workflow for members; email verification enforced)
 - Rate limiting: distributed (Firestore transactions) on abuse-sensitive endpoints; CSRF double-submit on mutating routes; strict CSP in production
+- Firebase App Check (reCAPTCHA Enterprise): browser attestation verified server-side on every API surface — inside `requireAuth()` for authenticated routes, explicitly on the public mutating routes (`join`, `contact`, `newsletter`, `auth/login|register|logout`, `teach-requests`, `webinars/register`, `publications/submissions`). The only mutation outside the gate is `auth/verify` (token-bearing: callers must already hold a valid Firebase ID token, so attestation adds nothing). Client attaches the token via a same-origin fetch interceptor (`AuthProvider`). Runs `off → monitor → enforce` via `APP_CHECK_MODE`; monitor-mode failures land in `api_logs`. See `APP_CHECK.md`
 - See `SECURITY_AUDIT_REPORT.md` for the historical audit and the fixes applied since
 

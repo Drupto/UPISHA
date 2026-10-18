@@ -1,9 +1,18 @@
 # Firebase App Check — Setup & Production Rollout (UP ISHA)
 
-> **Status: NOT YET CONFIGURED** — App Check has zero presence in the codebase today
-> (the only `@firebase/app-check` references are transitive `package-lock.json` entries).
-> This document is the single source of truth for implementing and operating App Check
-> on this project.
+> **Status: IMPLEMENTED — monitor mode (2026-10-18).** Client singleton
+> (`src/lib/app-check.ts`), server verifier (`verifyAppCheckToken()` in
+> `src/lib/firebase-server.ts`), choke-point gate (`withAppCheckProtection()`
+> in `src/lib/security.ts`), client fetch interceptor (`patchFetchForAppCheck()`
+> in `src/lib/csrf.ts`, installed from `AuthProvider`), env plumbing
+> (`APP_CHECK_MODE`, `NEXT_PUBLIC_APP_CHECK_SITE_KEY`) and Jest tests
+> (`src/__tests__/app-check.test.ts`) are all in place. Deploy with
+> `APP_CHECK_MODE=monitor` + the site key, watch metrics 1–2 weeks, then
+> flip console enforcement + `APP_CHECK_MODE=enforce`.
+>
+> Historical note: before 2026-10-18 this document read "NOT YET CONFIGURED —
+> App Check has zero presence in the codebase" (only transitive
+> `package-lock.json` references). That status is now superseded.
 >
 > Last reviewed: 2026-09 (verified against Firebase/Google Cloud docs updated 2026-09-17/22).
 
@@ -133,6 +142,17 @@ export async function getAppCheckToken(): Promise<string | null> {
 | `NEXT_PUBLIC_APP_CHECK_DEBUG_TOKEN=true` | local dev only — **remove from production** |
 | placeholder value | `.github/workflows/ci.yml` (like the existing `ci-placeholder` Firebase vars) |
 
+> **CSP sync requirement:** the page/document CSP in `next.config.ts` (`headers()` →
+> `/(.*)`) is what authorizes the `https://www.google.com/recaptcha/enterprise.js`
+> script the SDK injects — the identical CSP strings in `src/lib/security.ts`
+> (`withSecurityHeaders()`) run only on **API route responses** and cannot
+> authorize document scripts. Both files carry the same three reCAPTCHA origin
+> groups (`recaptchaScriptSrc` / `recaptchaConnectSrc` / `recaptchaFrameSrc`);
+> keep them in sync or App Check silently stops minting tokens (monitor-mode
+> `api_logs` will show `missing-header` for browser traffic while the console
+> shows the CSP violation). `next.config.ts` is read at server startup — a
+> running `npm run dev` must be **restarted** after CSP edits.
+
 ---
 
 ## 5. Phase 2 — Server-side verification (the real protection)
@@ -249,9 +269,9 @@ tokens (`getToken(appCheck, /* limitedUse */ true)`).
 
 ## 9. Verification checklist
 
-- [ ] Jest tests for the verify helper: missing header / invalid token / mode matrix
-      (`jest` is already configured)
-- [ ] `README.md` security section + `.env.example` updated (match existing doc style)
+- [x] Jest tests for the verify helper: missing header / invalid token / mode matrix
+      (`src/__tests__/app-check.test.ts` — 18 tests, all passing)
+- [x] `README.md` security section + `.env.example` updated (match existing doc style)
 - [ ] Monitor-mode metrics ≈ real traffic **before** enabling enforcement
 - [ ] Debug tokens/flags removed from production environment
 - [ ] Rollback tested once in staging (`APP_CHECK_MODE=enforce → monitor`)

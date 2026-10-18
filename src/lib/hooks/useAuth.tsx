@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { User } from 'firebase/auth'
 import { onAuthChange, loginUser, registerUser, logoutUser, resetPassword, sendVerificationEmail, refreshAuthToken, auth as getAuth } from '@/lib/auth'
+import { patchFetchForAppCheck } from '@/lib/csrf'
 import type { UserRole } from '@/lib/firestore'
 
 interface AuthContextType {
@@ -30,6 +31,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Firebase App Check (APP_CHECK.md §4): install the same-origin /api
+    // fetch interceptor (attaches x-firebase-appcheck + CSRF headers) and
+    // initialize the App Check singleton so the first token is warming while
+    // the session restores below. AuthProvider mounts in the root layout, so
+    // this covers every page. Both are no-ops when the site key is unset.
+    try {
+      patchFetchForAppCheck()
+      void import('@/lib/app-check').then((m) => m.getAppCheckInstance())
+    } catch {
+      // App Check is defense-in-depth — never break auth/session restore.
+    }
     let unsubscribe: (() => void) | undefined
     let cancelled = false
     try {

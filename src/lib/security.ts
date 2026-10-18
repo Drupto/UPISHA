@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server'
+import type { AppCheckResult } from './firebase-server'
 
 // Rate limiting store with periodic cleanup to prevent memory leaks.
 // Note: In production on serverless, use Redis/Vercel KV for distributed state.
@@ -59,9 +60,17 @@ export function resetRateLimit(identifier: string): void {
 // bootstrap scripts work. In production, serve the strict CSP.
 const isProduction = process.env.NODE_ENV === 'production'
 
-const strictCsp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.googleapis.com wss://firestore.googleapis.com wss://*.firebaseio.com; font-src 'self' data:; frame-src https://www.openstreetmap.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+// reCAPTCHA Enterprise endpoints required by Firebase App Check
+// (score-based key — invisible, no challenge UI unless the risk engine
+// demands it). Without these CSP entries the browser blocks the
+// App Check token fetch and the (rare) challenge iframe.
+const recaptchaScriptSrc = 'https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/'
+const recaptchaConnectSrc = 'https://www.google.com/recaptcha/'
+const recaptchaFrameSrc = 'https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/'
 
-const devCsp = "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.googleapis.com wss://firestore.googleapis.com wss://*.firebaseio.com; font-src 'self' data:; frame-src https://www.openstreetmap.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+const strictCsp = `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com ${recaptchaScriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.googleapis.com ${recaptchaConnectSrc} wss://firestore.googleapis.com wss://*.firebaseio.com; font-src 'self' data:; frame-src https://www.openstreetmap.org ${recaptchaFrameSrc}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`
+
+const devCsp = `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' ${recaptchaScriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.googleapis.com ${recaptchaConnectSrc} wss://firestore.googleapis.com wss://*.firebaseio.com; font-src 'self' data:; frame-src https://www.openstreetmap.org ${recaptchaFrameSrc}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`
 
 export function withSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
@@ -149,4 +158,88 @@ export function withCsrfProtection(request: Request): NextResponse | null {
   }
 
   return null // Continue with request
+}
+
+// ─── Firebase App Check gate (APP_CHECK.md §5) ──────────────────────────────
+// This is the choke point that covers every API surface without touching the
+// sync withCsrfProtection() signature (~100 call sites):
+//   - authenticated routes → requireAuth()/requireAdmin() call this AFTER
+//     verifying the ID token (see auth-helpers.ts)
+//   - unauthenticated mutating routes (join, contact, newsletter,
+//     auth/login|register|logout, teach-requests, webinars/register,
+//     publications/submissions) → called explicitly alongside
+//     withCsrfProtection()
+//
+// Mode semantics (APP_CHECK_MODE, default 'off'):
+//   - off     → null (allow) immediately, no network call
+//   - monitor → verify; failures are logged to `api_logs` but ALWAYS allowed
+//               (runs 1–2 weeks to measure the false-positive rate first)
+//   - enforce → 403 { error: 'App Check verification failed' } on failure
+//
+// Monitor/enforce logging uses logApiRequest() so the admin dashboard's
+// existing api_logs view doubles as the App Check metrics source. Awaiting
+// it is safe (both this helper and logApiRequest() swallow errors) and
+// guarantees the metric lands before the response. Only failing requests
+// pay this cost; the allow path in 'off' mode costs nothing.
+// The firebase-server import is dynamic so this module stays importable from
+// the Jest node tests without pulling in the Admin SDK credential chain.
+
+async function logAppCheckFailure(
+  path: string,
+  reason: string,
+  request: Request
+): Promise<void> {
+  try {
+    const { logApiRequest } = await import('./request-logger')
+    await logApiRequest({
+      endpoint: path,
+      method: request.method,
+      ip: getClientIp(request),
+      userId: null,
+      userAgent: request.headers.get('user-agent'),
+      status: 403,
+      error: `App Check verification failed (${reason})`,
+      timestamp: new Date(),
+    })
+  } catch {
+    // Logging must never break the request — the decision stands regardless.
+  }
+}
+
+/**
+ * Async App Check gate. Returns a 403 NextResponse to reject, or null to
+ * allow. `mode` is read fresh per call; pass `result` through to avoid a
+ * double verifyToken() round-trip when the caller already verified.
+ */
+export async function withAppCheckProtection(
+  request: Request,
+  result?: AppCheckResult
+): Promise<NextResponse | null> {
+  const { getAppCheckMode, verifyAppCheckToken } = await import('./firebase-server')
+  const mode = getAppCheckMode()
+  if (mode === 'off') return null
+
+  const outcome = result ?? (await verifyAppCheckToken(request))
+  if (outcome.valid) return null
+
+  const path = (() => {
+    try {
+      return new URL(request.url).pathname
+    } catch {
+      return 'unknown'
+    }
+  })()
+  if (mode === 'monitor') {
+    // ALLOW — but record the failure so the false-positive rate is measurable.
+    // Awaited (not fire-and-forget): both log layers swallow their own
+    // errors, so this can never throw, and awaiting guarantees the metric
+    // lands before the response. Only failing requests pay this cost.
+    await logAppCheckFailure(path, `monitor/${outcome.reason}`, request)
+    return null
+  }
+  // enforce → log + reject.
+  await logAppCheckFailure(path, `enforce/${outcome.reason}`, request)
+  return withSecurityHeaders(
+    NextResponse.json({ error: 'App Check verification failed' }, { status: 403 })
+  )
 }

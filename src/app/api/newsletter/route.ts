@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { upsertNewsletterSubscriber, getNewsletterSubscribers } from '@/lib/firestore'
 import { newsletterSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit } from '@/lib/security'
+import { withSecurityHeaders, rateLimit, withAppCheckProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
@@ -17,6 +17,11 @@ export async function POST(request: NextRequest) {
     // This is a public, unauthenticated form — no CSRF protection needed
     // (there is no authenticated session to protect). CSRF protection is
     // applied to authenticated/admin state-changing routes instead.
+    // Firebase App Check IS applied (APP_CHECK.md §5): it is the bot/mail-
+    // bombing defense here. Monitor logs-and-allows; enforce 403s.
+    const appCheckError = await withAppCheckProtection(request)
+    if (appCheckError) return withSecurityHeaders(appCheckError)
+
     await upsertNewsletterSubscriber(validated.email.toLowerCase())
 
     // Do not return the subscriber's email as the ID (L2).

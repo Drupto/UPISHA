@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 import { createMember, getMembers, createUserRecord } from '@/lib/firestore'
 import { joinSchema, JOIN_FIELD_LABELS } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, withCsrfProtection, getClientIp } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, withCsrfProtection, withAppCheckProtection, getClientIp } from '@/lib/security'
 import { checkRateLimitStrict } from '@/lib/firestore-rate-limit'
 import { validateDataUrl, MAX_IMAGE_BYTES, MAX_FILE_BYTES, IMAGE_MIME_TYPES, DOC_MIME_TYPES } from '@/lib/upload-validation'
 import { uploadDataUrl } from '@/lib/storage'
@@ -85,6 +85,13 @@ export async function POST(request: NextRequest) {
     // CSRF protection
     const csrfError = withCsrfProtection(request)
     if (csrfError) return csrfError
+
+    // Firebase App Check (APP_CHECK.md §5): primary bot defense for this
+    // public route. Cheap checks first (rate limit, CSRF, body validation
+    // above/below); attestation verified before any side effect (Auth
+    // account creation). Monitor logs-and-allows; enforce 403s.
+    const appCheckError = await withAppCheckProtection(request)
+    if (appCheckError) return appCheckError
 
     // Validate uploads (MIME + size) BEFORE creating the Firebase Auth
     // account — an invalid payload must fail fast with a field-level error

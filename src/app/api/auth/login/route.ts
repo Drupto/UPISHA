@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { loginUser } from '@/lib/auth'
 import { loginSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit, getClientIp, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, rateLimit, getClientIp, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 
 export async function POST(request: Request) {
   try {
@@ -22,6 +22,12 @@ export async function POST(request: Request) {
     // attacker-controlled account).
     const csrfError = withCsrfProtection(request)
     if (csrfError) return csrfError
+
+    // Firebase App Check (APP_CHECK.md §5): bot defense for credential
+    // stuffing on this endpoint. Verified before hitting Firebase Auth.
+    // Monitor logs-and-allows; enforce 403s.
+    const appCheckError = await withAppCheckProtection(request)
+    if (appCheckError) return withSecurityHeaders(appCheckError)
 
     const { user } = await loginUser(validated.email, validated.password)
     // Do NOT return the token in the response body (H2).

@@ -7,7 +7,7 @@ import {
   getWebinarRegistrationCount,
 } from '@/lib/firestore'
 import { webinarRegistrationSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, resetRateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, rateLimit, resetRateLimit, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
@@ -25,6 +25,13 @@ export async function POST(request: NextRequest) {
     // /api/contact so this public form cannot be cross-site submitted.
     const csrfError = withCsrfProtection(request)
     if (csrfError) return csrfError
+
+    // Firebase App Check (APP_CHECK.md §5): primary bot defense for this
+    // public form. Verified before the duplicate-registration and capacity
+    // reads (avoids paying Firestore reads for unattested traffic) and
+    // before the registration write. Monitor logs-and-allows; enforce 403s.
+    const appCheckError = await withAppCheckProtection(request)
+    if (appCheckError) return appCheckError
 
     // Duplicate registration check: same email + same webinar
     const existing = await getWebinarRegistrationsByEmail(email)

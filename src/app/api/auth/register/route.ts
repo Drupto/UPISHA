@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { registerUser } from '@/lib/auth'
 import { registerSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, rateLimit, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 
 export async function POST(request: Request) {
   try {
@@ -16,6 +16,12 @@ export async function POST(request: Request) {
     // CSRF protection
     const csrfError = withCsrfProtection(request)
     if (csrfError) return csrfError
+
+    // Firebase App Check (APP_CHECK.md §5): bot defense for mass account
+    // creation. Verified before hitting Firebase Auth. Monitor
+    // logs-and-allows; enforce 403s.
+    const appCheckError = await withAppCheckProtection(request)
+    if (appCheckError) return withSecurityHeaders(appCheckError)
 
     const { user } = await registerUser(validated.email, validated.password, validated.displayName)
     // Do NOT return the token in the response body (H2).

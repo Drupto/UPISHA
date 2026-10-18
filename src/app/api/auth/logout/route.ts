@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withSecurityHeaders, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 import { verifyIdToken } from '@/lib/firebase-server'
 import { logAdminAction } from '@/lib/audit-log'
 
@@ -14,6 +14,16 @@ export async function POST(request: NextRequest) {
   const csrfError = withCsrfProtection(request)
   if (csrfError) {
     return withSecurityHeaders(csrfError)
+  }
+
+  // Firebase App Check (APP_CHECK.md §5): attestation verified alongside
+  // CSRF. A failure must never trap the user in a logged-in state, so on
+  // rejection we clear the session cookie on the 403 response itself
+  // (fail-closed on attestation, fail-open on the session cleanup).
+  const appCheckError = await withAppCheckProtection(request)
+  if (appCheckError) {
+    appCheckError.cookies.set('session', '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 0, path: '/' })
+    return appCheckError
   }
 
   try {

@@ -36,6 +36,7 @@ import {
 import { getFirestore, type Firestore } from 'firebase-admin/firestore'
 import { getStorage, type Storage } from 'firebase-admin/storage'
 import { getAuth, type Auth } from 'firebase-admin/auth'
+import { getAppCheck } from 'firebase-admin/app-check'
 
 // Fail fast if this module ever ends up in the browser bundle.
 // The Admin SDK requires Node APIs and must never ship client-side.
@@ -152,5 +153,53 @@ export async function verifyIdToken(
     name: decoded.name ?? null,
     emailVerified: decoded.email_verified === true,
     claims: (decoded as unknown as Record<string, unknown>) ?? {},
+  }
+}
+
+// ─── Firebase App Check verification (APP_CHECK.md §5) ───────────────────────
+
+/** Enforcement mode for API-layer App Check verification. */
+export type AppCheckMode = 'off' | 'monitor' | 'enforce'
+
+/** Read fresh on every call (tests + env changes take effect without reboot). */
+export function getAppCheckMode(): AppCheckMode {
+  const mode = (process.env.APP_CHECK_MODE ?? 'off').toLowerCase()
+  return mode === 'monitor' || mode === 'enforce' ? mode : 'off'
+}
+
+export type AppCheckResult =
+  | { valid: true; appId: string }
+  | { valid: false; reason: 'missing-header' | 'invalid-token' | 'disabled' }
+
+/**
+ * Verify the App Check token on an incoming API request.
+ *
+ * Reads `APP_CHECK_MODE` (default `off`):
+ *   - `off`     → returns `{ valid: false, reason: 'disabled' }` without
+ *                  touching the network (kill-switch default, zero risk).
+ *   - `monitor` → verifies but callers must ALLOW anyway; failures are logged
+ *                  to `api_logs` so the false-positive rate can be measured.
+ *   - `enforce` → callers must return 403 on failure.
+ *
+ * Replay protection (`{ consume: true }`) is deliberately deferred — it is
+ * beta, Node-only, adds latency, and requires the Firebase App Check Token
+ * Verifier IAM role. See APP_CHECK.md §5.
+ */
+export async function verifyAppCheckToken(
+  request: Request
+): Promise<AppCheckResult> {
+  if (getAppCheckMode() === 'off') {
+    return { valid: false, reason: 'disabled' }
+  }
+
+  const token = request.headers.get('x-firebase-appcheck')
+  if (!token) return { valid: false, reason: 'missing-header' }
+  try {
+    const claims = await getAppCheck(getAdminApp()).verifyToken(token)
+    return claims?.appId
+      ? { valid: true, appId: claims.appId }
+      : { valid: false, reason: 'invalid-token' }
+  } catch {
+    return { valid: false, reason: 'invalid-token' } // expired / wrong project / tampered
   }
 }

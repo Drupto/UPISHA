@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createContactMessage, getContactMessages } from '@/lib/firestore'
 import { contactSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, rateLimit, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
@@ -17,6 +17,13 @@ export async function POST(request: NextRequest) {
     // CSRF protection
     const csrfError = withCsrfProtection(request)
     if (csrfError) return csrfError
+
+    // Firebase App Check (APP_CHECK.md §5): primary bot defense for this
+    // public form. Cheap checks first (rate limit, CSRF, body validation
+    // above); attestation verified before the Firestore write. Monitor
+    // logs-and-allows; enforce 403s.
+    const appCheckError = await withAppCheckProtection(request)
+    if (appCheckError) return appCheckError
 
     await createContactMessage({
       name: validated.name,

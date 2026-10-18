@@ -25,6 +25,9 @@ jobs:
       NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '0'
       NEXT_PUBLIC_FIREBASE_APP_ID: '1:0:web:ci'
       NEXT_PUBLIC_SITE_URL: https://upisha.org
+      # App Check stays OFF in CI: no site key (client no-op) + off mode
+      # (server allows without verifying). Production uses the Netlify vars.
+      APP_CHECK_MODE: 'off'
     steps:
       - uses: actions/checkout@v4
 

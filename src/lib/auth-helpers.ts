@@ -1,9 +1,10 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { verifyIdToken } from './firebase-server'
+import { withAppCheckProtection } from './security'
 import { getUserByUid, getMemberByUid } from './firestore'
 
 export async function requireAuth(request: NextRequest) {
-  const sessionToken = request.headers.get('authorization')?.replace('Bearer ', '') || 
+  const sessionToken = request.headers.get('authorization')?.replace('Bearer ', '') ||
                        request.cookies.get('session')?.value
 
   if (!sessionToken) {
@@ -16,6 +17,18 @@ export async function requireAuth(request: NextRequest) {
     // explicit revokeRefreshTokens — impossible with the previous REST
     // identitytoolkit accounts:lookup approach (HIGH-2 slice).
     const decodedToken = await verifyIdToken(sessionToken, true)
+
+    // Firebase App Check (APP_CHECK.md §5): verified AFTER the (cheaper,
+    // cached-friendly) ID token so a valid human session never pays the
+    // App Check failure path on a bot-filter misfire, and so monitor-mode
+    // metrics only measure bot-vs-legit on genuinely authenticated traffic.
+    // In monitor mode this logs-and-allows; in enforce mode it 403s here,
+    // before any Firestore read below.
+    const appCheckError = await withAppCheckProtection(request)
+    if (appCheckError) {
+      return appCheckError
+    }
+
     return decodedToken
   } catch {
     return NextResponse.json({ authenticated: false, error: 'Invalid token' }, { status: 401 })
