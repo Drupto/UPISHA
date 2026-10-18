@@ -224,6 +224,16 @@ export async function POST(request: NextRequest) {
     // Duplicate email gets an actionable message (with a distinct code so the
     // client can offer a "sign in instead" path) — without it, users get stuck
     // in a retry loop because the Auth account from attempt #1 already exists.
+    //
+    // EMAIL ENUMERATION (H5 residual — accepted risk, documented): returning
+    // a distinct "already exists" response confirms an email holds an
+    // account. A generic response would NOT close this oracle: Firebase
+    // Auth's public REST signUp (callable by anyone with the public web API
+    // key) leaks EMAIL_EXISTS regardless, so the platform layer discloses
+    // the same fact to any direct caller. Genericizing would therefore be
+    // UX loss (new applicants told to "wait" while their real problem is
+    // that they should sign in) with zero security gain. Brand-new signups
+    // are additionally bounded by rate limiting + App Check on this route.
     if (error?.message === 'An account with this email already exists') {
       return withSecurityHeaders(NextResponse.json({
         error: 'An account with this email already exists. Please sign in instead of submitting a new application.',

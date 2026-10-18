@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getGalleryImages as fetchGalleryImages } from '@/lib/data'
 import { createGalleryImage, updateGalleryImage, deleteGalleryImage } from '@/lib/firestore'
-import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
+import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
+import { checkRateLimit } from '@/lib/firestore-rate-limit'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
 
@@ -11,7 +12,12 @@ export async function GET(request: NextRequest) {
     const realIp = request.headers.get('x-real-ip')
     const ip = forwarded ? forwarded.split(',')[0].trim() : realIp || 'anonymous'
     
-    if (!rateLimit(`gallery:${ip}`, 30, 60 * 1000)) {
+    // Rate limiting — distributed (Firestore transactions), fail-open
+    // (checkRateLimit allows on Firestore errors): gallery reads must stay
+    // available; most homepage views never reach this function anyway
+    // (60s edge cache via withCacheHeaders).
+    const rate = await checkRateLimit(`gallery:${ip}`, 30, 60 * 1000)
+    if (!rate.allowed) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
     }
 

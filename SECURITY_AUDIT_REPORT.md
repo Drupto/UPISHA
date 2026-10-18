@@ -688,8 +688,12 @@ all **fixed**. What remains, in the order it should be worked:
   (token-bearing body + SameSite=Strict cookie make CSRF moot).
   `newsletter` POST: remains intentionally excluded (unauthenticated form,
   rate-limit-bounded) — revisit consciously if desired.
-- **1d Regression guard ⚪ deferred** — the middleware-level global CSRF gate or
-  per-handler test remains optional follow-up (roadmap item 9).
+- **1d Regression guard ✅ done (2026-10-18)** — per-handler coverage test
+  `src/__tests__/csrf-coverage.test.ts` scans every mutating handler in all
+  `route.ts` files for `withCsrfProtection()`, with the two consciously-asserted
+  exemptions (`auth/verify` POST — token-bearing body, `newsletter` POST — public
+  unauthenticated form) drift-guarded by a second test. Coverage can no longer
+  silently regress when new routes are added.
 
 **Why first:** the only HIGH-severity gap with a live exploit path (cross-site state
 changes while an admin's session cookie is active), and the infra already exists —
@@ -748,24 +752,41 @@ so coverage can never silently regress again.
 
 </details>
 
-### 2. 🟠 Ship Firebase App Check end-to-end (per `APP_CHECK.md`)
+### 2. ✅ CODE-COMPLETE (monitor mode) — Ship Firebase App Check end-to-end (per `APP_CHECK.md`)
 
 `APP_CHECK.md` says: **"Status: NOT YET CONFIGURED — App Check has zero presence in the
-codebase today."** The full design is already written there — execute it in order:
+codebase today."** — that predates the 2026-10-18 implementation. Code status is now:
 Phase 0 console/billing prerequisites → `src/lib/app-check.ts` + `fetchWithAppCheck()`
 (client) → `verifyAppCheckToken()` wired into `requireAuth()` / `withCsrfProtection()`
 (server, `APP_CHECK_MODE=monitor`) → `useAuth` init → env vars + CI → Jest tests →
-monitor 1–2 weeks → flip to `enforce`. Follow `APP_CHECK.md` §4–§9 exactly.
+monitor 1–2 weeks → flip to `enforce`.
 
-### 3. 🟠 Harden `members/[id]` PUT (Group D — highest-impact remaining D item)
+**Done (2026-10-18, code):** client singleton (`src/lib/app-check.ts`), server verifier
+(`verifyAppCheckToken()` in `src/lib/firebase-server.ts`), choke-point gate
+(`withAppCheckProtection()`, wired into `requireAuth()` + the sensitive public routes),
+fetch interceptor (installed from `AuthProvider`), env plumbing, CI (`off` mode), Jest
+tests (`src/__tests__/app-check.test.ts`).
 
-The approval path triggers cascading certificate/receipt issuance, so this PUT is the
-one D-item with real certificate/money consequences:
+**Remaining — ops ladder (`APP_CHECK.md` §7, calendar-bound):** deploy with
+`APP_CHECK_MODE=monitor` + the site key → watch metrics 1–2 weeks → flip console
+enforcement for Firestore/Storage → `APP_CHECK_MODE=enforce` (kill-switch: back to
+`monitor` without a redeploy) → rollback drill once in staging.
 
-- Whitelist `body.status` (e.g. only `pending` / `approved` / `rejected`) — currently any string is accepted.
-- Reject empty updates (`if (Object.keys(updateData).length === 0) return 400`).
-- Return **404** when the member does not exist (currently a silent "updated successfully" no-op is possible).
-- Audit log exists ✅ — keep it.
+### 3. ✅ FINISHED — Harden `members/[id]` PUT (Group D — highest-impact D item)
+
+**Done (2026-10-18):** all four sub-requirements landed —
+
+- **Status whitelist:** pure helper `parseMemberUpdateInput()` in `src/lib/member-update.ts`
+  (`ALLOWED_MEMBER_STATUSES = pending/approved/rejected`; anything else → 400 "Invalid
+  status"). Field whitelist + HTML sanitization on editable fields; admin-assigned
+  `membershipId` format-validated (blank clears it).
+- **Empty updates rejected:** `{}` or unknown-fields-only bodies → 400 "No fields to update".
+- **404 on missing member:** PUT (and GET/DELETE) fetch the member first and return
+  `404 Member not found` instead of a silent no-op.
+- **Audit log:** approval/update/delete logged via `logAdminAction` ✅ — kept.
+
+Pure-logic coverage in `src/__tests__/member-update.test.ts` (status enum, empty update,
+non-object body, membership-ID accept/clear/reject, address normalization).
 
 ### 4. 🟡 Move the remaining sensitive endpoints to the distributed rate limiter (H3 residual)
 
@@ -776,6 +797,16 @@ from `firestore-rate-limit.ts` (pattern proven on `join`/`upload`/certificates).
 **Login is the priority.** Optionally remove the legacy in-memory limiter once nothing
 uses it.
 
+**Done (2026-10-18):** all four migrated — `auth/login` + `auth/register` use
+`checkRateLimitStrict()` (fail-closed: a Firestore outage returns an honest 503 from
+a dedicated limiter guard — NOT the 401/500 `Invalid email or password` / `Registration
+failed` of the outer catch — rather than opening an abuse window;
+`login:${ip}:${email}` key shape preserved), `newsletter` POST and
+`gallery` GET use fail-open `checkRateLimit()` (availability first; edge caching +
+App Check/Brevo quota bound the residual). The in-memory limiter remains for the
+other 15 route files (all admin mutations behind auth + App Check — full sweep
+deferred as post-launch cleanup).
+
 ### 5. 🟡 Close the email-enumeration oracle on `POST /api/join` (H5 residual)
 
 `join/route.ts` still returns *"An account with this email already exists. Please sign
@@ -784,6 +815,14 @@ for the apply flow, but it confirms which emails hold accounts. Either accept an
 document the risk, or respond generically ("If your application can be processed you
 will hear from us") and rely on the existing email-notification flow. **Decide and
 document.**
+
+**Decision (2026-10-18) — KEEP the actionable message, document as accepted risk**
+(recorded inline in `join/route.ts`): a generic response would not close the oracle —
+Firebase Auth's public REST `signUp` (callable by anyone with the public web API key)
+leaks `EMAIL_EXISTS` regardless, so the platform discloses the same fact to any direct
+caller. Genericizing is therefore pure UX loss (new applicants told to "wait" while
+their real fix is signing in) with zero security gain. Abuse of the oracle is bounded
+by email-scoped distributed rate limiting + App Check on this route.
 
 ### 6. 🟡 Remove `'unsafe-inline'` from the production CSP (M1 residual)
 

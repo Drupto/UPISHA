@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { upsertNewsletterSubscriber, getNewsletterSubscribers } from '@/lib/firestore'
 import { newsletterSchema } from '@/lib/validations'
-import { withSecurityHeaders, rateLimit, withAppCheckProtection } from '@/lib/security'
+import { withSecurityHeaders, withAppCheckProtection } from '@/lib/security'
+import { checkRateLimit } from '@/lib/firestore-rate-limit'
 import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
@@ -9,8 +10,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validated = newsletterSchema.parse(body)
 
-    // Rate limiting
-    if (!rateLimit(`newsletter:${validated.email}`, 5, 60 * 60 * 1000)) {
+    // Rate limiting — distributed (Firestore transactions), fail-open
+    // (checkRateLimit allows on Firestore errors): a metrics/logging outage
+    // must never silence the subscribe button; mail-bombing stays bounded
+    // by App Check + the Brevo daily quota.
+    const rate = await checkRateLimit(`newsletter:${validated.email}`, 5, 60 * 60 * 1000)
+    if (!rate.allowed) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
     }
 
