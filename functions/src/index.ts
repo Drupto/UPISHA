@@ -412,6 +412,19 @@ export const onContactMessageCreated = onDocumentCreated('contactMessages/{messa
   }
 })
 
+// ── Shared per-recipient unsubscribe link (CAN-SPAM/GDPR) ──
+// Token = HMAC-SHA256(email, NEWSLETTER_UNSUBSCRIBE_SECRET) — the same
+// secret signs/verifies in the Next.js /api/newsletter/unsubscribe route.
+// Used by both the welcome email and every newsletter campaign send so a
+// single code path builds the link.
+function buildUnsubscribeUrlFor(email: string): string | undefined {
+  const unsubSecret = process.env.NEWSLETTER_UNSUBSCRIBE_SECRET
+  if (!unsubSecret || !email) return undefined
+  const siteUrl = process.env.SITE_URL || 'https://upisha.org'
+  const token = crypto.createHmac('sha256', unsubSecret).update(email.toLowerCase()).digest('hex')
+  return `${siteUrl}/api/newsletter/unsubscribe?email=${encodeURIComponent(email.toLowerCase())}&token=${token}`
+}
+
 // ─── Firestore Trigger: Newsletter Subscriber Created ───
 export const onNewsletterSubscriberCreated = onDocumentCreated('newsletterSubscribers/{subId}', async (event) => {
   const sub = event.data?.data() as Record<string, unknown> | undefined
@@ -422,7 +435,7 @@ export const onNewsletterSubscriberCreated = onDocumentCreated('newsletterSubscr
 
   if (!(await claimEmailSend(`newsletter-welcome:${event.params.subId}`))) return
 
-  const rendered = renderNewsletterWelcomeEmail({ email })
+  const rendered = renderNewsletterWelcomeEmail({ email, unsubscribeUrl: buildUnsubscribeUrlFor(email) })
 
   const result = await sendSingleEmail(
     { email },
@@ -492,17 +505,11 @@ export const sendNewsletterCampaign = onDocumentUpdated(
   }
 
   // ── Per-recipient unsubscribe link (CAN-SPAM/GDPR) ──
-  // Token = HMAC-SHA256(email, NEWSLETTER_UNSUBSCRIBE_SECRET) — the same
-  // secret signs/verifies in the Next.js /api/newsletter/unsubscribe route.
-  const siteUrl = process.env.SITE_URL || 'https://upisha.org'
+  // URL built by buildUnsubscribeUrlFor() — shared with the welcome email.
   const unsubSecret = process.env.NEWSLETTER_UNSUBSCRIBE_SECRET
 
   const items: RenderedBulkEmail[] = recipients.map((recipient) => {
-    let unsubscribeUrl: string | undefined
-    if (unsubSecret && recipient.email) {
-      const token = crypto.createHmac('sha256', unsubSecret).update(recipient.email.toLowerCase()).digest('hex')
-      unsubscribeUrl = `${siteUrl}/api/newsletter/unsubscribe?email=${encodeURIComponent(recipient.email.toLowerCase())}&token=${token}`
-    }
+    const unsubscribeUrl = buildUnsubscribeUrlFor(recipient.email)
     const rendered = renderNewsletterContent({
       email: recipient.email,
       content,

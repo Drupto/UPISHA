@@ -47,6 +47,7 @@ export function wrapTemplate(title: string, bodyHtml: string, unsubscribeLink?: 
     <div class="footer">
       <p>UP ISHA - Uttar Pradesh Indian Speech & Hearing Association</p>
       <p>You received this email because you're registered with UP ISHA.</p>
+      <p>Designed and Developed by <a href="https://druptoconsultants.com/" target="_blank" rel="noopener noreferrer" style="color:#0d9488; font-weight:600; text-decoration:underline;">DRUPTO</a></p>
       ${unsubscribeLink ? `<p><a href="${unsubscribeLink}">Unsubscribe</a></p>` : ''}
     </div>
   </div>

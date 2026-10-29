@@ -3,6 +3,10 @@ import { deactivateNewsletterSubscriber } from '@/lib/firestore'
 import { verifyUnsubscribeToken } from '@/lib/email-unsubscribe'
 import { withSecurityHeaders, rateLimit } from '@/lib/security'
 
+// Fallback contact shown whenever the unsubscribe flow gives trouble, so the
+// subscriber always has a human contact path (matches the site's public email).
+const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'office@upisha.org'
+
 function confirmationPage(message: string, success: boolean): NextResponse {
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -23,6 +27,7 @@ function confirmationPage(message: string, success: boolean): NextResponse {
   <div class="card">
     <h1>${success ? 'You have been unsubscribed' : 'Link could not be verified'}</h1>
     <p class="${success ? '' : 'error'}">${message}</p>
+    <p>Need help? Email us at <a href="mailto:${CONTACT_EMAIL}" style="color:#0d9488; text-decoration:underline;">${CONTACT_EMAIL}</a></p>
     <p><a href="/">Go to upisha.org</a></p>
   </div>
 </body>

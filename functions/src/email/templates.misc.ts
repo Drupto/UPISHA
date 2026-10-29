@@ -98,7 +98,7 @@ export function renderReceiptEmail(data: MembershipReceiptEmailData): RenderedEm
 }
 
 // Newsletter Welcome
-export function renderNewsletterWelcomeEmail(data: { email: string }): RenderedEmail {
+export function renderNewsletterWelcomeEmail(data: { email: string; unsubscribeUrl?: string }): RenderedEmail {
   const subject = 'Welcome to UP ISHA Newsletter! 🎉'
   const bodyHtml = `
     <h2>Welcome to UP ISHA Newsletter! 🎉</h2>
@@ -112,6 +112,8 @@ export function renderNewsletterWelcomeEmail(data: { email: string }): RenderedE
       <li>📚 Publications & resources</li>
     </ul>
     <div class="info-box">To ensure you see these emails, please add <strong>${process.env.BREVO_SENDER_EMAIL || 'noreply@upisha.org'}</strong> to your contacts.</div>
+    ${data.unsubscribeUrl ? `<p style="text-align:center;"><a href="${data.unsubscribeUrl}" style="color:#0d9488; font-size:12px; text-decoration:underline;">Unsubscribe</a></p>
+    <p style="color:#64748b; font-size:12px; text-align:center; margin-top:8px;">If the unsubscribe link doesn't work, email us at <a href="mailto:office@upisha.org" style="color:#0d9488; text-decoration:underline;">office@upisha.org</a></p>` : `<p style="color:#64748b; font-size:12px; text-align:center;">To unsubscribe, email us at <a href="mailto:office@upisha.org" style="color:#0d9488; text-decoration:underline;">office@upisha.org</a></p>`}
     <p>Warm regards,<br><strong>UP ISHA Team</strong></p>
   `
   const text = `Welcome to UP ISHA Newsletter!\n\nYou've successfully subscribed at ${data.email}.\n\nBest regards,\nUP ISHA Team`
@@ -132,7 +134,8 @@ export function renderNewsletterContent(data: {
     <p>${greeting}</p>
     <div style="font-size:14px; line-height:1.7; color:#334155;">${data.content}</div>
     <p style="color:#64748b; font-size:12px;">You are receiving this because you subscribed to UP ISHA newsletter.</p>
-    ${data.unsubscribeUrl ? `<p style="text-align:center;"><a href="${data.unsubscribeUrl}" style="color:#0d9488; font-size:12px;">Unsubscribe</a></p>` : ''}
+    ${data.unsubscribeUrl ? `<p style="text-align:center;"><a href="${data.unsubscribeUrl}" style="color:#0d9488; font-size:12px; text-decoration:underline;">Unsubscribe</a></p>
+    <p style="color:#64748b; font-size:12px; text-align:center; margin-top:8px;">If the unsubscribe link doesn't work, email us at <a href="mailto:office@upisha.org" style="color:#0d9488; text-decoration:underline;">office@upisha.org</a></p>` : `<p style="color:#64748b; font-size:12px; text-align:center;">To unsubscribe, email us at <a href="mailto:office@upisha.org" style="color:#0d9488; text-decoration:underline;">office@upisha.org</a></p>`}
   `
   return {
     subject: data.subject,
