@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/lib/hooks/useAuth";
 import { getSchemaGraph, siteConfig } from "@/lib/seo";
 import { GoogleAnalytics } from "@/components/seo/GoogleAnalytics";
+import { CookieConsentProvider } from "@/lib/hooks/useCookieConsent";
+import { CookieConsent } from "@/components/consent/CookieConsent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -170,11 +172,14 @@ export default function RootLayout({
               }}
             />
           ))}
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-          <Toaster />
-          <GoogleAnalytics />
+          <CookieConsentProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+            <Toaster />
+            <CookieConsent />
+            <GoogleAnalytics />
+          </CookieConsentProvider>
         </ThemeProvider>
       </body>
     </html>

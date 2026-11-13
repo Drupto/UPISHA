@@ -1,4 +1,5 @@
 import { PolicyPage, PolicySection, PolicyListItem } from '@/components/policy/PolicyPage'
+import { CookiePreferencesButton } from '@/components/consent/CookiePreferencesButton'
 
 export default function CookiePolicyPage() {
   return (
@@ -6,7 +7,7 @@ export default function CookiePolicyPage() {
       badge="Cookie Policy"
       title="Cookie Policy"
       description="This policy explains what cookies and similar technologies the UP ISHA website uses, what they do, and how you can control or delete them. It works together with our Privacy Policy."
-      updated="09 September 2026"
+      updated="14 November 2026"
     >
       <PolicySection title="1. What Are Cookies?">
         <p>
@@ -20,8 +21,10 @@ export default function CookiePolicyPage() {
         <p>We use the following types of cookies and browser storage:</p>
         <ul className="list-disc pl-5 space-y-2">
           <PolicyListItem>
-            <strong>Consent cookie</strong> — remembers whether you accepted or declined our
-            cookie-consent banner, so we don't ask you repeatedly.
+            <strong>Consent record (local storage)</strong> — remembers your cookie choice
+            (including which optional categories you allowed). It is stored in your browser
+            under the key <code>upisha-cookie-consent-v2</code>, is never sent to our servers,
+            and stays until you change it or clear your browser storage.
           </PolicyListItem>
           <PolicyListItem>
             <strong>Session cookie</strong> — keeps you signed in to your member account. It is
@@ -34,46 +37,65 @@ export default function CookiePolicyPage() {
             personal information.
           </PolicyListItem>
           <PolicyListItem>
-            <strong>Local storage (auto-save)</strong> — we may store partially-entered form
-            data (for example from the Contact or Join forms) in your browser's local storage so
-            that your input is not lost if the page reloads. This data never leaves your device
-            unless you submit the form.
+            <strong>Functional local storage</strong> — remembers your theme choice and may
+            auto-save partially-entered form data (for example from the Contact or Join forms)
+            so your input is not lost if the page reloads. This data stays on your device and is
+            never sent to us unless you submit the form.
           </PolicyListItem>
         </ul>
       </PolicySection>
 
       <PolicySection title="3. Third-Party Cookies & Analytics">
         <p>
-          We use Google Analytics to understand aggregate website usage (such as the number of
-          visitors and the pages they view). Google Analytics sets its own cookies on your device
-          when you visit our website. These cookies do not identify you personally.
+          We use Google Analytics 4 to understand aggregate website usage (such as the number of
+          visitors and the pages they view). Google Analytics is <strong>not loaded at all</strong>{' '}
+          until you choose “Accept all” or enable the Analytics category in the cookie
+          preferences dialog. If you reject it, no Google Analytics script runs and no{' '}
+          <code>_ga</code> cookies are written.
+        </p>
+        <p>
+          When enabled, Google Analytics sets its own first-party cookies (for example{' '}
+          <code>_ga</code> and <code>_ga_&lt;container-id&gt;</code>) to distinguish browsers. We
+          enable IP anonymization and we do not use advertising, remarketing, or cross-site
+          tracking features. If you later withdraw consent, we disable Google Analytics for this
+          site and expire the Google Analytics cookies we can access.
         </p>
         <p>
           For more information about how Google uses data collected through analytics, please
-          see Google's privacy policies at policies.google.com.
+          see Google&apos;s privacy policies at policies.google.com.
         </p>
       </PolicySection>
 
       <PolicySection title="4. Required vs. Optional Cookies">
         <ul className="list-disc pl-5 space-y-2">
           <PolicyListItem>
-            <strong>Strictly necessary cookies</strong> — the session cookie and CSRF cookie are
-            required for the correct operation of the website and for account security. They
-            cannot be disabled without affecting functionality.
+            <strong>Strictly necessary</strong> — the session cookie, CSRF cookie, consent
+            record, and functional storage (theme/form drafts) are required for the website to
+            operate correctly and securely. They cannot be switched off in the banner.
           </PolicyListItem>
           <PolicyListItem>
-            <strong>Preference cookies</strong> — the consent cookie respects your choice.
+            <strong>Analytics (optional)</strong> — Google Analytics cookies are used only to
+            improve the site. They are <strong>off by default</strong> and load only after you
+            opt in.
           </PolicyListItem>
           <PolicyListItem>
-            <strong>Analytics cookies</strong> — used for site improvement; you can block them
-            using your browser settings or the cookie-consent banner.
+            <strong>Marketing / advertising</strong> — we do not currently use advertising or
+            cross-site marketing cookies.
           </PolicyListItem>
         </ul>
       </PolicySection>
 
       <PolicySection title="5. How to Control or Delete Cookies">
         <p>
-          You can control cookies through your browser settings. Most browsers let you:
+          You can change your choice at any time using the button below or the “Cookie settings”
+          link in the website footer. You can accept all optional cookies, reject everything
+          optional, or allow only the categories you choose.
+        </p>
+        <div className="pt-1">
+          <CookiePreferencesButton />
+        </div>
+        <p className="pt-2">
+          You can also control cookies through your browser settings. Most browsers let you:
         </p>
         <ul className="list-disc pl-5 space-y-2">
           <PolicyListItem>Block third-party cookies.</PolicyListItem>
@@ -82,13 +104,9 @@ export default function CookiePolicyPage() {
           <PolicyListItem>Browse in private/incognito mode, which deletes cookies when the window closes.</PolicyListItem>
         </ul>
         <p>
-          If you disable cookies, some parts of the website (such as staying signed in) may not
-          work correctly.
-        </p>
-        <p>
-          To reset your cookie consent choice, you can clear the site's consent cookie or local
-          storage entry for upisha.org, and the consent banner will appear again on your next
-          visit.
+          If you disable strictly necessary cookies, some parts of the website (such as staying
+          signed in) may not work correctly. Clearing this site&apos;s storage removes your
+          consent record, and the banner will ask for your choice again on your next visit.
         </p>
       </PolicySection>
 

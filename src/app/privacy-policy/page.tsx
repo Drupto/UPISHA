@@ -97,7 +97,8 @@ export default function PrivacyPolicyPage() {
         </p>
         <p>In summary, we use:</p>
         <ul className="list-disc pl-5 space-y-2">
-          <PolicyListItem>A consent cookie to remember whether you accepted or declined our cookie banner.</PolicyListItem>
+          <PolicyListItem>A consent record in local storage that remembers your cookie choice (including whether you allowed optional analytics).</PolicyListItem>
+          <PolicyListItem>Google Analytics cookies, only if you opt in, to measure aggregate site usage.</PolicyListItem>
           <PolicyListItem>Session cookies to keep you signed in to your member account (httpOnly, secure).</PolicyListItem>
           <PolicyListItem>A short-lived CSRF token cookie to protect our forms from cross-site request forgery.</PolicyListItem>
           <PolicyListItem>Local storage to autosave partially-filled contact and membership forms on your device.</PolicyListItem>

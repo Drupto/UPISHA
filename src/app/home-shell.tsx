@@ -26,7 +26,6 @@ import {
   BackToTop,
   FloatingContact,
   SocialProofNotification,
-  CookieConsent,
   SectionNavigationIndicator,
   BreadcrumbIndicator,
   CommandPalette,
@@ -205,7 +204,6 @@ export function HomeShell({
       <BackToTop />
       <FloatingContact />
       <SocialProofNotification />
-      <CookieConsent />
       <SectionNavigationIndicator activeSection={activeSection} />
       <CommandPalette
         open={searchOpen}

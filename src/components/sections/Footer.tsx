@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import { CookieSettingsLink } from '@/components/consent/CookiePreferencesButton'
 import { publications } from '@/lib/static-data'
 
 /* ─── Footer ─── */
@@ -221,6 +222,7 @@ export function Footer() {
               <a href="/cookie-policy" className="hover:text-upisha-teal transition-colors">
                 Cookie Policy
               </a>
+              <CookieSettingsLink className="hover:text-upisha-teal transition-colors" />
               <a href="/disclaimer" className="hover:text-upisha-teal transition-colors">
                 Disclaimer
               </a>
