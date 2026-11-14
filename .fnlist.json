@@ -1,0 +1,435 @@
+{
+  "status": "success",
+  "result": [
+    {
+      "platform": "gcfv2",
+      "id": "auditLogRetention",
+      "project": "upisha-948e1",
+      "region": "asia-south1",
+      "scheduleTrigger": {},
+      "entryPoint": "auditLogRetention",
+      "runtime": "nodejs22",
+      "source": {
+        "storageSource": {
+          "bucket": "gcf-v2-sources-701387507570-asia-south1",
+          "object": "auditLogRetention/function-source.zip",
+          "generation": "1794661768559072"
+        }
+      },
+      "ingressSettings": "ALLOW_ALL",
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"upisha-948e1\",\"storageBucket\":\"upisha-948e1.firebasestorage.app\"}",
+        "GCLOUD_PROJECT": "upisha-948e1",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/upisha-948e1/locations/asia-south1/services/auditLogRetention",
+        "FUNCTION_REGION": "asia-south1",
+        "FUNCTION_TARGET": "auditLogRetention",
+        "LOG_EXECUTION_ID": "true"
+      },
+      "timeoutSeconds": 540,
+      "uri": "https://asia-south1-upisha-948e1.cloudfunctions.net/auditLogRetention",
+      "serviceAccount": "701387507570-compute@developer.gserviceaccount.com",
+      "availableMemoryMb": 256,
+      "cpu": 1,
+      "maxInstances": 20,
+      "concurrency": 80,
+      "labels": {
+        "deployment-tool": "cli-firebase",
+        "deployment-scheduled": "true",
+        "firebase-functions-hash": "579453e907461206ca7920cd2bea191dfc696011"
+      },
+      "runServiceId": "auditlogretention",
+      "codebase": "default",
+      "hash": "579453e907461206ca7920cd2bea191dfc696011",
+      "state": "ACTIVE"
+    },
+    {
+      "platform": "gcfv2",
+      "id": "drainApprovedEmailOutbox",
+      "project": "upisha-948e1",
+      "region": "asia-south1",
+      "scheduleTrigger": {},
+      "entryPoint": "drainApprovedEmailOutbox",
+      "runtime": "nodejs22",
+      "source": {
+        "storageSource": {
+          "bucket": "gcf-v2-sources-701387507570-asia-south1",
+          "object": "drainApprovedEmailOutbox/function-source.zip",
+          "generation": "1794661818997512"
+        }
+      },
+      "ingressSettings": "ALLOW_ALL",
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"upisha-948e1\",\"storageBucket\":\"upisha-948e1.firebasestorage.app\"}",
+        "GCLOUD_PROJECT": "upisha-948e1",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/upisha-948e1/locations/asia-south1/services/drainApprovedEmailOutbox",
+        "FUNCTION_REGION": "asia-south1",
+        "FUNCTION_TARGET": "drainApprovedEmailOutbox",
+        "LOG_EXECUTION_ID": "true",
+        "FUNCTION_SIGNATURE_TYPE": "http"
+      },
+      "secretEnvironmentVariables": [
+        {
+          "key": "BREVO_API_KEY",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_API_KEY",
+          "version": "3"
+        },
+        {
+          "key": "BREVO_SENDER_EMAIL",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_SENDER_EMAIL",
+          "version": "1"
+        },
+        {
+          "key": "BREVO_SENDER_NAME",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_SENDER_NAME",
+          "version": "1"
+        },
+        {
+          "key": "SITE_URL",
+          "projectId": "upisha-948e1",
+          "secret": "SITE_URL",
+          "version": "1"
+        },
+        {
+          "key": "NEWSLETTER_UNSUBSCRIBE_SECRET",
+          "projectId": "upisha-948e1",
+          "secret": "NEWSLETTER_UNSUBSCRIBE_SECRET",
+          "version": "1"
+        }
+      ],
+      "timeoutSeconds": 300,
+      "uri": "https://asia-south1-upisha-948e1.cloudfunctions.net/drainApprovedEmailOutbox",
+      "serviceAccount": "701387507570-compute@developer.gserviceaccount.com",
+      "availableMemoryMb": 256,
+      "cpu": 1,
+      "maxInstances": 10,
+      "concurrency": 80,
+      "labels": {
+        "deployment-scheduled": "true",
+        "firebase-functions-hash": "c6fce9e40f5c4f4f9b2e09993cd37708bf2991d6",
+        "deployment-tool": "cli-firebase"
+      },
+      "runServiceId": "drainapprovedemailoutbox",
+      "codebase": "default",
+      "hash": "c6fce9e40f5c4f4f9b2e09993cd37708bf2991d6",
+      "state": "ACTIVE"
+    },
+    {
+      "platform": "gcfv2",
+      "id": "onEmailOutboxApproved",
+      "project": "upisha-948e1",
+      "region": "asia-south1",
+      "eventTrigger": {
+        "eventType": "google.cloud.firestore.document.v1.written",
+        "retry": false,
+        "eventFilters": {
+          "database": "(default)",
+          "namespace": "(default)"
+        },
+        "eventFilterPathPatterns": {
+          "document": "emailOutbox/{outboxId}"
+        },
+        "region": "asia-south2"
+      },
+      "entryPoint": "onEmailOutboxApproved",
+      "runtime": "nodejs22",
+      "source": {
+        "storageSource": {
+          "bucket": "gcf-v2-sources-701387507570-asia-south1",
+          "object": "onEmailOutboxApproved/function-source.zip",
+          "generation": "1794661767570170"
+        }
+      },
+      "ingressSettings": "ALLOW_ALL",
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"upisha-948e1\",\"storageBucket\":\"upisha-948e1.firebasestorage.app\"}",
+        "GCLOUD_PROJECT": "upisha-948e1",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/upisha-948e1/locations/asia-south1/services/onEmailOutboxApproved",
+        "FUNCTION_REGION": "asia-south1",
+        "FUNCTION_SIGNATURE_TYPE": "cloudevent",
+        "FUNCTION_TARGET": "onEmailOutboxApproved",
+        "LOG_EXECUTION_ID": "true"
+      },
+      "secretEnvironmentVariables": [
+        {
+          "key": "BREVO_API_KEY",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_API_KEY",
+          "version": "3"
+        },
+        {
+          "key": "BREVO_SENDER_EMAIL",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_SENDER_EMAIL",
+          "version": "1"
+        },
+        {
+          "key": "BREVO_SENDER_NAME",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_SENDER_NAME",
+          "version": "1"
+        },
+        {
+          "key": "SITE_URL",
+          "projectId": "upisha-948e1",
+          "secret": "SITE_URL",
+          "version": "1"
+        },
+        {
+          "key": "NEWSLETTER_UNSUBSCRIBE_SECRET",
+          "projectId": "upisha-948e1",
+          "secret": "NEWSLETTER_UNSUBSCRIBE_SECRET",
+          "version": "1"
+        }
+      ],
+      "timeoutSeconds": 120,
+      "uri": "https://asia-south1-upisha-948e1.cloudfunctions.net/onEmailOutboxApproved",
+      "serviceAccount": "701387507570-compute@developer.gserviceaccount.com",
+      "availableMemoryMb": 256,
+      "cpu": 1,
+      "maxInstances": 10,
+      "concurrency": 80,
+      "labels": {
+        "deployment-tool": "cli-firebase",
+        "firebase-functions-hash": "c6fce9e40f5c4f4f9b2e09993cd37708bf2991d6"
+      },
+      "runServiceId": "onemailoutboxapproved",
+      "codebase": "default",
+      "hash": "c6fce9e40f5c4f4f9b2e09993cd37708bf2991d6",
+      "state": "ACTIVE"
+    },
+    {
+      "platform": "gcfv2",
+      "id": "reconcileEmailOutbox",
+      "project": "upisha-948e1",
+      "region": "asia-south1",
+      "scheduleTrigger": {},
+      "entryPoint": "reconcileEmailOutbox",
+      "runtime": "nodejs22",
+      "source": {
+        "storageSource": {
+          "bucket": "gcf-v2-sources-701387507570-asia-south1",
+          "object": "reconcileEmailOutbox/function-source.zip",
+          "generation": "1794661818943627"
+        }
+      },
+      "ingressSettings": "ALLOW_ALL",
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"upisha-948e1\",\"storageBucket\":\"upisha-948e1.firebasestorage.app\"}",
+        "GCLOUD_PROJECT": "upisha-948e1",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/upisha-948e1/locations/asia-south1/services/reconcileEmailOutbox",
+        "FUNCTION_REGION": "asia-south1",
+        "FUNCTION_TARGET": "reconcileEmailOutbox",
+        "LOG_EXECUTION_ID": "true",
+        "FUNCTION_SIGNATURE_TYPE": "http"
+      },
+      "secretEnvironmentVariables": [
+        {
+          "key": "BREVO_API_KEY",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_API_KEY",
+          "version": "3"
+        },
+        {
+          "key": "BREVO_SENDER_EMAIL",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_SENDER_EMAIL",
+          "version": "1"
+        },
+        {
+          "key": "BREVO_SENDER_NAME",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_SENDER_NAME",
+          "version": "1"
+        },
+        {
+          "key": "SITE_URL",
+          "projectId": "upisha-948e1",
+          "secret": "SITE_URL",
+          "version": "1"
+        },
+        {
+          "key": "NEWSLETTER_UNSUBSCRIBE_SECRET",
+          "projectId": "upisha-948e1",
+          "secret": "NEWSLETTER_UNSUBSCRIBE_SECRET",
+          "version": "1"
+        }
+      ],
+      "timeoutSeconds": 300,
+      "uri": "https://asia-south1-upisha-948e1.cloudfunctions.net/reconcileEmailOutbox",
+      "serviceAccount": "701387507570-compute@developer.gserviceaccount.com",
+      "availableMemoryMb": 256,
+      "cpu": 1,
+      "maxInstances": 10,
+      "concurrency": 80,
+      "labels": {
+        "deployment-tool": "cli-firebase",
+        "deployment-scheduled": "true",
+        "firebase-functions-hash": "c6fce9e40f5c4f4f9b2e09993cd37708bf2991d6"
+      },
+      "runServiceId": "reconcileemailoutbox",
+      "codebase": "default",
+      "hash": "c6fce9e40f5c4f4f9b2e09993cd37708bf2991d6",
+      "state": "ACTIVE"
+    },
+    {
+      "platform": "gcfv2",
+      "id": "resumeStalledNewsletterCampaigns",
+      "project": "upisha-948e1",
+      "region": "asia-south1",
+      "scheduleTrigger": {},
+      "entryPoint": "resumeStalledNewsletterCampaigns",
+      "runtime": "nodejs22",
+      "source": {
+        "storageSource": {
+          "bucket": "gcf-v2-sources-701387507570-asia-south1",
+          "object": "resumeStalledNewsletterCampaigns/function-source.zip",
+          "generation": "1794661767817293"
+        }
+      },
+      "ingressSettings": "ALLOW_ALL",
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"upisha-948e1\",\"storageBucket\":\"upisha-948e1.firebasestorage.app\"}",
+        "GCLOUD_PROJECT": "upisha-948e1",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/upisha-948e1/locations/asia-south1/services/resumeStalledNewsletterCampaigns",
+        "FUNCTION_REGION": "asia-south1",
+        "FUNCTION_TARGET": "resumeStalledNewsletterCampaigns",
+        "LOG_EXECUTION_ID": "true"
+      },
+      "secretEnvironmentVariables": [
+        {
+          "key": "BREVO_API_KEY",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_API_KEY",
+          "version": "3"
+        },
+        {
+          "key": "BREVO_SENDER_EMAIL",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_SENDER_EMAIL",
+          "version": "1"
+        },
+        {
+          "key": "BREVO_SENDER_NAME",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_SENDER_NAME",
+          "version": "1"
+        },
+        {
+          "key": "SITE_URL",
+          "projectId": "upisha-948e1",
+          "secret": "SITE_URL",
+          "version": "1"
+        },
+        {
+          "key": "NEWSLETTER_UNSUBSCRIBE_SECRET",
+          "projectId": "upisha-948e1",
+          "secret": "NEWSLETTER_UNSUBSCRIBE_SECRET",
+          "version": "1"
+        }
+      ],
+      "timeoutSeconds": 540,
+      "uri": "https://asia-south1-upisha-948e1.cloudfunctions.net/resumeStalledNewsletterCampaigns",
+      "serviceAccount": "701387507570-compute@developer.gserviceaccount.com",
+      "availableMemoryMb": 512,
+      "cpu": 1,
+      "maxInstances": 10,
+      "concurrency": 80,
+      "labels": {
+        "deployment-tool": "cli-firebase",
+        "deployment-scheduled": "true",
+        "firebase-functions-hash": "c6fce9e40f5c4f4f9b2e09993cd37708bf2991d6"
+      },
+      "runServiceId": "resumestallednewslettercampaigns",
+      "codebase": "default",
+      "hash": "c6fce9e40f5c4f4f9b2e09993cd37708bf2991d6",
+      "state": "ACTIVE"
+    },
+    {
+      "platform": "gcfv2",
+      "id": "sendNewsletterCampaign",
+      "project": "upisha-948e1",
+      "region": "asia-south1",
+      "eventTrigger": {
+        "eventType": "google.cloud.firestore.document.v1.updated",
+        "retry": false,
+        "eventFilters": {
+          "database": "(default)",
+          "namespace": "(default)"
+        },
+        "eventFilterPathPatterns": {
+          "document": "newsletterCampaigns/{campaignId}"
+        },
+        "region": "asia-south2"
+      },
+      "entryPoint": "sendNewsletterCampaign",
+      "runtime": "nodejs22",
+      "source": {
+        "storageSource": {
+          "bucket": "gcf-v2-sources-701387507570-asia-south1",
+          "object": "sendNewsletterCampaign/function-source.zip",
+          "generation": "1794661820225868"
+        }
+      },
+      "ingressSettings": "ALLOW_ALL",
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"upisha-948e1\",\"storageBucket\":\"upisha-948e1.firebasestorage.app\"}",
+        "GCLOUD_PROJECT": "upisha-948e1",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/upisha-948e1/locations/asia-south1/services/sendNewsletterCampaign",
+        "FUNCTION_REGION": "asia-south1",
+        "FUNCTION_SIGNATURE_TYPE": "cloudevent",
+        "FUNCTION_TARGET": "sendNewsletterCampaign",
+        "LOG_EXECUTION_ID": "true"
+      },
+      "secretEnvironmentVariables": [
+        {
+          "key": "BREVO_API_KEY",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_API_KEY",
+          "version": "3"
+        },
+        {
+          "key": "BREVO_SENDER_EMAIL",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_SENDER_EMAIL",
+          "version": "1"
+        },
+        {
+          "key": "BREVO_SENDER_NAME",
+          "projectId": "upisha-948e1",
+          "secret": "BREVO_SENDER_NAME",
+          "version": "1"
+        },
+        {
+          "key": "SITE_URL",
+          "projectId": "upisha-948e1",
+          "secret": "SITE_URL",
+          "version": "1"
+        },
+        {
+          "key": "NEWSLETTER_UNSUBSCRIBE_SECRET",
+          "projectId": "upisha-948e1",
+          "secret": "NEWSLETTER_UNSUBSCRIBE_SECRET",
+          "version": "1"
+        }
+      ],
+      "timeoutSeconds": 540,
+      "uri": "https://asia-south1-upisha-948e1.cloudfunctions.net/sendNewsletterCampaign",
+      "serviceAccount": "701387507570-compute@developer.gserviceaccount.com",
+      "availableMemoryMb": 512,
+      "cpu": 1,
+      "maxInstances": 10,
+      "concurrency": 80,
+      "labels": {
+        "deployment-tool": "cli-firebase",
+        "firebase-functions-hash": "c6fce9e40f5c4f4f9b2e09993cd37708bf2991d6"
+      },
+      "runServiceId": "sendnewslettercampaign",
+      "codebase": "default",
+      "hash": "c6fce9e40f5c4f4f9b2e09993cd37708bf2991d6",
+      "state": "ACTIVE"
+    }
+  ]
+}
