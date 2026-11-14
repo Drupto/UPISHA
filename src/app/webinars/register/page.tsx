@@ -258,14 +258,8 @@ export default function WebinarRegisterPage() {
             <CardContent>
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 This is a free webinar. Complete the registration form below to secure your spot.
-                {selectedWebinar.meetingLink && (
-                  <span className="block mt-2">
-                    After registering, you will receive the meeting link via email, or you can join directly:
-                    <a href={selectedWebinar.meetingLink} target="_blank" rel="noopener noreferrer" className="text-upisha-teal hover:underline ml-1">
-                      Join Meeting <ExternalLink className="h-3.5 w-3.5 inline" />
-                    </a>
-                  </span>
-                )}
+                The meeting link is sent by email after an administrator confirms your
+                registration.
               </p>
             </CardContent>
           </Card>

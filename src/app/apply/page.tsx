@@ -287,7 +287,7 @@ export default function ApplyPage() {
         const data = await res.json().catch(() => ({}))
         toast({
           title: 'Application submitted!',
-          description: data.message || 'Account created! Please check your email to verify your account.',
+          description: data.message || 'Account created! Sign in and request a verification email from the member dashboard.',
         })
       } else {
         const errData = await res.json().catch(() => ({})) as {
@@ -453,9 +453,9 @@ export default function ApplyPage() {
                   Application Submitted!
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  Thank you for your interest in joining UP ISHA. Your account has been created and
-                  a verification email has been sent. We will review your application and get back
-                  to you shortly.
+                  Thank you for your interest in joining UP ISHA. Your account has been created.
+                  Sign in to the member portal and click “Resend Verification Email” to verify your
+                  address. We will review your application and get back to you shortly.
                 </p>
                 <Link href="/login" className="inline-block text-upisha-teal hover:underline text-sm font-medium">
                   Click here to sign in to your member portal →
@@ -598,7 +598,7 @@ export default function ApplyPage() {
                     {allJoinErrors.password && <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
                   </div>
                   {allJoinErrors.password && <p role="alert" className="text-xs text-red-500 mt-1">{allJoinErrors.password}</p>}
-                  <p className="text-[10px] text-gray-400 mt-1">Min 8 characters with at least one uppercase letter (A–Z), one lowercase letter (a–z) and one number (0–9). This password will be used to log into your account. A verification email will be sent.</p>
+                  <p className="text-[10px] text-gray-400 mt-1">Min 8 characters with at least one uppercase letter (A–Z), one lowercase letter (a–z) and one number (0–9). This password will be used to log into your account. You can request a verification email from the member dashboard after signing in.</p>
                 </div>
 
                 {/* Phone & City */}

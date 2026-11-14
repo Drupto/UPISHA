@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateAnnouncement, deleteAnnouncement } from '@/lib/firestore'
-import { announcementSchema } from '@/lib/validations'
+import { announcementUpdateSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
@@ -25,7 +25,7 @@ export async function PUT(
 
   try {
     const body = await request.json()
-    const validated = announcementSchema.partial().parse(body)
+    const validated = announcementUpdateSchema.parse(body)
 
     await updateAnnouncement(id, {
       ...validated,

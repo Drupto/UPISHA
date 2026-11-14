@@ -141,6 +141,10 @@ export const newsletterCampaignSchema = z.object({
   status: z.enum(['draft', 'sent']).optional().default('draft'),
 })
 
+export const newsletterCampaignUpdateSchema = newsletterCampaignSchema.partial().extend({
+  status: z.enum(['draft', 'sent']).optional(),
+})
+
 export const webinarRegistrationSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
   email: z.string().email('Invalid email address'),
@@ -149,8 +153,6 @@ export const webinarRegistrationSchema = z.object({
   rciCrrNumber: z.string().min(2, 'RCI-CRR Number is required').max(100),
   city: z.string().min(2, 'City is required').max(100),
   webinarId: z.string().min(1, 'Webinar selection is required'),
-  webinarTitle: z.string().min(1, 'Webinar title is required'),
-  webinarType: z.enum(['paid', 'free']).optional().nullable(),
   transactionNumber: z.string().max(100).optional().nullable(),
   message: z.string().max(5000).optional().nullable(),
   declaration: z.boolean().refine((val) => val === true, {
@@ -189,6 +191,16 @@ export const webinarSchema = z.object({
   maxAttendees: z.number().int().positive().optional().nullable(),
 })
 
+/**
+ * Update schema: re-declares every default-bearing field as a plain optional
+ * so `.partial()` cannot inject defaults (which previously converted free
+ * webinars to paid and reactivated inactive ones on unrelated edits).
+ */
+export const webinarUpdateSchema = webinarSchema.partial().extend({
+  type: z.enum(['paid', 'free']).optional(),
+  isActive: z.boolean().optional(),
+})
+
 export const eventSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters').max(200),
   date: z.string().min(1, 'Date is required'),
@@ -206,12 +218,21 @@ export const eventSchema = z.object({
   registrationLabel: z.string().max(100).optional().nullable(),
 })
 
+export const eventUpdateSchema = eventSchema.partial().extend({
+  isActive: z.boolean().optional(),
+  countdownEnabled: z.boolean().optional(),
+})
+
 export const announcementSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters').max(200),
   date: z.string().min(1, 'Date is required'),
   type: z.string().min(2, 'Type must be at least 2 characters').max(100),
   content: z.string().max(5000).optional().nullable(),
   isActive: z.boolean().optional().default(true),
+})
+
+export const announcementUpdateSchema = announcementSchema.partial().extend({
+  isActive: z.boolean().optional(),
 })
 
 export const publicationSchema = z.object({

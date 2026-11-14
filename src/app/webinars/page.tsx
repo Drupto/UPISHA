@@ -45,7 +45,7 @@ export default function WebinarsPage() {
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
             Stay updated with the latest professional development webinars from UP ISHA.
-            Register for free to secure your spot.
+            Register to secure your spot; confirmations and meeting links are sent after review.
           </p>
           <div className="mt-6">
             <Link href="/webinars/lookup">

@@ -3,17 +3,24 @@ import { createPublicationSubmission, getPublicationSubmissions } from '@/lib/fi
 import { withSecurityHeaders, sanitizeHtml, rateLimit, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { publicationSubmissionSchema } from '@/lib/validations'
+import { publicFormsDisabledResponse, enforcePublicEndpointLimit } from '@/lib/public-endpoint-guard'
 
 export async function POST(request: NextRequest) {
+  const disabled = publicFormsDisabledResponse()
+  if (disabled) return disabled
+
   try {
     const body = await request.json()
     const validated = publicationSubmissionSchema.parse(body)
     const email = validated.authorEmail.toLowerCase()
 
-    // Rate limiting - 5 submissions per hour per email
-    if (!rateLimit(`pub-sub:${email}`, 5, 60 * 60 * 1000)) {
-      return withSecurityHeaders(NextResponse.json({ error: 'Too many submissions. Please try again later.' }, { status: 429 }))
-    }
+    const limited = await enforcePublicEndpointLimit(request, 'publication-submissions', {
+      perIp: 5,
+      global: 100,
+      email,
+      perEmail: 3,
+    })
+    if (limited) return limited
 
     // CSRF protection (double-submit) — same pattern as /api/join and
     // /api/contact; the client (PublicationsSection) already ships the token.

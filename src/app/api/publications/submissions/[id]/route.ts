@@ -3,6 +3,7 @@ import { updatePublicationSubmission, deletePublicationSubmission, createPublica
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
+import { enqueueEmail } from '@/lib/email-outbox'
 import type { PublicationSubmissionDoc } from '@/lib/types'
 
 export async function PATCH(
@@ -26,16 +27,18 @@ export async function PATCH(
   try {
     const body = await request.json()
     const { status } = body
+    const notify = body?.notify !== false
 
     if (!['pending', 'approved', 'rejected'].includes(status)) {
       return withSecurityHeaders(NextResponse.json({ error: 'Invalid status' }, { status: 400 }))
     }
 
     // If approving, also create a publication from the submission
+    let submission = (await getPublicationSubmissions()).find((s) => s.id === id) as
+      | PublicationSubmissionDoc
+      | undefined
+
     if (status === 'approved') {
-      const submissions = await getPublicationSubmissions()
-      const submission = submissions.find((s) => s.id === id) as PublicationSubmissionDoc | undefined
-      
       if (submission) {
         await createPublication({
           title: sanitizeHtml(submission.title),
@@ -49,6 +52,26 @@ export async function PATCH(
     }
 
     await updatePublicationSubmission(id, { status })
+
+    if (notify && (status === 'approved' || status === 'rejected') && submission) {
+      try {
+        await enqueueEmail({
+          dedupeKey: `publication-decision:${id}:${status}`,
+          template: 'publication-decision',
+          to: { email: submission.authorEmail, name: submission.authorName },
+          templateData: {
+            authorName: submission.authorName,
+            title: submission.title,
+            status,
+          },
+          source: { collection: 'publicationSubmissions', id },
+          requestedBy: { type: 'admin', uid: admin.uid, email: admin.email },
+          approvedBy: { uid: admin.uid, email: admin.email },
+        })
+      } catch (queueError) {
+        console.error('Failed to queue publication decision email:', queueError)
+      }
+    }
 
     await logAdminAction({
       action: 'submission.review',

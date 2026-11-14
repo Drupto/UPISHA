@@ -18,6 +18,53 @@ const DAILY_EMAIL_LIMIT = (() => {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 300
 })()
 
+// Burst protection: the daily cap stops quota exhaustion but still allows a
+// short attack to send the entire day's allowance in a minute. Keep a small
+// hourly ceiling so legitimate transactional mail still flows all day.
+const HOURLY_EMAIL_LIMIT = (() => {
+  const n = Number(process.env.BREVO_HOURLY_LIMIT)
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 60
+})()
+
+function currentHourKey(): string {
+  return new Date().toISOString().slice(0, 13) // YYYY-MM-DDTHH (UTC)
+}
+
+export interface EmailSendingState {
+  enabled: boolean
+  reason?: string | null
+}
+
+let sendingStateCache: { value: EmailSendingState; expiresAt: number } | null = null
+
+/**
+ * Operator kill switch stored in Firestore (`config/emailSending`).
+ * Missing doc = enabled. Cached for 30s so a per-email check is cheap but a
+ * pause still takes effect quickly. `enabled: false` stops ALL sends.
+ */
+export async function getEmailSendingState(): Promise<EmailSendingState> {
+  const now = Date.now()
+  if (sendingStateCache && sendingStateCache.expiresAt > now) {
+    return sendingStateCache.value
+  }
+
+  let value: EmailSendingState = { enabled: true, reason: null }
+  try {
+    const snap = await db.collection('config').doc('emailSending').get()
+    const data = snap.data() as { enabled?: unknown; reason?: unknown } | undefined
+    value = {
+      enabled: data?.enabled !== false,
+      reason: typeof data?.reason === 'string' ? data.reason : null,
+    }
+  } catch (err) {
+    functions.logger.warn('Failed to read email sending state, assuming enabled:', err)
+  }
+
+  sendingStateCache = { value, expiresAt: now + 30_000 }
+  return value
+}
+
+
 function quotaDocRef(): admin.firestore.DocumentReference {
   const today = new Date().toISOString().slice(0, 10) // UTC day — matches the Next.js admin dashboard
   return db.collection('emailQuota').doc(today)
@@ -28,30 +75,66 @@ export interface QuotaStatus {
   used: number
   remaining: number
   exhausted: boolean
+  hourLimit: number
+  hourUsed: number
+  hourExhausted: boolean
 }
 
 async function getQuotaStatus(): Promise<QuotaStatus> {
   try {
     const snap = await quotaDocRef().get()
-    const data = snap.data() as { used?: unknown; exhausted?: unknown } | undefined
+    const data = snap.data() as {
+      used?: unknown
+      exhausted?: unknown
+      hourKey?: unknown
+      hourUsed?: unknown
+    } | undefined
     const used = typeof data?.used === 'number' ? data.used : 0
     const exhausted = data?.exhausted === true || used >= DAILY_EMAIL_LIMIT
-    return { limit: DAILY_EMAIL_LIMIT, used, remaining: Math.max(0, DAILY_EMAIL_LIMIT - used), exhausted }
+    const hourKey = currentHourKey()
+    const hourUsed =
+      data?.hourKey === hourKey && typeof data?.hourUsed === 'number' ? data.hourUsed : 0
+    return {
+      limit: DAILY_EMAIL_LIMIT,
+      used,
+      remaining: Math.max(0, DAILY_EMAIL_LIMIT - used),
+      exhausted,
+      hourLimit: HOURLY_EMAIL_LIMIT,
+      hourUsed,
+      hourExhausted: hourUsed >= HOURLY_EMAIL_LIMIT,
+    }
   } catch (err) {
     // Fail open: a Firestore hiccup should not block ALL transactional email.
     // Brevo itself will still 429 past the real limit, and we then mark the
     // quota doc as exhausted.
     functions.logger.warn('Failed to read email quota, assuming available:', err)
-    return { limit: DAILY_EMAIL_LIMIT, used: 0, remaining: DAILY_EMAIL_LIMIT, exhausted: false }
+    return {
+      limit: DAILY_EMAIL_LIMIT,
+      used: 0,
+      remaining: DAILY_EMAIL_LIMIT,
+      exhausted: false,
+      hourLimit: HOURLY_EMAIL_LIMIT,
+      hourUsed: 0,
+      hourExhausted: false,
+    }
   }
 }
 
 async function incrementQuotaUsed(): Promise<void> {
   try {
+    const hourKey = currentHourKey()
+    const snap = await quotaDocRef().get()
+    const data = snap.data() as { hourKey?: unknown; hourUsed?: unknown } | undefined
+    const previousHourUsed =
+      data?.hourKey === hourKey && typeof data?.hourUsed === 'number' ? data.hourUsed : 0
+
     await quotaDocRef().set(
       {
         used: admin.firestore.FieldValue.increment(1),
         limit: DAILY_EMAIL_LIMIT,
+        hourKey,
+        hourUsed: previousHourUsed + 1,
+        hourLimit: HOURLY_EMAIL_LIMIT,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
@@ -139,6 +222,12 @@ export interface SendEmailResult {
   error?: string
   /** True when the send was blocked because the daily Brevo quota is exhausted. */
   quotaExceeded?: boolean
+  /** True when the operator kill switch is off — item should stay queued. */
+  paused?: boolean
+  /** True when the hourly burst limit was reached — item should stay queued. */
+  rateLimited?: boolean
+  /** True when EMAIL_DRY_RUN handled the send without contacting Brevo. */
+  dryRun?: boolean
 }
 
 /**
@@ -197,13 +286,40 @@ function sleep(ms: number): Promise<void> {
 const MAX_SEND_ATTEMPTS = 3
 
 /**
+ * Hard ceiling on a single Brevo API call so a hung request cannot burn the
+ * whole function timeout. A timeout looks like a network failure (no HTTP
+ * status) to isTransientError(), so it is retried like any other glitch.
+ */
+const BREVO_CALL_TIMEOUT_MS = (() => {
+  const n = Number(process.env.BREVO_CALL_TIMEOUT_MS)
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 15_000
+})()
+
+function withCallTimeout<T>(promise: Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`Brevo API call timed out after ${BREVO_CALL_TIMEOUT_MS}ms`)),
+      BREVO_CALL_TIMEOUT_MS
+    )
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (err) => {
+        clearTimeout(timer)
+        reject(err)
+      }
+    )
+  })
+}
+
+/**
  * Send a transactional email via Brevo.
  * - Enforces the daily quota (skip + flag when exhausted)
  * - Retries transient failures (network / 5xx / 429-not-quota) with backoff
  */
 export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
-  const client = getBrevoClient()
-
   const sender = options.sender ?? {
     email: process.env.BREVO_SENDER_EMAIL || 'noreply@upisha.org',
     name: process.env.BREVO_SENDER_NAME || 'UP ISHA Team',
@@ -211,6 +327,32 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
 
   const templateTag = options.tags?.[0] || 'transactional'
   const recipientEmail = options.to[0]?.email || ''
+
+  // ── Operator kill switch ──
+  const sendingState = await getEmailSendingState()
+  if (!sendingState.enabled) {
+    functions.logger.warn('Email sending paused by config/emailSending — send skipped', {
+      recipient: recipientEmail,
+      template: templateTag,
+      reason: sendingState.reason,
+    })
+    return { success: false, paused: true, error: 'Email sending is paused' }
+  }
+
+  // ── Dry-run mode (safe end-to-end testing while Brevo is disabled) ──
+  if ((process.env.EMAIL_DRY_RUN ?? '').toLowerCase() === 'true') {
+    await logEmail({
+      to: recipientEmail,
+      toName: options.to[0]?.name || null,
+      subject: options.subject,
+      template: templateTag,
+      status: 'sent',
+      messageId: 'dry-run',
+      metadata: { ...(options.metadata || {}), dryRun: true },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    })
+    return { success: true, messageId: 'dry-run', dryRun: true }
+  }
 
   // ── Quota pre-check ──
   const quota = await getQuotaStatus()
@@ -227,6 +369,21 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
     })
     return { success: false, quotaExceeded: true, error: 'Daily email quota exhausted' }
   }
+  if (quota.hourExhausted) {
+    await logEmail({
+      to: recipientEmail,
+      toName: options.to[0]?.name || null,
+      subject: options.subject,
+      template: templateTag,
+      status: 'quota-exceeded',
+      error: 'Hourly email limit reached — send skipped',
+      metadata: options.metadata || null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    })
+    return { success: false, rateLimited: true, error: 'Hourly email limit reached' }
+  }
+
+  const client = getBrevoClient()
 
   // Count the attempt BEFORE sending: slightly overcounts on hard failures,
   // but that is the safe direction — better to stop early than to overrun
@@ -266,7 +423,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
   let lastError: unknown
   for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt++) {
     try {
-      const result = await client.sendTransacEmail(sendSmtpEmail)
+      const result = await withCallTimeout(client.sendTransacEmail(sendSmtpEmail))
       const messageId = result.body?.messageId || null
 
       await logEmail({
@@ -341,7 +498,7 @@ export async function sendSingleEmail(
   textContent?: string,
   tags?: string[],
   metadata?: Record<string, unknown>
-): Promise<{ success: boolean; messageId?: string; error?: string }> {
+): Promise<SendEmailResult> {
   return sendEmail({
     to: [to],
     subject,

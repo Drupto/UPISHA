@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getWebinars } from '@/lib/data'
-import { createWebinar, getWebinarRegistrationCount } from '@/lib/firestore'
+import { createWebinar, getWebinarRegistrationCount, getWebinars as getFirestoreWebinars } from '@/lib/firestore'
 import { webinarSchema } from '@/lib/validations'
 import { withSecurityHeaders, withCacheHeaders, sanitizeHtml, rateLimit, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
@@ -17,7 +17,13 @@ export async function GET(request: NextRequest) {
       return withSecurityHeaders(NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 }))
     }
 
-    const webinars = await getWebinars()
+    // Admin requests get the full documents (needed by the admin editor).
+    // Public requests get a safe DTO with NO meetingLink/registrationLink and
+    // no inactive webinars — otherwise private paid meeting links leak.
+    const auth = await requireAdmin(request)
+    const isAdmin = !(auth instanceof NextResponse)
+
+    const webinars = isAdmin ? await getFirestoreWebinars() : await getWebinars()
     // Attach registration counts for capacity display
     const webinarsWithCounts = await Promise.all(
       webinars.map(async (w) => {
@@ -30,7 +36,29 @@ export async function GET(request: NextRequest) {
         }
       })
     )
-    return withCacheHeaders(withSecurityHeaders(NextResponse.json({ webinars: webinarsWithCounts })))
+
+    if (isAdmin) {
+      return withSecurityHeaders(NextResponse.json({ webinars: webinarsWithCounts }))
+    }
+
+    const publicWebinars = webinarsWithCounts
+      .filter((w) => w.isActive !== false)
+      .map((w) => ({
+        id: w.id,
+        title: w.title,
+        date: w.date,
+        time: w.time,
+        speaker: w.speaker,
+        duration: w.duration,
+        description: w.description ?? null,
+        type: w.type ?? 'paid',
+        price: w.price ?? null,
+        isActive: w.isActive !== false,
+        maxAttendees: w.maxAttendees ?? null,
+        registrationCount: (w as { registrationCount?: number }).registrationCount ?? 0,
+      }))
+
+    return withCacheHeaders(withSecurityHeaders(NextResponse.json({ webinars: publicWebinars })))
   } catch (error) {
     console.error('Error fetching webinars:', error)
     return withSecurityHeaders(NextResponse.json({ error: 'Failed to fetch webinars' }, { status: 500 }))

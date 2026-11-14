@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createContactMessage, getContactMessages } from '@/lib/firestore'
+import { enqueueEmail } from '@/lib/email-outbox'
 import { contactSchema } from '@/lib/validations'
 import { withSecurityHeaders, rateLimit, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { publicFormsDisabledResponse, enforcePublicEndpointLimit } from '@/lib/public-endpoint-guard'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const validated = contactSchema.parse(body)
 
-    // Rate limiting
-    if (!rateLimit(`contact:${validated.email}`, 3, 60 * 60 * 1000)) {
-      return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
-    }
+    // Operator kill switch + distributed per-IP/global/email limits.
+    const disabled = publicFormsDisabledResponse()
+    if (disabled) return disabled
+    const limited = await enforcePublicEndpointLimit(request, 'contact', {
+      perIp: 5,
+      global: 100,
+      email: validated.email,
+      perEmail: 3,
+    })
+    if (limited) return limited
 
     // CSRF protection
     const csrfError = withCsrfProtection(request)
@@ -25,12 +33,32 @@ export async function POST(request: NextRequest) {
     const appCheckError = await withAppCheckProtection(request)
     if (appCheckError) return appCheckError
 
-    await createContactMessage({
+    const message = await createContactMessage({
       name: validated.name,
       email: validated.email,
       subject: validated.subject,
       message: validated.message,
     })
+
+    // Approval gate: queue the acknowledgment for an admin decision. No email
+    // is sent directly from this public endpoint.
+    try {
+      await enqueueEmail({
+        dedupeKey: `contact-ack:${message.id}`,
+        template: 'contact-ack',
+        to: { email: validated.email, name: validated.name },
+        templateData: {
+          name: validated.name,
+          subject: validated.subject,
+          message: validated.message,
+          ticketNumber: message.id.slice(0, 8).toUpperCase(),
+        },
+        source: { collection: 'contactMessages', id: message.id },
+        requestedBy: { type: 'public' },
+      })
+    } catch (queueError) {
+      console.error('Failed to queue contact acknowledgment:', queueError)
+    }
 
     return withSecurityHeaders(NextResponse.json({ success: true }, { status: 201 }))
   } catch (err: unknown) {

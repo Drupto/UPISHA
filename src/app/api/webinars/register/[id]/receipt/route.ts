@@ -3,7 +3,7 @@ import { withSecurityHeaders, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
 import { ensureWebinarReceipt, webinarReceiptNumber } from '@/lib/webinar-receipts'
-import { getReceiptByReceiptNumber } from '@/lib/firestore'
+import { getReceiptByReceiptNumber, getWebinarRegistrationById } from '@/lib/firestore'
 
 /**
  * Admin-only endpoint to inspect and (re)generate the payment receipt linked
@@ -56,6 +56,20 @@ export async function POST(
 
   const { id } = await params
   try {
+    const registration = await getWebinarRegistrationById(id)
+    if (!registration) {
+      return withSecurityHeaders(NextResponse.json({ error: 'Registration not found' }, { status: 404 }))
+    }
+    if (registration.status !== 'confirmed' || registration.paymentStatus !== 'verified') {
+      return withSecurityHeaders(NextResponse.json(
+        {
+          error:
+            'A receipt can only be generated for a confirmed registration whose payment has been verified.',
+        },
+        { status: 400 }
+      ))
+    }
+
     const result = await ensureWebinarReceipt(id)
     if (result.skipped === 'not-found') {
       return withSecurityHeaders(NextResponse.json({ error: 'Registration not found' }, { status: 404 }))

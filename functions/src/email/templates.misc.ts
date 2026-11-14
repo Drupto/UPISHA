@@ -148,3 +148,62 @@ export function renderNewsletterContent(data: {
 function wrapHtml(subject: string, bodyHtml: string, unsubscribeLink?: string): string {
   return wrapTemplate(subject, bodyHtml, unsubscribeLink)
 }
+
+// Publication submission decision
+export interface PublicationDecisionEmailData {
+  authorName: string
+  title: string
+  status: 'approved' | 'rejected'
+  note?: string
+}
+
+export function renderPublicationDecisionEmail(data: PublicationDecisionEmailData): RenderedEmail {
+  const approved = data.status === 'approved'
+  const subject = approved
+    ? `Publication Approved: ${data.title}`
+    : `Publication Submission Update: ${data.title}`
+  const bodyHtml = `
+    <h2>${approved ? 'Publication Approved ✅' : 'Publication Submission Update'}</h2>
+    <p>Dear <strong>${data.authorName}</strong>,</p>
+    <p>Your submission <strong>${data.title}</strong> has been ${
+      approved ? '<span class="badge badge-success">APPROVED</span>' : '<span class="badge badge-error">NOT APPROVED</span>'
+    }.</p>
+    ${data.note ? `<div class="info-box"><strong>Note:</strong> ${data.note}</div>` : ''}
+    <p>${approved ? 'It is now available in the publications section of the UP ISHA website.' : 'You are welcome to revise and resubmit your work.'}</p>
+    <p>Warm regards,<br><strong>UP ISHA Team</strong></p>
+  `
+  const text = `Dear ${data.authorName},\n\nYour submission "${data.title}" has been ${
+    approved ? 'approved' : 'not approved'
+  }.${data.note ? `\n\nNote: ${data.note}` : ''}\n\nBest regards,\nUP ISHA Team`
+  return { subject, html: wrapTemplate(subject, bodyHtml), text }
+}
+
+// Teach request decision
+export interface TeachDecisionEmailData {
+  fullName: string
+  topic: string
+  status: 'accepted' | 'rejected'
+  note?: string
+}
+
+export function renderTeachDecisionEmail(data: TeachDecisionEmailData): RenderedEmail {
+  const accepted = data.status === 'accepted'
+  const subject = accepted
+    ? 'Your UP ISHA Teaching Proposal Was Accepted'
+    : 'Update on Your UP ISHA Teaching Proposal'
+  const bodyHtml = `
+    <h2>${accepted ? 'Teaching Proposal Accepted ✅' : 'Teaching Proposal Update'}</h2>
+    <p>Dear <strong>${data.fullName}</strong>,</p>
+    <p>Thank you for proposing the session <strong>${data.topic}</strong>.</p>
+    <p>After review, your proposal has been ${
+      accepted ? '<span class="badge badge-success">ACCEPTED</span>' : '<span class="badge badge-error">NOT ACCEPTED</span>'
+    }.</p>
+    ${data.note ? `<div class="info-box"><strong>Note:</strong> ${data.note}</div>` : ''}
+    <p>${accepted ? 'Our team will contact you with the next steps and scheduling details.' : 'We appreciate your interest and encourage you to submit another topic in the future.'}</p>
+    <p>Warm regards,<br><strong>UP ISHA Team</strong></p>
+  `
+  const text = `Dear ${data.fullName},\n\nYour teaching proposal "${data.topic}" has been ${
+    accepted ? 'accepted' : 'not accepted'
+  }.${data.note ? `\n\nNote: ${data.note}` : ''}\n\nBest regards,\nUP ISHA Team`
+  return { subject, html: wrapTemplate(subject, bodyHtml), text }
+}

@@ -12,6 +12,7 @@ import { checkRateLimitStrict, getClientIp } from '@/lib/firestore-rate-limit'
 import { logAdminAction } from '@/lib/audit-log'
 import { enforceBodySizeLimit } from '@/lib/validations'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { enqueueEmail } from '@/lib/email-outbox'
 import type { WebinarRegistrationDoc } from '@/lib/types'
 
 /**
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { registrationId, templateId } = body
+    const notify = body?.notify !== false
 
     if (!registrationId || !templateId) {
       return withSecurityHeaders(NextResponse.json(
@@ -145,8 +147,32 @@ export async function POST(request: NextRequest) {
         email: registration.email,
         webinarTitle: registration.webinarTitle,
         certificateNumber: `UPISHA-WEB-${registrationId}`,
+        notify,
       },
     })
+
+    if (notify) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://upisha.org'
+      const certificateNumber = `UPISHA-WEB-${registrationId}`
+      try {
+        await enqueueEmail({
+          dedupeKey: `webinar-certificate:${certificateNumber}`,
+          template: 'webinar-certificate',
+          to: { email: registration.email, name: registration.fullName },
+          templateData: {
+            fullName: registration.fullName,
+            webinarTitle: registration.webinarTitle,
+            certificateNumber,
+            certificateUrl: `${siteUrl}/verify/${certificateNumber}`,
+          },
+          source: { collection: 'certificates', id: certificate.id },
+          requestedBy: { type: 'admin', uid: admin.uid, email: admin.email },
+          approvedBy: { uid: admin.uid, email: admin.email },
+        })
+      } catch (queueError) {
+        console.error('Failed to queue certificate email:', queueError)
+      }
+    }
 
     return withSecurityHeaders(NextResponse.json({
       success: true,

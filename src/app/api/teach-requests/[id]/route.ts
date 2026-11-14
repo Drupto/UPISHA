@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateTeachRequest, deleteTeachRequest } from '@/lib/firestore'
+import { updateTeachRequest, deleteTeachRequest, getTeachRequests } from '@/lib/firestore'
 import { withSecurityHeaders, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { enqueueEmail } from '@/lib/email-outbox'
 
 const ALLOWED_STATUSES = ['new', 'contacted', 'accepted', 'rejected'] as const
 type TeachRequestStatus = (typeof ALLOWED_STATUSES)[number]
@@ -15,6 +16,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (auth instanceof NextResponse) {
     return withSecurityHeaders(auth)
   }
+  const admin = auth as { uid: string; email: string | null }
 
   // CSRF protection
   const csrfError = withCsrfProtection(request)
@@ -45,7 +47,35 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return withSecurityHeaders(NextResponse.json({ error: 'No valid fields to update' }, { status: 400 }))
     }
 
+    const teachRequest = (await getTeachRequests()).find((r) => r.id === id)
     await updateTeachRequest(id, update)
+
+    const notify = body?.notify !== false
+    if (
+      notify &&
+      teachRequest &&
+      (update.status === 'accepted' || update.status === 'rejected')
+    ) {
+      try {
+        await enqueueEmail({
+          dedupeKey: `teach-decision:${id}:${update.status}`,
+          template: 'teach-decision',
+          to: { email: teachRequest.email, name: teachRequest.name },
+          templateData: {
+            fullName: teachRequest.name,
+            topic: teachRequest.topic,
+            status: update.status,
+            note: update.adminNotes ?? undefined,
+          },
+          source: { collection: 'teachRequests', id },
+          requestedBy: { type: 'admin', uid: admin.uid, email: admin.email },
+          approvedBy: { uid: admin.uid, email: admin.email },
+        })
+      } catch (queueError) {
+        console.error('Failed to queue teach decision email:', queueError)
+      }
+    }
+
     return withSecurityHeaders(NextResponse.json({ success: true }))
   } catch (error) {
     console.error('Error updating teach request:', error)

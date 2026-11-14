@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateEvent, deleteEvent } from '@/lib/firestore'
-import { eventSchema } from '@/lib/validations'
+import { eventUpdateSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
@@ -25,7 +25,7 @@ export async function PUT(
 
   try {
     const body = await request.json()
-    const validated = eventSchema.partial().parse(body)
+    const validated = eventUpdateSchema.parse(body)
 
     await updateEvent(id, {
       ...validated,

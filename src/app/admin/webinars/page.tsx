@@ -53,6 +53,11 @@ interface RegistrationItem {
   message?: string | null
   declaration: boolean
   status?: 'pending' | 'confirmed' | 'rejected'
+  amount?: number | null
+  currency?: 'INR'
+  paymentStatus?: 'not_required' | 'pending_verification' | 'verified' | 'rejected' | 'refunded'
+  paymentVerifiedBy?: { uid: string; email: string | null } | null
+  receiptNumber?: string | null
   createdAt?: Date
 }
 
@@ -349,18 +354,72 @@ export default function AdminWebinarsPage() {
   }
 
   const handleStatusChange = async (id: string, status: 'pending' | 'confirmed' | 'rejected') => {
+    const registration = registrations.find((r) => r.id === id)
+    const payload: Record<string, unknown> = { status, notify: true }
+
+    if (status === 'confirmed' && registration?.webinarType === 'paid') {
+      const verified = window.confirm(
+        `Confirm that the payment of ₹${registration.amount ?? 0} (transaction ${registration.transactionNumber || '—'}) has been verified in the bank/UPI statement.\n\nClick OK only if the payment is verified.`
+      )
+      if (!verified) return
+      payload.paymentVerified = true
+    }
+
+    if (
+      status === 'rejected' &&
+      registration?.webinarType === 'paid' &&
+      registration.status === 'confirmed'
+    ) {
+      const refunded = window.confirm(
+        'This paid registration has a receipt.\n\nOK = payment was refunded (receipt marked refunded)\nCancel = no refund needed (receipt stays paid)'
+      )
+      payload.refundDecision = refunded ? 'refunded' : 'no_refund'
+      if (refunded) {
+        const reason = window.prompt('Reason for rejection / refund (optional)')
+        if (reason) payload.rejectionReason = reason
+      }
+    }
+
     try {
       const res = await fetch(`/api/webinars/register/${id}`, {
         method: 'PATCH',
         headers: csrfHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(payload),
       })
       if (res.ok) {
+        const data = await res.json().catch(() => ({}))
         toast({ title: `Registration ${status}`, description: `Registration marked as ${status}.` })
-        setRegistrations((prev) => prev.map((r) => r.id === id ? { ...r, status } : r))
-        setSelectedRegistration((prev) => prev && prev.id === id ? { ...prev, status } : prev)
+        setRegistrations((prev) =>
+          prev.map((r) =>
+            r.id === id
+              ? {
+                  ...r,
+                  status,
+                  receiptNumber: data.receiptNumber ?? r.receiptNumber,
+                  paymentStatus:
+                    status === 'confirmed' && r.webinarType === 'paid'
+                      ? 'verified'
+                      : r.paymentStatus,
+                }
+              : r
+          )
+        )
+        setSelectedRegistration((prev) =>
+          prev && prev.id === id
+            ? {
+                ...prev,
+                status,
+                receiptNumber: data.receiptNumber ?? prev.receiptNumber,
+                paymentStatus:
+                  status === 'confirmed' && prev.webinarType === 'paid'
+                    ? 'verified'
+                    : prev.paymentStatus,
+              }
+            : prev
+        )
       } else {
-        toast({ title: 'Error', description: 'Failed to update status', variant: 'destructive' })
+        const data = await res.json().catch(() => ({}))
+        toast({ title: 'Error', description: data.error || 'Failed to update status', variant: 'destructive' })
       }
     } catch {
       toast({ title: 'Error', description: 'Network error', variant: 'destructive' })
@@ -1099,6 +1158,23 @@ export default function AdminWebinarsPage() {
                   <p className="text-xs text-gray-400 mb-1">Transaction Number</p>
                   <p className="text-sm font-mono text-gray-700 dark:text-gray-300">{selectedRegistration.transactionNumber || '-'}</p>
                 </div>
+
+                {selectedRegistration.webinarType === 'paid' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">Amount Due</p>
+                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                        ₹{selectedRegistration.amount ?? 0}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">Payment Status</p>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                        {selectedRegistration.paymentStatus || 'pending_verification'}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {selectedRegistration.webinarType === 'paid' && (
                   <div>

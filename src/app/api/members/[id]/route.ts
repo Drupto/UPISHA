@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateMember, deleteMember, getMemberById as fetchMemberById, getMemberByMembershipId } from '@/lib/firestore'
 import { getActiveCertificateTemplateByType, getCertificatesByMemberId, seedDefaultCertificateTemplates, upsertCertificate } from '@/lib/firestore'
-import { upsertMembershipReceipt, getReceiptsByMemberId } from '@/lib/firestore'
+import { upsertMembershipReceipt, getReceiptsByMemberId, getReceiptByReceiptNumber } from '@/lib/firestore'
+import { enqueueEmail } from '@/lib/email-outbox'
 import { membershipFees } from '@/lib/static-data'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { parseMemberUpdateInput } from '@/lib/member-update'
@@ -37,6 +38,8 @@ export async function PUT(
       return withSecurityHeaders(NextResponse.json({ error: parsed.error }, { status: 400 }))
     }
     const { updateData, approved } = parsed
+    const notify = body?.notify !== false
+    const rejectionReason = String(body?.reason ?? '').trim().slice(0, 500)
 
     // 404 when the member does not exist (updateDoc would throw NOT_FOUND
     // → 500; a wrong id is not a server error). The fetched doc is reused
@@ -143,6 +146,53 @@ export async function PUT(
       } catch (certError) {
         // Log but don't fail the member update if certificate/receipt issuance fails
         console.error('Error auto-issuing certificate or receipt:', certError)
+      }
+    }
+
+    // Notification goes through the approval outbox. The admin action is the
+    // approval only when `notify` is true; nothing is sent directly here.
+    const finalStatus = updateData.status
+    if (notify && (finalStatus === 'approved' || finalStatus === 'rejected')) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://upisha.org'
+      let receiptData: Record<string, unknown> | undefined
+      try {
+        const receipt = await getReceiptByReceiptNumber(`UPISHA-RCPT-${id}`)
+        if (receipt && receipt.receiptNumber) {
+          receiptData = {
+            receiptNumber: receipt.receiptNumber,
+            transactionType: receipt.transactionType,
+            description: receipt.description,
+            amount: receipt.amount,
+            paidAt: receipt.issuedAt
+              ? new Date(receipt.issuedAt as unknown as string).toLocaleDateString()
+              : new Date().toLocaleDateString(),
+          }
+        }
+      } catch (receiptLookupError) {
+        console.error('Failed to load receipt for approval email:', receiptLookupError)
+      }
+
+      try {
+        await enqueueEmail({
+          dedupeKey: `member-approval:${id}:${finalStatus}`,
+          template: 'member-approval',
+          to: { email: member.email, name: member.fullName },
+          templateData: {
+            fullName: member.fullName,
+            status: finalStatus,
+            loginUrl: `${siteUrl}/login`,
+            certificateUrl:
+              finalStatus === 'approved' ? `${siteUrl}/verify/UPISHA-${id}` : undefined,
+            receiptUrl: receiptData ? `${siteUrl}/member/receipts` : undefined,
+            reason: finalStatus === 'rejected' ? rejectionReason || undefined : undefined,
+            receipt: receiptData,
+          },
+          source: { collection: 'members', id },
+          requestedBy: { type: 'admin', uid: admin.uid, email: admin.email },
+          approvedBy: { uid: admin.uid, email: admin.email },
+        })
+      } catch (queueError) {
+        console.error('Failed to queue member status email:', queueError)
       }
     }
 

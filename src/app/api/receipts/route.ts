@@ -3,6 +3,7 @@ import { getReceipts, createReceipt, getReceiptByReceiptNumber } from '@/lib/fir
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
+import { enqueueEmail } from '@/lib/email-outbox'
 import type { ReceiptDoc, ReceiptTransactionType, ReceiptStatus } from '@/lib/types'
 
 export async function GET(request: NextRequest) {
@@ -104,6 +105,32 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await createReceipt(receiptData)
+
+    const notify = body?.notify !== false
+    if (notify) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://upisha.org'
+      try {
+        await enqueueEmail({
+          dedupeKey: `receipt:${receiptData.receiptNumber}`,
+          template: 'receipt',
+          to: { email: receiptData.memberEmail, name: receiptData.memberName },
+          templateData: {
+            fullName: receiptData.memberName,
+            receiptNumber: receiptData.receiptNumber,
+            amount: receiptData.amount,
+            transactionType: receiptData.transactionType,
+            description: receiptData.description,
+            paidAt: (receiptData.issuedAt ?? new Date()).toLocaleDateString(),
+            receiptUrl: `${siteUrl}/member/receipts`,
+          },
+          source: { collection: 'receipts', id: result.id },
+          requestedBy: { type: 'admin', uid: admin.uid, email: admin.email },
+          approvedBy: { uid: admin.uid, email: admin.email },
+        })
+      } catch (queueError) {
+        console.error('Failed to queue receipt email:', queueError)
+      }
+    }
 
     await logAdminAction({
       action: 'receipt.create',

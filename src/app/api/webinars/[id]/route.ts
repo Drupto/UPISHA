@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateWebinar, deleteWebinar } from '@/lib/firestore'
-import { webinarSchema } from '@/lib/validations'
+import { webinarUpdateSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
@@ -25,7 +25,7 @@ export async function PUT(
 
   try {
     const body = await request.json()
-    const validated = webinarSchema.partial().parse(body)
+    const validated = webinarUpdateSchema.parse(body)
 
     await updateWebinar(id, {
       ...validated,

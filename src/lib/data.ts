@@ -95,7 +95,16 @@ export async function getWebinars(): Promise<Webinar[]> {
     try {
       const { getWebinars: fbGetWebinars } = await import('@/lib/firestore')
       const docs = await fbGetWebinars()
-      if (docs && docs.length > 0) return docs as Webinar[]
+      if (docs && docs.length > 0) {
+        // Public/RSC payloads must never include private join credentials or
+        // inactive webinars. Admin reads use firestore.getWebinars directly.
+        return docs
+          .filter((webinar) => webinar.isActive !== false)
+          .map((webinar) => {
+            const { meetingLink: _meetingLink, registrationLink: _registrationLink, ...safe } = webinar
+            return safe as Webinar
+          })
+      }
       return []
     } catch {
       return []

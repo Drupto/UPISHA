@@ -2,7 +2,7 @@ import {
   getWebinarRegistrationById,
   getWebinarById,
   getReceiptByReceiptNumber,
-  createReceipt,
+  upsertReceipt,
   updateReceipt,
   getMemberByEmail,
 } from '@/lib/firestore'
@@ -40,17 +40,22 @@ export async function ensureWebinarReceipt(
 
   const receiptNumber = webinarReceiptNumber(id)
   const webinar = registration.webinarId ? await getWebinarById(registration.webinarId) : null
-  const amount = webinar?.price ?? 0
+  // Snapshot wins: the amount quoted at registration must not change if the
+  // admin later edits the webinar price.
+  const amount =
+    typeof registration.amount === 'number'
+      ? registration.amount
+      : typeof webinar?.price === 'number'
+        ? webinar.price
+        : 0
 
   const existing = await getReceiptByReceiptNumber(receiptNumber)
   if (existing) {
     // Receipts issued before the webinar had a price (or before the price was
-    // set on the webinar) carry amount 0. Sync them so the corrected fee
-    // flows through to the stored/downloadable receipt.
-    const price = typeof webinar?.price === 'number' ? webinar.price : 0
-    if (existing.id && existing.amount === 0 && price > 0) {
+    // set on the webinar) carry amount 0. Sync them to the snapshotted amount.
+    if (existing.id && existing.amount === 0 && amount > 0) {
       try {
-        await updateReceipt(existing.id, { amount: price })
+        await updateReceipt(existing.id, { amount })
         const refreshed = await getReceiptByReceiptNumber(receiptNumber)
         return { created: false, receipt: refreshed ?? existing }
       } catch (syncError) {
@@ -76,7 +81,7 @@ export async function ensureWebinarReceipt(
     console.error('Failed to link webinar receipt to member account:', linkError)
   }
 
-  await createReceipt({
+  await upsertReceipt({
     receiptNumber,
     memberId,
     memberUid,
@@ -90,6 +95,8 @@ export async function ensureWebinarReceipt(
     paymentMethod: 'UPI',
     status: 'paid',
     issuedAt: new Date(),
+    // The confirmation email (with receipt details) is the single notification.
+    suppressEmail: true,
   })
 
   const created = await getReceiptByReceiptNumber(receiptNumber)

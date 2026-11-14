@@ -5,22 +5,31 @@ import {
   getWebinarRegistrationsByEmail,
   getWebinarById,
   getWebinarRegistrationCount,
+  getWebinarRegistrationByTransactionNumber,
 } from '@/lib/firestore'
 import { webinarRegistrationSchema } from '@/lib/validations'
-import { withSecurityHeaders, sanitizeHtml, rateLimit, resetRateLimit, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
+import { withSecurityHeaders, sanitizeHtml, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { isWebinarPast } from '@/lib/webinar-status'
+import { publicFormsDisabledResponse, enforcePublicEndpointLimit } from '@/lib/public-endpoint-guard'
 
 export async function POST(request: NextRequest) {
+  // Operator kill switch + distributed per-IP/global/email limits.
+  const disabled = publicFormsDisabledResponse()
+  if (disabled) return disabled
+
   try {
     const body = await request.json()
     const validated = webinarRegistrationSchema.parse(body)
     const email = validated.email.toLowerCase()
 
-    // Rate limiting - 10 attempts per hour per email (generous to avoid blocking legit users)
-    if (!rateLimit(`webinar-reg:${email}`, 10, 60 * 60 * 1000)) {
-      return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
-    }
+    const limited = await enforcePublicEndpointLimit(request, 'webinar-register', {
+      perIp: 10,
+      global: 100,
+      email,
+      perEmail: 5,
+    })
+    if (limited) return limited
 
     // CSRF protection (double-submit) — same pattern as /api/join and
     // /api/contact so this public form cannot be cross-site submitted.
@@ -46,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Capacity check: enforce maxAttendees if set
     const webinar = await getWebinarById(validated.webinarId)
-    if (!webinar) {
+    if (!webinar || webinar.isActive === false) {
       return withSecurityHeaders(NextResponse.json(
         { error: 'Webinar not found.' },
         { status: 404 }
@@ -71,20 +80,46 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Determine webinar type (fall back to the submitted value, or infer from webinar record)
-    const webinarType = validated.webinarType ?? webinar?.type ?? 'paid'
+    // SECURITY: type, title and price come ONLY from the webinar document.
+    // The client must never be able to declare a paid webinar "free".
+    const webinarType = webinar.type === 'free' ? 'free' : 'paid'
     const isFree = webinarType === 'free'
+    const amount = typeof webinar.price === 'number' ? webinar.price : null
 
-    // For paid webinars, a transaction number is required
-    if (!isFree && !validated.transactionNumber?.trim()) {
+    if (!isFree && (amount === null || amount <= 0)) {
       return withSecurityHeaders(NextResponse.json(
-        { error: 'Transaction number is required for paid webinars.' },
-        { status: 400 }
+        {
+          error:
+            'This webinar is not currently accepting registrations. Please contact the administrator.',
+        },
+        { status: 409 }
       ))
     }
 
-    // Free webinars are auto-confirmed; paid webinars require admin confirmation
-    const status = isFree ? 'confirmed' : 'pending'
+    // For paid webinars a usable, unique transaction reference is required.
+    const transactionNumber = validated.transactionNumber?.trim() ?? ''
+    if (!isFree) {
+      if (transactionNumber.length < 4 || transactionNumber.length > 100) {
+        return withSecurityHeaders(NextResponse.json(
+          { error: 'Please enter a valid payment transaction / reference number.' },
+          { status: 400 }
+        ))
+      }
+      const duplicate = await getWebinarRegistrationByTransactionNumber(transactionNumber)
+      if (duplicate) {
+        return withSecurityHeaders(NextResponse.json(
+          {
+            error:
+              'This transaction number has already been submitted. If you believe this is an error, please contact us.',
+          },
+          { status: 409 }
+        ))
+      }
+    }
+
+    // ALL registrations (free and paid) remain pending until an admin reviews
+    // them. The confirmation email is only created after that approval.
+    const status = 'pending'
 
     const registration = await createWebinarRegistration({
       fullName: sanitizeHtml(validated.fullName),
@@ -94,22 +129,29 @@ export async function POST(request: NextRequest) {
       rciCrrNumber: validated.rciCrrNumber ? sanitizeHtml(validated.rciCrrNumber) : null,
       city: sanitizeHtml(validated.city),
       webinarId: validated.webinarId,
-      webinarTitle: sanitizeHtml(validated.webinarTitle),
-      webinarDate: webinar?.date ?? null,
-      webinarTime: webinar?.time ?? null,
+      webinarTitle: sanitizeHtml(webinar.title),
+      webinarDate: webinar.date ?? null,
+      webinarTime: webinar.time ?? null,
       webinarType,
-      transactionNumber: validated.transactionNumber ? sanitizeHtml(validated.transactionNumber) : null,
+      transactionNumber: isFree ? null : sanitizeHtml(transactionNumber),
       message: validated.message ? sanitizeHtml(validated.message) : null,
       declaration: validated.declaration,
       status,
+      amount: isFree ? 0 : amount,
+      currency: 'INR',
+      paymentStatus: isFree ? 'not_required' : 'pending_verification',
+      paymentVerifiedBy: null,
+      paymentVerifiedAt: null,
+      receiptNumber: null,
+      rejectionReason: null,
     })
 
-    // Reset rate limit on success so a user can register for multiple webinars
-    resetRateLimit(`webinar-reg:${email}`)
+    // Rate-limit keys are intentionally NOT reset on success: that would allow
+    // an attacker to bypass the limiter by interleaving one valid registration.
 
     const message = isFree
-      ? 'Registration successful! You are now registered for this free webinar. You will receive the webinar link via email.'
-      : 'Registration submitted successfully! Your registration is pending admin confirmation. You will receive an email once confirmed.'
+      ? 'Registration submitted! Your free registration is pending admin confirmation. You will receive the meeting link by email once confirmed.'
+      : 'Registration submitted successfully! Your registration is pending payment verification and admin confirmation. You will receive an email once confirmed.'
 
     return withSecurityHeaders(NextResponse.json({
       success: true,

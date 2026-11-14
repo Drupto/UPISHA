@@ -2,6 +2,23 @@
 
 This document describes how the UP ISHA platform sends emails via **Brevo** (formerly Sendinblue) using **Firebase Cloud Functions**.
 
+> ## Current architecture — approval-gated email outbox
+>
+> Direct Firestore email triggers are **disabled**. All transactional email now
+> flows through the `emailOutbox` collection:
+>
+> 1. A public submission enqueues a `pending_approval` item (it never sends).
+> 2. An admin action may enqueue an already-`approved` item when the admin
+>    explicitly opts to notify.
+> 3. Admins approve/reject pending items in **Admin → Email Approvals**.
+> 4. `onEmailOutboxApproved` (`functions/src/email-outbox.ts`) is the ONLY
+>    consumer that calls Brevo.
+> 5. `config/emailSending { enabled: false }` pauses all sends; queued items
+>    remain approved and resume automatically.
+>
+> The old trigger names below are kept for historical context only — they are
+> no longer exported/deployed.
+
 ## Architecture Overview
 
 ```

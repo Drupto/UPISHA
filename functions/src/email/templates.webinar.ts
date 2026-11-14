@@ -12,6 +12,7 @@ export interface WebinarConfirmationTemplateData {
   registrationStatus?: 'pending' | 'confirmed' | 'rejected'
   registrationNumber?: string
   transactionNumber?: string
+  receiptNumber?: string
   amount?: number
 }
 
@@ -60,6 +61,7 @@ export function renderWebinarConfirmationEmail(data: WebinarConfirmationTemplate
         ${data.webinarDuration ? `<tr><td>Duration</td><td>${data.webinarDuration}</td></tr>` : ''}
         ${data.amount ? `<tr><td>Fee</td><td>₹${data.amount}</td></tr>` : ''}
         ${data.registrationNumber ? `<tr><td>Registration No.</td><td><code>${data.registrationNumber}</code></td></tr>` : ''}
+        ${data.receiptNumber ? `<tr><td>Receipt No.</td><td><code>${data.receiptNumber}</code></td></tr>` : ''}
         ${data.transactionNumber ? `<tr><td>Transaction</td><td>${data.transactionNumber}</td></tr>` : ''}
       </table>
       ${meetingLink ? `

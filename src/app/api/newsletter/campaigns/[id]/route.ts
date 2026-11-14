@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateNewsletterCampaign, deleteNewsletterCampaign } from '@/lib/firestore'
-import { newsletterCampaignSchema } from '@/lib/validations'
+import { newsletterCampaignUpdateSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { logAdminAction } from '@/lib/audit-log'
@@ -25,7 +25,7 @@ export async function PUT(
 
   try {
     const body = await request.json()
-    const validated = newsletterCampaignSchema.partial().parse(body)
+    const validated = newsletterCampaignUpdateSchema.parse(body)
 
     // When marking as sent, record sentAt timestamp
     const sentAt = validated.status === 'sent' ? new Date() : undefined

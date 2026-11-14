@@ -22,6 +22,8 @@ npm run dev            # http://localhost:3000
 | `NEXT_PUBLIC_FIREBASE_*` (6) | `.env` / Netlify | Public Firebase web config (safe to expose — protected by security rules) |
 | `NEXT_PUBLIC_APP_CHECK_SITE_KEY` | `.env` / Netlify | Public reCAPTCHA Enterprise site key for App Check attestation (safe to expose — enforcement is server-side) |
 | `APP_CHECK_MODE` | `.env` / Netlify (`off` in CI) | API-layer App Check: `off` (default) / `monitor` (verify + log to `api_logs`, always allow) / `enforce` (403 on failure). Kill-switch: flip `enforce → monitor` without a redeploy |
+| `PUBLIC_FORMS_DISABLED` | `.env` / Netlify | `true` makes all public POST forms return 503 during an incident (join, contact, newsletter, webinar registration, teach requests, publication submissions) |
+| `config/emailSending` (Firestore doc) | Firestore console / Admin SDK | `{ enabled: false }` pauses ALL transactional email; queued outbox items remain approved and resume when re-enabled |
 | `FIREBASE_ADMIN_PROJECT_ID` | `.env` / Netlify (**secret**) | Server Admin SDK — `project_id` from the service-account JSON |
 | `FIREBASE_ADMIN_CLIENT_EMAIL` | `.env` / Netlify (**secret**) | Server Admin SDK — `client_email` |
 | `FIREBASE_ADMIN_PRIVATE_KEY` | `.env` / Netlify (**secret**) | `private_key` — single line, `\n` escapes preserved, no quotes |
@@ -50,9 +52,13 @@ npm run dev            # http://localhost:3000
 # Security rules + composite indexes + storage rules
 firebase deploy --only firestore:rules,firestore:indexes,storage
 
-# Cloud Functions (transactional email)
+# Cloud Functions (approval-gated transactional email outbox)
 cd functions && npm run build && cd .. && firebase deploy --only functions
 ```
+
+> Transactional email is sent only by `onEmailOutboxApproved`. Public forms queue
+> `pending_approval` items; admins approve/reject them in **Admin → Email
+> Approvals**. Newsletter campaigns remain the admin-initiated bulk exception.
 
 ### Service-account key (server Admin SDK)
 

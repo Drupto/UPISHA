@@ -351,6 +351,14 @@ export interface WebinarRegistrationDoc {
   message?: string | null
   declaration: boolean
   status?: 'pending' | 'confirmed' | 'rejected'
+  /** Amount quoted at registration time (snapshot — never re-read from webinar). */
+  amount?: number | null
+  currency?: 'INR'
+  paymentStatus?: 'not_required' | 'pending_verification' | 'verified' | 'rejected' | 'refunded'
+  paymentVerifiedBy?: { uid: string; email: string | null } | null
+  paymentVerifiedAt?: Date | null
+  receiptNumber?: string | null
+  rejectionReason?: string | null
   createdAt?: Date
   updatedAt?: Date
 }

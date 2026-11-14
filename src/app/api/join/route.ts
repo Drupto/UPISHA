@@ -4,6 +4,7 @@ import { createMember, getMembers, createUserRecord } from '@/lib/firestore'
 import { joinSchema, JOIN_FIELD_LABELS } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, withCsrfProtection, withAppCheckProtection, getClientIp } from '@/lib/security'
 import { checkRateLimitStrict } from '@/lib/firestore-rate-limit'
+import { publicFormsDisabledResponse } from '@/lib/public-endpoint-guard'
 import { validateDataUrl, MAX_IMAGE_BYTES, MAX_FILE_BYTES, IMAGE_MIME_TYPES, DOC_MIME_TYPES } from '@/lib/upload-validation'
 import { uploadDataUrl } from '@/lib/storage'
 
@@ -36,23 +37,10 @@ async function createFirebaseAuthUser(email: string, password: string, displayNa
     throw new Error(errorCode || 'Failed to create account')
   }
 
-  // Send email verification
-  const verifyRes = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        requestType: 'VERIFY_EMAIL',
-        idToken: signUpData.idToken,
-      }),
-    }
-  )
-
-  if (!verifyRes.ok) {
-    console.error('Failed to send verification email')
-  }
-
+  // SECURITY: do NOT send a Firebase verification email from this public,
+  // unauthenticated endpoint. A bot could otherwise mail-bomb arbitrary
+  // addresses. Verification is user-initiated after login via the existing
+  // "Resend verification" action in MemberRoute.
   return { localId: signUpData.localId, email: signUpData.email }
 }
 
@@ -66,6 +54,10 @@ async function maybeUploadToStorage(value: string | null | undefined, path: stri
 }
 
 export async function POST(request: NextRequest) {
+  // Operator kill switch — disable the public join form during an incident.
+  const disabled = publicFormsDisabledResponse()
+  if (disabled) return disabled
+
   // (C3) This endpoint only accepts POST requests; there is no GET handler,
   // so unauthenticated GET is not applicable.
   let authUser: { localId: string; email: string } | null = null

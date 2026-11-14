@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin'
 import * as crypto from 'crypto'
 import * as functions from 'firebase-functions'
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore'
+import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { defineSecret } from 'firebase-functions/params'
 import { setGlobalOptions } from 'firebase-functions/v2'
@@ -44,11 +45,26 @@ setGlobalOptions({
 // picks it up on `firebase deploy --only functions`.
 export { auditLogRetention }
 
+// The ONLY transactional-email sender (approval-gated outbox) + crash recovery.
+export {
+  onEmailOutboxApproved,
+  reconcileEmailOutbox,
+  drainApprovedEmailOutbox,
+} from './email-outbox'
+
+// ─── LEGACY DIRECT EMAIL TRIGGERS (disabled) ───
+// These trigger definitions are intentionally NOT exported: the Firebase CLI
+// discovers only exports, so they will be undeployed. Email now flows through
+// emailOutbox -> onEmailOutboxApproved only. They are kept temporarily for
+// template/format helpers and will be deleted in the cleanup pass.
+
+
 // ─── Email service imports ───
 import {
   sendSingleEmail,
   sendBulkEmails,
   sendBulkRenderedEmails,
+  getEmailSendingState,
   EmailRecipient,
   RenderedBulkEmail,
 } from './email/brevo.service'
@@ -103,7 +119,7 @@ async function claimEmailSend(markerId: string): Promise<boolean> {
 
 // ─── Firestore Trigger: Member Created (Join Form) ───
 // When a new member doc is created via /api/join, send application received email.
-export const sendJoinApplicationEmail = onDocumentCreated('members/{memberId}', async (event) => {
+const sendJoinApplicationEmail = onDocumentCreated('members/{memberId}', async (event) => {
   const member = event.data?.data() as Record<string, unknown> | undefined
   if (!member) return
 
@@ -137,7 +153,7 @@ export const sendJoinApplicationEmail = onDocumentCreated('members/{memberId}', 
 })
 
 // ─── Firestore Trigger: Member Status Change (Approval/Rejection) ───
-export const sendMemberApprovalEmailTrigger = onDocumentUpdated('members/{memberId}', async (event) => {
+const sendMemberApprovalEmailTrigger = onDocumentUpdated('members/{memberId}', async (event) => {
   const before = event.data?.before?.data?.() as Record<string, unknown> | undefined
   const after = event.data?.after?.data?.() as Record<string, unknown> | undefined
 
@@ -242,7 +258,7 @@ function formatDateValue(value: unknown): string {
 }
 
 // ─── Firestore Trigger: Webinar Registration Created ───
-export const onWebinarRegistrationCreated = onDocumentCreated('webinarRegistrations/{regId}', async (event) => {
+const onWebinarRegistrationCreated = onDocumentCreated('webinarRegistrations/{regId}', async (event) => {
   const reg = event.data?.data() as Record<string, unknown> | undefined
   if (!reg) return
 
@@ -308,7 +324,7 @@ export const onWebinarRegistrationCreated = onDocumentCreated('webinarRegistrati
 })
 
 // ─── Firestore Trigger: Webinar Registration Status Change ───
-export const onWebinarRegistrationUpdated = onDocumentUpdated('webinarRegistrations/{regId}', async (event) => {
+const onWebinarRegistrationUpdated = onDocumentUpdated('webinarRegistrations/{regId}', async (event) => {
   const before = event.data?.before?.data?.() as Record<string, unknown> | undefined
   const after = event.data?.after?.data?.() as Record<string, unknown> | undefined
 
@@ -381,7 +397,7 @@ export const onWebinarRegistrationUpdated = onDocumentUpdated('webinarRegistrati
 })
 
 // ─── Firestore Trigger: Contact Message Created ───
-export const onContactMessageCreated = onDocumentCreated('contactMessages/{messageId}', async (event) => {
+const onContactMessageCreated = onDocumentCreated('contactMessages/{messageId}', async (event) => {
   const msg = event.data?.data() as Record<string, unknown> | undefined
   if (!msg) return
 
@@ -426,7 +442,7 @@ function buildUnsubscribeUrlFor(email: string): string | undefined {
 }
 
 // ─── Firestore Trigger: Newsletter Subscriber Created ───
-export const onNewsletterSubscriberCreated = onDocumentCreated('newsletterSubscribers/{subId}', async (event) => {
+const onNewsletterSubscriberCreated = onDocumentCreated('newsletterSubscribers/{subId}', async (event) => {
   const sub = event.data?.data() as Record<string, unknown> | undefined
   if (!sub) return
 
@@ -451,9 +467,16 @@ export const onNewsletterSubscriberCreated = onDocumentCreated('newsletterSubscr
   }
 })
 
-// ─── Firestore Trigger: Newsletter Campaign Marked as Sent ───
-// Raised timeout + batch pacing so a full-day quota's worth of sends (~300)
-// completes instead of dying at the default 120s.
+// ─── Newsletter Campaign Sending (resumable) ───
+// A campaign list can be bigger than one invocation's timeout, so sending is
+// cursor-based: the last processed subscriber doc ID and running counters are
+// persisted after every batch, and `resumeStalledNewsletterCampaigns` picks
+// the work back up until `sendState === 'completed'`. Per-batch markers in
+// `emailSends` make redelivery/timeout recovery duplicate-free.
+const CAMPAIGN_BATCH_SIZE = 25
+const CAMPAIGN_TIME_BUDGET_MS = 7 * 60 * 1000 // stay under the 540s timeout
+const CAMPAIGN_LOCK_STALE_MS = 15 * 60 * 1000
+
 export const sendNewsletterCampaign = onDocumentUpdated(
   {
     document: 'newsletterCampaigns/{campaignId}',
@@ -461,90 +484,223 @@ export const sendNewsletterCampaign = onDocumentUpdated(
     memory: '512MiB',
   },
   async (event) => {
-  const before = event.data?.before?.data?.() as Record<string, unknown> | undefined
-  const after = event.data?.after?.data?.() as Record<string, unknown> | undefined
+    const before = event.data?.before?.data?.() as Record<string, unknown> | undefined
+    const after = event.data?.after?.data?.() as Record<string, unknown> | undefined
 
-  if (!before || !after) return
+    if (!before || !after) return
 
-  const oldStatus = String(before.status || '')
-  const newStatus = String(after.status || '')
-  if (oldStatus === newStatus) return
-  if (newStatus !== 'sent') return
+    const oldStatus = String(before.status || '')
+    const newStatus = String(after.status || '')
+    if (oldStatus === newStatus) return
+    if (newStatus !== 'sent') return
 
-  const subject = String(after.subject || '')
-  const content = String(after.content || '')
-
-  // Idempotency: campaign redelivery must not resend to the whole list.
-  if (!(await claimEmailSend(`newsletter-campaign:${event.params.campaignId}:${newStatus}`))) return
-
-  // Fetch active subscribers in pages so a large list never OOMs the function.
-  const recipients: EmailRecipient[] = []
-  let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined
-  for (;;) {
-    let query = db.collection('newsletterSubscribers')
-      .where('isActive', '==', true)
-      .orderBy(admin.firestore.FieldPath.documentId())
-      .limit(500)
-    if (lastDoc) query = query.startAfter(lastDoc)
-    const page = await query.get()
-    if (page.empty) break
-    for (const doc of page.docs) {
-      const data = doc.data() as Record<string, unknown>
-      const email = String(data.email || '')
-      if (email) {
-        recipients.push({ email })
-      }
-    }
-    lastDoc = page.docs[page.docs.length - 1]
-    if (page.size < 500) break
+    await runNewsletterCampaign(event.params.campaignId)
   }
+)
 
-  if (recipients.length === 0) {
-    functions.logger.log('No active newsletter subscribers found for campaign', event.params.campaignId)
+/**
+ * Resume campaigns that stalled mid-send (timeout, deploy, quota window).
+ * Only campaigns the sender itself marked `sendState: 'in_progress'` are
+ * picked up — historical campaigns are never re-sent.
+ */
+export const resumeStalledNewsletterCampaigns = onSchedule(
+  {
+    schedule: 'every 10 minutes',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+  },
+  async () => {
+    const state = await getEmailSendingState()
+    if (!state.enabled) return
+
+    const snapshot = await db
+      .collection('newsletterCampaigns')
+      .where('status', '==', 'sent')
+      .where('sendState', '==', 'in_progress')
+      .limit(10)
+      .get()
+
+    for (const doc of snapshot.docs) {
+      await runNewsletterCampaign(doc.id)
+    }
+  }
+)
+
+async function runNewsletterCampaign(campaignId: string): Promise<void> {
+  const ref = db.collection('newsletterCampaigns').doc(campaignId)
+  const snap = await ref.get()
+  if (!snap.exists) return
+  const data = snap.data() as Record<string, unknown>
+  if (String(data.status || '') !== 'sent') return
+  if (data.sendState === 'completed' || data.sendState === 'failed') return
+
+  // Operator kill switch: do not start (or resume) while paused.
+  const sendingState = await getEmailSendingState()
+  if (!sendingState.enabled) {
+    functions.logger.warn('Newsletter campaign skipped: email sending is paused')
     return
   }
 
-  // ── Per-recipient unsubscribe link (CAN-SPAM/GDPR) ──
-  // URL built by buildUnsubscribeUrlFor() — shared with the welcome email.
-  const unsubSecret = process.env.NEWSLETTER_UNSUBSCRIBE_SECRET
-
-  const items: RenderedBulkEmail[] = recipients.map((recipient) => {
-    const unsubscribeUrl = buildUnsubscribeUrlFor(recipient.email)
-    const rendered = renderNewsletterContent({
-      email: recipient.email,
-      content,
-      subject,
-      unsubscribeUrl,
-    })
-    return { to: recipient, subject: rendered.subject, html: rendered.html, text: rendered.text }
+  // Concurrency lock: only one invocation works a campaign at a time; a lock
+  // older than CAMPAIGN_LOCK_STALE_MS means the previous invocation died.
+  const lockAcquired = await db.runTransaction(async (tx) => {
+    const s = await tx.get(ref)
+    const d = s.data() as Record<string, unknown> | undefined
+    if (!d) return false
+    if (String(d.status || '') !== 'sent') return false
+    if (d.sendState === 'completed' || d.sendState === 'failed') return false
+    const lockAt =
+      (d.processingAt as admin.firestore.Timestamp | undefined)?.toDate?.()?.getTime?.() ?? 0
+    if (Date.now() - lockAt < CAMPAIGN_LOCK_STALE_MS) return false
+    tx.update(ref, { processingAt: admin.firestore.FieldValue.serverTimestamp() })
+    return true
   })
+  if (!lockAcquired) return
 
-  if (!unsubSecret) {
+  const subject = String(data.subject || '')
+  const content = String(data.content || '')
+
+  if (!process.env.NEWSLETTER_UNSUBSCRIBE_SECRET) {
     // Compliance: never send bulk mail without an unsubscribe mechanism.
     functions.logger.error('NEWSLETTER_UNSUBSCRIBE_SECRET not set — campaign aborted, no emails sent')
-    await db.collection('newsletterCampaigns').doc(event.params.campaignId).update({
-      failedCount: recipients.length,
+    await ref.update({
+      sendState: 'failed',
+      processingAt: admin.firestore.FieldValue.delete(),
+      failedCount: 0,
       skippedQuotaCount: 0,
       error: 'NEWSLETTER_UNSUBSCRIBE_SECRET not configured',
     })
     return
   }
 
-  const result = await sendBulkRenderedEmails(items, ['newsletter-campaign'])
+  const deadline = Date.now() + CAMPAIGN_TIME_BUDGET_MS
+  let cursor: string | null = typeof data.cursor === 'string' ? data.cursor : null
+  let sentCount = typeof data.sentCount === 'number' ? data.sentCount : 0
+  let failedCount = typeof data.failedCount === 'number' ? data.failedCount : 0
+  let skippedCount = typeof data.skippedQuotaCount === 'number' ? data.skippedQuotaCount : 0
+  let outOfTime = false
+  let quotaBlocked = false
 
-  functions.logger.info('Newsletter campaign send complete:', result)
+  try {
+    outer: for (;;) {
+      let query = db
+        .collection('newsletterSubscribers')
+        .where('isActive', '==', true)
+        .orderBy(admin.firestore.FieldPath.documentId())
+        .limit(500)
+      if (cursor) query = query.startAfter(cursor)
+      const page = await query.get()
+      if (page.empty) break
 
-  // Update campaign status
-  await db.collection('newsletterCampaigns').doc(event.params.campaignId).update({
-    sentAt: admin.firestore.FieldValue.serverTimestamp(),
-    sentCount: result.successful,
-    failedCount: result.failed,
-    skippedQuotaCount: result.skipped,
-  })
-})
+      for (let i = 0; i < page.docs.length; i += CAMPAIGN_BATCH_SIZE) {
+        if (Date.now() > deadline) {
+          outOfTime = true
+          break outer
+        }
+        const chunk = page.docs.slice(i, i + CAMPAIGN_BATCH_SIZE)
+        const batchKey = chunk[chunk.length - 1].id
+        const markerId = `newsletter-campaign:${campaignId}:batch:${batchKey}`
+
+        if (await claimEmailSend(markerId)) {
+          const items: RenderedBulkEmail[] = chunk
+            .map((doc) => {
+              const d = doc.data() as Record<string, unknown>
+              const email = String(d.email || '')
+              return { email, unsubscribeUrl: buildUnsubscribeUrlFor(email) }
+            })
+            .filter((r) => r.email && r.unsubscribeUrl)
+            .map((r) => {
+              const rendered = renderNewsletterContent({
+                email: r.email,
+                content,
+                subject,
+                unsubscribeUrl: r.unsubscribeUrl,
+              })
+              return {
+                to: { email: r.email } as EmailRecipient,
+                subject: rendered.subject,
+                html: rendered.html,
+                text: rendered.text,
+              }
+            })
+
+          const result = await sendBulkRenderedEmails(items, ['newsletter-campaign'])
+          sentCount += result.successful
+          failedCount += result.failed
+          skippedCount += result.skipped
+
+          if (result.skipped > 0 && result.successful === 0) {
+            // Quota exhausted and NOTHING was sent for this batch — release
+            // the marker so the batch is re-sent (not skipped) when the
+            // quota window resets.
+            try {
+              await db.collection('emailSends').doc(markerId).delete()
+            } catch (deleteErr) {
+              functions.logger.warn(`Failed to release campaign batch marker ${markerId}:`, deleteErr)
+            }
+            quotaBlocked = true
+            break outer
+          }
+        } else {
+          functions.logger.log(`Campaign batch ${batchKey} already sent; advancing cursor`)
+        }
+
+        // Persist progress after every batch: a timeout/deploy loses at most
+        // the in-flight batch, never duplicates an already-sent one.
+        cursor = batchKey
+        await ref.update({
+          cursor,
+          sentCount,
+          failedCount,
+          skippedQuotaCount: skippedCount,
+          processingAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+      }
+
+      if (page.size < 500) break
+    }
+
+    const completed = !outOfTime && !quotaBlocked
+    await ref.update({
+      sendState: completed ? 'completed' : 'in_progress',
+      cursor: cursor ?? null,
+      sentCount,
+      failedCount,
+      skippedQuotaCount: skippedCount,
+      processingAt: admin.firestore.FieldValue.delete(),
+      ...(completed ? { sentAt: admin.firestore.FieldValue.serverTimestamp() } : {}),
+    })
+
+    functions.logger.info('Newsletter campaign run finished:', {
+      campaignId,
+      completed,
+      outOfTime,
+      quotaBlocked,
+      sentCount,
+      failedCount,
+      skippedCount,
+      cursor,
+    })
+  } catch (err) {
+    functions.logger.error('Newsletter campaign send failed:', err)
+    try {
+      await ref.update({
+        sendState: 'in_progress',
+        cursor: cursor ?? null,
+        sentCount,
+        failedCount,
+        skippedQuotaCount: skippedCount,
+        processingAt: admin.firestore.FieldValue.delete(),
+        error: err instanceof Error ? err.message : 'Unknown campaign error',
+      })
+    } catch (updateErr) {
+      functions.logger.error('Failed to persist campaign error state:', updateErr)
+    }
+  }
+}
 
 // ─── Firestore Trigger: Receipt Created ───
-export const onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async (event) => {
+const onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async (event) => {
   const receipt = event.data?.data() as Record<string, unknown> | undefined
   if (!receipt) return
 
@@ -585,7 +741,7 @@ export const onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async 
 // ─── Firestore Trigger: Webinar Certificate Created ───
 // When a webinar participation certificate is issued (admin action), send
 // the recipient an email with a direct link to view/download it.
-export const onWebinarCertificateCreated = onDocumentCreated('certificates/{certId}', async (event) => {
+const onWebinarCertificateCreated = onDocumentCreated('certificates/{certId}', async (event) => {
   const cert = event.data?.data() as Record<string, unknown> | undefined
   if (!cert) return
 
@@ -626,7 +782,7 @@ export const onWebinarCertificateCreated = onDocumentCreated('certificates/{cert
 
 // ─── Callable: sendTransactionalEmail ───
 // Manually trigger a transactional email from the Next.js app (admin use).
-export const sendTransactionalEmail = onCall(async (request) => {
+const sendTransactionalEmail = onCall(async (request) => {
   // Only allow authenticated callers
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'You must be signed in to send emails.')
@@ -730,3 +886,16 @@ export const sendTransactionalEmail = onCall(async (request) => {
 
   return result
 })
+
+// Keep the disabled legacy trigger definitions referenced so TypeScript's
+// `noUnusedLocals` passes while they are pending deletion. They are NOT
+// exported and therefore are not deployed.
+void sendJoinApplicationEmail
+void sendMemberApprovalEmailTrigger
+void onWebinarRegistrationCreated
+void onWebinarRegistrationUpdated
+void onContactMessageCreated
+void onNewsletterSubscriberCreated
+void onReceiptCreated
+void onWebinarCertificateCreated
+void sendTransactionalEmail

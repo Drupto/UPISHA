@@ -92,8 +92,9 @@ export default function MemberRoute({ children }: { children: React.ReactNode })
           </h2>
           <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
             Please verify your email address to access the member dashboard.
-            We've sent a verification link to <span className="font-medium">{user.email}</span>.
-            Check your inbox and click the link to verify your account.
+            Verification emails are sent only when you request one, to prevent abuse.
+            Click “Resend Verification Email” below and check the inbox for{' '}
+            <span className="font-medium">{user.email}</span>.
           </p>
           <div className="space-y-3">
             <Button

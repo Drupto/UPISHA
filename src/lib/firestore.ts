@@ -93,6 +93,7 @@ const WEBINAR_UPDATE_FIELDS = [
 const WEBINAR_REG_UPDATE_FIELDS = [
   'fullName', 'email', 'phone', 'qualification', 'rciCrrNumber', 'city', 'webinarId', 'webinarTitle',
   'webinarDate', 'webinarTime', 'webinarType', 'transactionNumber', 'registrationNumber', 'message', 'status',
+  'amount', 'currency', 'paymentStatus', 'paymentVerifiedBy', 'paymentVerifiedAt', 'receiptNumber', 'rejectionReason',
 ] as const
 
 const TESTIMONIAL_UPDATE_FIELDS = [
@@ -249,6 +250,13 @@ export interface WebinarRegistrationDoc {
   message?: string | null
   declaration: boolean
   status?: 'pending' | 'confirmed' | 'rejected'
+  amount?: number | null
+  currency?: 'INR'
+  paymentStatus?: 'not_required' | 'pending_verification' | 'verified' | 'rejected' | 'refunded'
+  paymentVerifiedBy?: { uid: string; email: string | null } | null
+  paymentVerifiedAt?: Date | null
+  receiptNumber?: string | null
+  rejectionReason?: string | null
   createdAt?: FieldValue | Date
   updatedAt?: FieldValue | Date
 }
@@ -601,6 +609,31 @@ export async function createReceipt(data: ReceiptDoc) {
     updatedAt: data.updatedAt ?? new Date(),
   })
   return { id: ref.id }
+}
+
+/**
+ * Deterministic receipt upsert — used for webinar receipts so concurrent
+ * admin confirms / retries converge on one document instead of inserting
+ * duplicates with the same receipt number.
+ */
+export async function upsertReceipt(data: ReceiptDoc) {
+  if (!data.receiptNumber) throw new Error('upsertReceipt requires a receiptNumber')
+  const ref = doc(db(), 'receipts', data.receiptNumber)
+  await setDoc(
+    ref,
+    {
+      ...data,
+      status: data.status ?? 'paid',
+      currency: data.currency ?? 'INR',
+      transactionNumber: data.transactionNumber ?? null,
+      paymentMethod: data.paymentMethod ?? null,
+      issuedAt: data.issuedAt ?? new Date(),
+      createdAt: data.createdAt ?? new Date(),
+      updatedAt: new Date(),
+    },
+    { merge: true }
+  )
+  return { id: data.receiptNumber }
 }
 
 /**
@@ -1395,7 +1428,7 @@ export async function createTeachRequest(data: TeachRequestDoc) {
   return { id: ref.id }
 }
 
-export async function getTeachRequests() {
+export async function getTeachRequests(): Promise<TeachRequestDoc[]> {
   const snapshot = await getDocs(query(collection(db(), 'teachRequests'), orderBy('createdAt', 'desc')))
   return snapshot.docs.map((doc) => {
     const data = doc.data()
@@ -1404,7 +1437,7 @@ export async function getTeachRequests() {
       ...data,
       createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
       updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null),
-    }
+    } as TeachRequestDoc
   })
 }
 
@@ -1635,7 +1668,7 @@ export async function createWebinar(data: WebinarDoc) {
 
 export async function getWebinars() {
   const snapshot = await getDocs(query(collection(db(), 'webinars'), orderBy('createdAt', 'desc')))
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as WebinarDoc[]
 }
 
 export async function getWebinarById(id: string) {
@@ -1678,6 +1711,13 @@ export async function createWebinarRegistration(data: WebinarRegistrationDoc) {
     registrationNumber,
     webinarType: data.webinarType ?? 'paid',
     status: data.status ?? 'pending',
+    amount: data.amount ?? null,
+    currency: data.currency ?? 'INR',
+    paymentStatus: data.paymentStatus ?? (data.webinarType === 'free' ? 'not_required' : 'pending_verification'),
+    paymentVerifiedBy: data.paymentVerifiedBy ?? null,
+    paymentVerifiedAt: data.paymentVerifiedAt ?? null,
+    receiptNumber: data.receiptNumber ?? null,
+    rejectionReason: data.rejectionReason ?? null,
     createdAt: data.createdAt ?? new Date(),
     updatedAt: data.updatedAt ?? new Date(),
     qualification: data.qualification ?? null,
@@ -1791,7 +1831,31 @@ export async function getWebinarRegistrationCount(webinarId: string) {
   const snapshot = await getDocs(
     query(collection(db(), 'webinarRegistrations'), where('webinarId', '==', webinarId))
   )
-  return snapshot.size
+  // Seats are held by every registration except explicitly rejected ones, so
+  // legacy docs without `status` still count.
+  return snapshot.docs.filter((doc) => doc.data().status !== 'rejected').length
+}
+
+export async function getWebinarRegistrationByTransactionNumber(
+  transactionNumber: string
+): Promise<WebinarRegistrationDoc | null> {
+  const normalized = transactionNumber.trim()
+  if (!normalized) return null
+  const snapshot = await getDocs(
+    query(
+      collection(db(), 'webinarRegistrations'),
+      where('transactionNumber', '==', normalized)
+    )
+  )
+  if (snapshot.empty) return null
+  const doc = snapshot.docs[0]
+  const data = doc.data()
+  return {
+    id: doc.id,
+    ...data,
+    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : null,
+    updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : null,
+  } as WebinarRegistrationDoc
 }
 
 export async function updateWebinarRegistration(id: string, data: Partial<WebinarRegistrationDoc>) {

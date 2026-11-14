@@ -3,16 +3,23 @@ import { createTeachRequest, getTeachRequests } from '@/lib/firestore'
 import { teachRequestSchema } from '@/lib/validations'
 import { withSecurityHeaders, rateLimit, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { publicFormsDisabledResponse, enforcePublicEndpointLimit } from '@/lib/public-endpoint-guard'
 
 export async function POST(request: NextRequest) {
+  const disabled = publicFormsDisabledResponse()
+  if (disabled) return disabled
+
   try {
     const body = await request.json()
     const validated = teachRequestSchema.parse(body)
 
-    // Rate limiting (same policy as the contact endpoint)
-    if (!rateLimit(`teach:${validated.email}`, 3, 60 * 60 * 1000)) {
-      return withSecurityHeaders(NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 }))
-    }
+    const limited = await enforcePublicEndpointLimit(request, 'teach-requests', {
+      perIp: 5,
+      global: 100,
+      email: validated.email,
+      perEmail: 3,
+    })
+    if (limited) return limited
 
     // CSRF protection
     const csrfError = withCsrfProtection(request)
