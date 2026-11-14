@@ -1,27 +1,13 @@
 import type { NextConfig } from "next";
 
-// In production, use a strict CSP without unsafe-eval/unsafe-inline.
-// In development, Next.js requires 'unsafe-eval'/'unsafe-inline' for HMR
-// and inline bootstrap scripts — a strict CSP would break the page.
-const isProduction = process.env.NODE_ENV === "production";
-
-// Firebase App Check (reCAPTCHA Enterprise) endpoints. The SDK injects
-// enterprise.js into the DOCUMENT, so these origins must live in this
-// page-level CSP — the identical strings in src/lib/security.ts only run on
-// API route responses and cannot authorize document scripts. Keep the two
-// files in sync (see APP_CHECK.md §4).
-const recaptchaScriptSrc = "https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/";
-const recaptchaConnectSrc = "https://www.google.com/recaptcha/";
-const recaptchaFrameSrc = "https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/";
-
-const strictCsp = `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com ${recaptchaScriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.googleapis.com https://www.google-analytics.com https://*.google-analytics.com https://*.googletagmanager.com ${recaptchaConnectSrc} wss://firestore.googleapis.com wss://*.firebaseio.com; font-src 'self' data:; frame-src https://www.openstreetmap.org ${recaptchaFrameSrc}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`;
-
-const devCsp = `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com ${recaptchaScriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.googleapis.com https://www.google-analytics.com https://*.google-analytics.com https://*.googletagmanager.com ${recaptchaConnectSrc} wss://firestore.googleapis.com wss://*.firebaseio.com; font-src 'self' data:; frame-src https://www.openstreetmap.org ${recaptchaFrameSrc}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`;
-
+// NOTE: the Content-Security-Policy is now owned by middleware.ts (nonce-based
+// in production - M1 residual fix, see SECURITY_AUDIT_REPORT.md). This block
+// keeps the static security headers for every response. API routes also get
+// headers via withSecurityHeaders() in src/lib/security.ts.
 const nextConfig: NextConfig = {
   // Keep the (CommonJS, heavyweight) Firebase Admin SDK out of the bundler
-  // graph — Netlify Functions require() it from node_modules at runtime.
-  serverExternalPackages: ['firebase-admin'],
+  // graph - Netlify Functions require() it from node_modules at runtime.
+  serverExternalPackages: ["firebase-admin"],
   poweredByHeader: false,
   turbopack: {
     root: import.meta.dirname,
@@ -54,10 +40,6 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "geolocation=(), microphone=(), camera=()",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: isProduction ? strictCsp : devCsp,
           },
         ],
       },

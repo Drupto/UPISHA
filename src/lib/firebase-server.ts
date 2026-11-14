@@ -156,6 +156,28 @@ export async function verifyIdToken(
   }
 }
 
+/**
+ * Verify a Firebase SESSION cookie (minted by /api/auth/verify via
+ * Admin SDK createSessionCookie - the L1 residual fix). Session cookies are
+ * a different token type from ID tokens and MUST be verified with
+ * verifySessionCookie(), not verifyIdToken(). checkRevoked=true rejects
+ * cookies invalidated by password change / account disable / explicit
+ * revokeRefreshTokens. Returns the same shape as verifyIdToken() so
+ * auth-helpers can use either interchangeably.
+ */
+export async function verifySessionCookie(
+  token: string,
+  checkRevoked = true
+): Promise<VerifiedToken> {
+  const decoded = await getAdminAuth().verifySessionCookie(token, checkRevoked)
+  return {
+    uid: decoded.uid,
+    email: decoded.email ?? null,
+    name: decoded.name ?? null,
+    emailVerified: decoded.email_verified === true,
+    claims: (decoded as unknown as Record<string, unknown>) ?? {},
+  }
+}
 // ─── Firebase App Check verification (APP_CHECK.md §5) ───────────────────────
 
 /** Enforcement mode for API-layer App Check verification. */

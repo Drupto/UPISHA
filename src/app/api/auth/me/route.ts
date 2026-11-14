@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyIdToken } from '@/lib/firebase-server'
+import { verifyIdToken, verifySessionCookie } from '@/lib/firebase-server'
 import { getUserByUid, getMemberByUid } from '@/lib/firestore'
 
 export async function GET(request: NextRequest) {
@@ -7,7 +7,13 @@ export async function GET(request: NextRequest) {
     const sessionToken = request.cookies.get('session')?.value
     if (!sessionToken) return NextResponse.json({ authenticated: false }, { status: 401 })
 
-    const decodedToken = await verifyIdToken(sessionToken, true)
+    // The session cookie may be either an Admin SDK SESSION cookie (minted by
+    // /api/auth/verify - L1 residual fix) or, transitionally, a raw ID token
+    // from a pre-deploy session. verifySessionCookie() rejects ID tokens and
+    // verifyIdToken() is the fallback; both enforce revocation checking.
+    const decodedToken = await verifySessionCookie(sessionToken, true).catch(() =>
+      verifyIdToken(sessionToken, true)
+    )
     const userRecord = await getUserByUid(decodedToken.uid)
 
     // Fetch member approval status (only for member role)

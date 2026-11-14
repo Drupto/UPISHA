@@ -1,11 +1,20 @@
 import { NextResponse, NextRequest } from 'next/server'
-import { verifyIdToken } from './firebase-server'
+import { verifyIdToken, verifySessionCookie } from './firebase-server'
 import { withAppCheckProtection } from './security'
 import { getUserByUid, getMemberByUid } from './firestore'
 
 export async function requireAuth(request: NextRequest) {
-  const sessionToken = request.headers.get('authorization')?.replace('Bearer ', '') ||
-                       request.cookies.get('session')?.value
+  // Two token transports:
+  //   1. `Authorization: Bearer <ID token>` - a Firebase ID token from the
+  //      client SDK (verified with verifyIdToken).
+  //   2. The httpOnly `session` cookie - an Admin SDK SESSION cookie minted by
+  //      /api/auth/verify via createSessionCookie (L1 residual fix). Session
+  //      cookies are a different token type and are verified with
+  //      verifySessionCookie(). A legacy raw-ID-token cookie may still arrive
+  //      from a pre-deploy session, hence the verifyIdToken fallback below.
+  const bearerToken = request.headers.get('authorization')?.replace('Bearer ', '')
+  const cookieToken = request.cookies.get('session')?.value
+  const sessionToken = bearerToken || cookieToken
 
   if (!sessionToken) {
     return NextResponse.json({ authenticated: false, error: 'Unauthorized' }, { status: 401 })
@@ -14,11 +23,17 @@ export async function requireAuth(request: NextRequest) {
   try {
     // Admin SDK verification with revocation checking (checkRevoked=true):
     // rejects tokens invalidated by password change / account disable /
-    // explicit revokeRefreshTokens — impossible with the previous REST
+    // explicit revokeRefreshTokens - impossible with the previous REST
     // identitytoolkit accounts:lookup approach (HIGH-2 slice).
-    const decodedToken = await verifyIdToken(sessionToken, true)
+    const decodedToken = bearerToken
+      ? await verifyIdToken(bearerToken, true)
+      : await verifySessionCookie(sessionToken, true).catch(() =>
+          // Transitional fallback: raw ID-token cookie minted before the
+          // session-cookie rollout. Remove once all sessions are refreshed.
+          verifyIdToken(sessionToken, true)
+        )
 
-    // Firebase App Check (APP_CHECK.md §5): verified AFTER the (cheaper,
+    // Firebase App Check (APP_CHECK.md section 5): verified AFTER the (cheaper,
     // cached-friendly) ID token so a valid human session never pays the
     // App Check failure path on a bot-filter misfire, and so monitor-mode
     // metrics only measure bot-vs-legit on genuinely authenticated traffic.

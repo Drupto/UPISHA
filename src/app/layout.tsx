@@ -126,6 +126,12 @@ export const metadata: Metadata = {
   },
 };
 
+// Force dynamic rendering: the nonce-based production CSP (middleware.ts) mints a
+// per-request nonce that Next.js stamps onto its scripts at render time. Static
+// prerendering cannot carry a per-request nonce, so every route must be
+// server-rendered (documented requirement for nonce-based CSP).
+export const dynamic = 'force-dynamic';
+
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#0d7377" },

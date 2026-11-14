@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withSecurityHeaders, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
-import { verifyIdToken } from '@/lib/firebase-server'
+import { verifyIdToken, verifySessionCookie } from '@/lib/firebase-server'
 import { logAdminAction } from '@/lib/audit-log'
 
 /**
  * Clears the session cookie. The logout audit entry is best-effort: the
  * session token may already be expired/revoked (that is often WHY the user
  * is logging out), so verification failure must never block the cookie
- * clearing — the response is identical to the previous version.
+ * clearing - the response is identical to the previous version.
  */
 export async function POST(request: NextRequest) {
   // CSRF protection for mutating requests (prevents cross-site forced-logout).
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     return withSecurityHeaders(csrfError)
   }
 
-  // Firebase App Check (APP_CHECK.md §5): attestation verified alongside
+  // Firebase App Check (APP_CHECK.md section 5): attestation verified alongside
   // CSRF. A failure must never trap the user in a logged-in state, so on
   // rejection we clear the session cookie on the 403 response itself
   // (fail-closed on attestation, fail-open on the session cleanup).
@@ -27,11 +27,17 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const sessionToken =
-      request.headers.get('authorization')?.replace('Bearer ', '') ||
-      request.cookies.get('session')?.value
+    const bearerToken = request.headers.get('authorization')?.replace('Bearer ', '')
+    const cookieToken = request.cookies.get('session')?.value
+    const sessionToken = bearerToken || cookieToken
     if (sessionToken) {
-      const decoded = await verifyIdToken(sessionToken, false)
+      // Dual transport: Bearer = ID token; cookie = Admin SDK session cookie
+      // (with a transitional raw-ID-token fallback - see auth-helpers).
+      const decoded = bearerToken
+        ? await verifyIdToken(bearerToken, false)
+        : await verifySessionCookie(sessionToken, false).catch(() =>
+            verifyIdToken(sessionToken, false)
+          )
       await logAdminAction({
         action: 'auth.logout',
         resourceType: 'auth',
@@ -41,7 +47,7 @@ export async function POST(request: NextRequest) {
       })
     }
   } catch {
-    // Token missing/invalid/expired — proceed with logout regardless.
+    // Token missing/invalid/expired - proceed with logout regardless.
   }
 
   const response = withSecurityHeaders(NextResponse.json({ success: true }))
