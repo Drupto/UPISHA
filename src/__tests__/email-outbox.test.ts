@@ -5,6 +5,7 @@ import {
   webinarUpdateSchema,
 } from '@/lib/validations'
 import { outboxDocumentId } from '@/lib/email-outbox-types'
+import { stripUndefined } from '@/lib/email-outbox-types'
 
 describe('outboxDocumentId', () => {
   it('produces a stable Firestore-safe ID and never contains a slash', () => {
@@ -31,5 +32,27 @@ describe('update schemas do not inject creation defaults', () => {
   it('announcement/event partial updates do not force isActive', () => {
     expect(announcementUpdateSchema.parse({ title: 'New title' })).toEqual({ title: 'New title' })
     expect(eventUpdateSchema.parse({ title: 'New title' })).toEqual({ title: 'New title' })
+  })
+})
+
+describe('stripUndefined', () => {
+  it('removes undefined fields so template data is always Firestore-safe', () => {
+    const input = {
+      fullName: 'Test User',
+      webinarSpeaker: undefined,
+      webinarDuration: undefined,
+      meetingLink: 'https://meet.example/x',
+      transactionNumber: null,
+      receipt: { number: 'R-1', paidAt: undefined },
+      tags: ['a', undefined, 'b'] as unknown as string[],
+    }
+    const cleaned = stripUndefined(input) as Record<string, unknown>
+    expect(cleaned).toEqual({
+      fullName: 'Test User',
+      meetingLink: 'https://meet.example/x',
+      transactionNumber: null,
+      receipt: { number: 'R-1' },
+      tags: ['a', null, 'b'],
+    })
   })
 })

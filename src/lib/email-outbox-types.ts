@@ -88,3 +88,23 @@ export function outboxDocumentId(dedupeKey: string): string {
     .replace(/^_+|_+$/g, '')
     .slice(0, 380)
 }
+
+/**
+ * Firestore rejects `undefined` values anywhere in a document. Callers build
+ * template data from optional fields (speaker, meeting link, receipt number,
+ * rejection reason…) where an absent value naturally becomes `undefined` —
+ * strip them before writing so a missing optional field can never fail the
+ * enqueue (callers log-and-continue, which would leave a status change
+ * confirmed but the email silently unsent).
+ */
+export function stripUndefined(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripUndefined).map((v) => (v === undefined ? null : v))
+  if (value !== null && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (v !== undefined) out[k] = stripUndefined(v)
+    }
+    return out
+  }
+  return value
+}

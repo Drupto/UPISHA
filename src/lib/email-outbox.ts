@@ -22,7 +22,7 @@ import type {
   EmailOutboxStatus,
   EmailOutboxTemplate,
 } from './email-outbox-types'
-import { outboxDocumentId } from './email-outbox-types'
+import { outboxDocumentId, stripUndefined } from './email-outbox-types'
 
 export interface EnqueueEmailInput {
   /** Stable key, e.g. `contact-ack:<messageId>`. Becomes the document ID. */
@@ -43,6 +43,8 @@ function outboxMarkerId(id: string): string {
   return `outbox:${id}`
 }
 
+export { stripUndefined } from './email-outbox-types'
+
 export async function enqueueEmail(
   input: EnqueueEmailInput
 ): Promise<{ id: string; created: boolean }> {
@@ -62,7 +64,7 @@ export async function enqueueEmail(
     template: input.template,
     to: input.to,
     subject: input.subject ?? null,
-    templateData: input.templateData,
+    templateData: stripUndefined(input.templateData) as Record<string, unknown>,
     status: input.approvedBy ? 'approved' : 'pending_approval',
     source: input.source,
     requestedBy: input.requestedBy,
